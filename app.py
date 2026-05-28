@@ -377,6 +377,10 @@ def ticket_form(prefix, defaults=None):
         st.session_state[title_key] = defaults.get("title", "")
     if description_key not in st.session_state:
         st.session_state[description_key] = defaults.get("description", "")
+    if st.session_state.get("pending_ai_target") == prefix:
+        st.session_state[title_key] = st.session_state.pop("pending_ai_title", st.session_state[title_key])
+        st.session_state[description_key] = st.session_state.pop("pending_ai_description", st.session_state[description_key])
+        st.session_state.pop("pending_ai_target", None)
 
     title = st.text_input("Titre", key=title_key)
     description = st.text_area("Description", key=description_key)
@@ -389,19 +393,6 @@ def ticket_form(prefix, defaults=None):
         key=category_key,
     )
     project = col2.text_input("Projet / client", value=defaults.get("project", ""), key=project_key)
-
-    if st.button("✨ Améliorer titre + description avec IA", key=f"{prefix}_ai_rewrite", use_container_width=True):
-        if not title.strip() and not description.strip():
-            st.warning("Ajoute d'abord un titre ou une description brute.")
-        else:
-            try:
-                with st.spinner("Réécriture en cours..."):
-                    improved_title, improved_description = improve_ticket_copy(title, description, category, project)
-                st.session_state[title_key] = improved_title
-                st.session_state[description_key] = improved_description
-                st.rerun()
-            except Exception as exc:
-                st.error(f"Impossible d'améliorer le ticket : {exc}")
 
     col3, col4, col5 = st.columns(3)
     priority = col3.selectbox(
@@ -432,11 +423,31 @@ def ticket_form(prefix, defaults=None):
     return title, description, category, project, priority, status, due_date, estimate_hours
 
 
+def improve_ticket_from_form(prefix, ticket):
+    title, description, category, project = ticket[:4]
+    if not title.strip() and not description.strip():
+        st.warning("Ajoute d'abord un titre ou une description brute.")
+        return
+    try:
+        with st.spinner("Réécriture en cours..."):
+            improved_title, improved_description = improve_ticket_copy(title, description, category, project)
+        st.session_state["pending_ai_target"] = prefix
+        st.session_state["pending_ai_title"] = improved_title
+        st.session_state["pending_ai_description"] = improved_description
+        st.rerun()
+    except Exception as exc:
+        st.error(f"Impossible d'améliorer le ticket : {exc}")
+
+
 @st.dialog("Nouveau ticket")
 def create_ticket_dialog():
     with st.form("create_ticket", clear_on_submit=True):
         new_ticket = ticket_form("new")
-        submitted = st.form_submit_button("Créer le ticket", type="primary", use_container_width=True)
+        ai_col, submit_col = st.columns(2)
+        improve = ai_col.form_submit_button("✨ Améliorer avec IA", use_container_width=True)
+        submitted = submit_col.form_submit_button("Créer le ticket", type="primary", use_container_width=True)
+        if improve:
+            improve_ticket_from_form("new", new_ticket)
         if submitted:
             if not new_ticket[0].strip():
                 st.error("Le titre est obligatoire.")
@@ -451,9 +462,12 @@ def edit_ticket_dialog(ticket_id):
     current = tickets[tickets["id"] == ticket_id].iloc[0].to_dict()
     with st.form("edit_ticket"):
         edited_ticket = ticket_form("edit", current)
-        save_col, delete_col = st.columns(2)
+        ai_col, save_col, delete_col = st.columns(3)
+        improve = ai_col.form_submit_button("✨ Améliorer avec IA", use_container_width=True)
         save = save_col.form_submit_button("Enregistrer", type="primary", use_container_width=True)
         remove = delete_col.form_submit_button("Supprimer", use_container_width=True)
+        if improve:
+            improve_ticket_from_form("edit", edited_ticket)
         if save:
             if not edited_ticket[0].strip():
                 st.error("Le titre est obligatoire.")
