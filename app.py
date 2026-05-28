@@ -9,12 +9,12 @@ import streamlit as st
 
 
 DB_PATH = "tickets.db"
-STATUSES = ["Backlog", "À faire", "En cours", "Bloqué", "Terminé"]
+STATUSES = ["À trier", "À faire", "En cours", "Bloqué", "Terminé"]
 PRIORITIES = ["Urgente", "Haute", "Moyenne", "Basse"]
 CATEGORIES = ["Privé", "Pro", "Freelance"]
 PRIORITY_SCORE = {"Urgente": 4, "Haute": 3, "Moyenne": 2, "Basse": 1}
-STATUS_SCORE = {"Bloqué": 3, "En cours": 2, "À faire": 1, "Backlog": 0, "Terminé": -1}
-STATUS_ICONS = {"Backlog": "📥", "À faire": "🧭", "En cours": "⚙️", "Bloqué": "⛔", "Terminé": "✅"}
+STATUS_SCORE = {"Bloqué": 3, "En cours": 2, "À faire": 1, "À trier": 0, "Terminé": -1}
+STATUS_ICONS = {"À trier": "🧬", "À faire": "🎯", "En cours": "⚙️", "Bloqué": "🧯", "Terminé": "✅"}
 CATEGORY_ICONS = {"Privé": "🏠", "Pro": "💼", "Freelance": "🤝"}
 AI_MODEL = "gpt-4o-mini"
 
@@ -194,6 +194,7 @@ def prepare_dataframe(df):
     if df.empty:
         return df
     df = df.copy()
+    df["status"] = df["status"].replace({"Backlog": "À trier"})
     today = date.today()
     df["due"] = pd.to_datetime(df["due_date"], errors="coerce").dt.date
     df["days_left"] = df["due"].apply(lambda d: (d - today).days if pd.notna(d) else None)
@@ -234,12 +235,19 @@ def inject_styles():
             padding-bottom: 2rem;
             max-width: 1500px;
         }
+        .stApp {
+            background:
+                radial-gradient(circle at 20% 0%, rgba(34, 211, 238, 0.18), transparent 32%),
+                radial-gradient(circle at 90% 12%, rgba(168, 85, 247, 0.15), transparent 28%),
+                linear-gradient(180deg, #f8fbff 0%, #eef7ff 100%);
+        }
         div[data-testid="stMetric"] {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(14, 165, 233, 0.22);
             border-radius: 16px;
             padding: 14px 16px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+            box-shadow: 0 12px 30px rgba(14, 116, 144, 0.08);
+            backdrop-filter: blur(10px);
         }
         .hero {
             display: flex;
@@ -248,10 +256,12 @@ def inject_styles():
             gap: 1rem;
             padding: 22px 24px;
             border-radius: 22px;
-            background: linear-gradient(135deg, #172554 0%, #2563eb 55%, #38bdf8 100%);
-            color: white;
+            background:
+                linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(224,242,254,0.92) 50%, rgba(240,253,250,0.92) 100%);
+            color: #0f172a;
             margin-bottom: 18px;
-            box-shadow: 0 18px 45px rgba(37, 99, 235, 0.24);
+            border: 1px solid rgba(14, 165, 233, 0.25);
+            box-shadow: 0 18px 45px rgba(14, 116, 144, 0.13);
         }
         .hero h1 {
             margin: 0;
@@ -260,19 +270,26 @@ def inject_styles():
         }
         .hero p {
             margin: 8px 0 0;
-            color: rgba(255,255,255,0.86);
+            color: #475569;
+        }
+        .hero-code {
+            color: #0891b2;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-weight: 800;
         }
         .ticket-card {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(14, 165, 233, 0.2);
+            border-left: 4px solid #22d3ee;
+            border-radius: 18px;
             padding: 14px;
-            margin-bottom: 12px;
-            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+            margin-bottom: 8px;
+            box-shadow: 0 10px 26px rgba(14, 116, 144, 0.08);
         }
         .ticket-card:hover {
-            border-color: #93c5fd;
-            box-shadow: 0 12px 32px rgba(37, 99, 235, 0.12);
+            border-color: rgba(168, 85, 247, 0.45);
+            border-left-color: #a855f7;
+            box-shadow: 0 14px 36px rgba(124, 58, 237, 0.13);
         }
         .ticket-title {
             font-weight: 800;
@@ -313,13 +330,19 @@ def inject_styles():
         .due-today { color: #c2410c; font-weight: 800; }
         .due-normal { color: #475569; font-weight: 700; }
         .column-header {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
+            background: rgba(255,255,255,0.78);
+            border: 1px solid rgba(14, 165, 233, 0.22);
             border-radius: 14px;
             padding: 10px 12px;
             margin-bottom: 12px;
             font-weight: 900;
             color: #0f172a;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.45);
+        }
+        div[data-testid="stButton"] > button {
+            border-radius: 12px;
+            border: 1px solid rgba(14, 165, 233, 0.35);
+            font-weight: 800;
         }
         </style>
         """,
@@ -364,6 +387,30 @@ def ticket_card(row, compact=False):
         """,
         unsafe_allow_html=True,
     )
+
+
+def render_ticket_actions(ticket_id, prefix):
+    edit_col, done_col, delete_col = st.columns([2, 1, 1])
+    if edit_col.button("Carte / Modifier", key=f"edit_{prefix}_{ticket_id}", use_container_width=True):
+        edit_ticket_dialog(ticket_id)
+    if done_col.button("✓", key=f"done_{prefix}_{ticket_id}", use_container_width=True, help="Marquer comme terminé"):
+        current = tickets[tickets["id"] == ticket_id].iloc[0].to_dict()
+        due_date = datetime.fromisoformat(current["due_date"]).date() if current.get("due_date") else None
+        update_ticket(
+            ticket_id,
+            current["title"],
+            current.get("description", ""),
+            current["category"],
+            current.get("project", ""),
+            current["priority"],
+            "Terminé",
+            due_date,
+            current.get("estimate_hours") or 0,
+        )
+        st.rerun()
+    if delete_col.button("🗑", key=f"delete_{prefix}_{ticket_id}", use_container_width=True, help="Supprimer la carte"):
+        delete_ticket(ticket_id)
+        st.rerun()
 
 
 def ticket_form(prefix, defaults=None):
@@ -491,9 +538,9 @@ st.markdown(
     <div class="hero">
         <div>
             <h1>🎫 Personal Ticketing</h1>
-            <p>Un espace clair pour piloter tes tâches privées, professionnelles et freelance.</p>
+            <p><span class="hero-code">~/tasks</span> — cockpit clair pour prioriser privé, pro et freelance.</p>
         </div>
-        <div class="muted" style="color: rgba(255,255,255,0.86);">Vue Kanban + aperçu complet</div>
+        <div class="hero-code">Kanban // Focus // Done</div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -548,8 +595,7 @@ with tab_board:
                 )
                 for _, row in status_df.sort_values("score", ascending=False).iterrows():
                     ticket_card(row, compact=True)
-                    if st.button("Ouvrir", key=f"open_board_{int(row['id'])}", use_container_width=True):
-                        edit_ticket_dialog(int(row["id"]))
+                    render_ticket_actions(int(row["id"]), "board")
 
 with tab_list:
     st.subheader("Aperçu complet des tickets")
@@ -557,14 +603,8 @@ with tab_list:
         st.info("Aucun ticket à afficher.")
     else:
         for _, row in filtered.sort_values(["score", "created_at"], ascending=[False, False]).iterrows():
-            card_col, action_col = st.columns([5, 1])
-            with card_col:
-                ticket_card(row)
-            with action_col:
-                st.write("")
-                st.write("")
-                if st.button("Modifier", key=f"open_list_{int(row['id'])}", use_container_width=True):
-                    edit_ticket_dialog(int(row["id"]))
+            ticket_card(row)
+            render_ticket_actions(int(row["id"]), "list")
 
 with tab_table:
     st.subheader("Vue tableau")
