@@ -258,147 +258,200 @@ def render_metrics(df):
     col4.metric("À 7 jours", len(due_soon))
 
 
+def weekly_dashboard_data(active_df, deleted_df):
+    frames = []
+    if not active_df.empty:
+        active = active_df.copy()
+        active["created_week"] = pd.to_datetime(active["created_at"], errors="coerce").dt.to_period("W").astype(str)
+        created = active.groupby("created_week").size().reset_index(name="Créés").rename(columns={"created_week": "Semaine"})
+        frames.append(created)
+
+        completed = active[active["completed_at"].notna()].copy()
+        if not completed.empty:
+            completed["completed_week"] = pd.to_datetime(completed["completed_at"], errors="coerce").dt.to_period("W").astype(str)
+            done = completed.groupby("completed_week").size().reset_index(name="Terminés").rename(columns={"completed_week": "Semaine"})
+            frames.append(done)
+
+    if not deleted_df.empty:
+        deleted = deleted_df.copy()
+        deleted["deleted_week"] = pd.to_datetime(deleted["deleted_at"], errors="coerce").dt.to_period("W").astype(str)
+        removed = deleted.groupby("deleted_week").size().reset_index(name="Corbeille").rename(columns={"deleted_week": "Semaine"})
+        frames.append(removed)
+
+    if not frames:
+        return pd.DataFrame(columns=["Semaine", "Créés", "Terminés", "Corbeille"])
+
+    weekly = frames[0]
+    for frame in frames[1:]:
+        weekly = weekly.merge(frame, on="Semaine", how="outer")
+    weekly = weekly.fillna(0).sort_values("Semaine")
+    for col in ["Créés", "Terminés", "Corbeille"]:
+        if col not in weekly.columns:
+            weekly[col] = 0
+        weekly[col] = weekly[col].astype(int)
+    return weekly
+
+
+def render_dashboard(active_df, deleted_df):
+    st.subheader("Dashboard hebdomadaire")
+    st.caption("Vue d’avancement : tâches créées, terminées et envoyées en corbeille par semaine.")
+
+    active_count = len(active_df[active_df["status"] != "Terminé"]) if not active_df.empty else 0
+    done_count = len(active_df[active_df["status"] == "Terminé"]) if not active_df.empty else 0
+    total_count = active_count + done_count
+    completion_rate = round((done_count / total_count) * 100, 1) if total_count else 0
+
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Total actif", total_count)
+    col2.metric("Terminés", done_count)
+    col3.metric("À traiter", active_count)
+    col4.metric("Complétion", f"{completion_rate}%")
+
+    weekly = weekly_dashboard_data(active_df, deleted_df)
+    if weekly.empty:
+        st.info("Pas encore assez de données pour afficher les stats hebdomadaires.")
+        return
+
+    chart_df = weekly.set_index("Semaine")
+    st.markdown("#### Progression par semaine")
+    st.bar_chart(chart_df[["Créés", "Terminés", "Corbeille"]], use_container_width=True)
+
+    st.markdown("#### Répartition actuelle")
+    if not active_df.empty:
+        status_counts = active_df.groupby("status").size().reindex(STATUSES, fill_value=0)
+        st.bar_chart(status_counts, use_container_width=True)
+
+    st.markdown("#### Détail hebdomadaire")
+    st.dataframe(weekly, hide_index=True, use_container_width=True)
+
+
 def inject_styles():
     st.markdown(
         """
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&display=swap');
         .block-container {
-            padding-top: 1.1rem;
+            padding-top: 1rem;
             padding-bottom: 2rem;
-            max-width: 1540px;
+            max-width: 1500px;
         }
         .stApp {
-            background-color: #f6fbff;
-            background-image:
-                linear-gradient(rgba(14, 165, 233, 0.08) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(14, 165, 233, 0.08) 1px, transparent 1px),
-                radial-gradient(circle at 12% 8%, rgba(34, 211, 238, 0.28), transparent 24%),
-                radial-gradient(circle at 88% 12%, rgba(168, 85, 247, 0.22), transparent 22%);
-            background-size: 28px 28px, 28px 28px, 100% 100%, 100% 100%;
+            background: #f4f5f7;
+            color: #172b4d;
         }
-        h1, h2, h3, .hero-code, .column-header, .ticket-title {
-            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        h1, h2, h3 {
+            color: #172b4d;
+            letter-spacing: -0.02em;
         }
         div[data-testid="stMetric"] {
-            background: rgba(255, 255, 255, 0.76);
-            border: 1px solid rgba(6, 182, 212, 0.35);
+            background: #ffffff;
+            border: 1px solid #dfe1e6;
             border-radius: 8px;
             padding: 14px 16px;
-            box-shadow: 5px 5px 0 rgba(103, 232, 249, 0.28);
-            backdrop-filter: blur(12px);
+            box-shadow: 0 1px 2px rgba(9, 30, 66, 0.14);
         }
         .hero {
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 1rem;
-            padding: 24px;
+            padding: 22px 24px;
             border-radius: 10px;
-            background: rgba(255,255,255,0.82);
-            color: #0f172a;
+            background: #ffffff;
+            color: #172b4d;
             margin-bottom: 18px;
-            border: 1px solid rgba(6, 182, 212, 0.42);
-            box-shadow: 8px 8px 0 rgba(14, 165, 233, 0.18), -8px -8px 0 rgba(168, 85, 247, 0.08);
-            position: relative;
-            overflow: hidden;
-        }
-        .hero:before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, #06b6d4, #a855f7, #22c55e);
+            border: 1px solid #dfe1e6;
+            box-shadow: 0 2px 8px rgba(9, 30, 66, 0.10);
         }
         .hero h1 {
             margin: 0;
-            font-size: 34px;
-            letter-spacing: -1px;
+            font-size: 30px;
+            font-weight: 800;
         }
         .hero p {
             margin: 8px 0 0;
-            color: #334155;
+            color: #5e6c84;
+            font-size: 14px;
         }
         .hero-code {
-            color: #0e7490;
+            color: #0052cc;
             font-weight: 800;
         }
         .ticket-card {
-            background: rgba(255, 255, 255, 0.88);
-            border: 1px solid rgba(8, 145, 178, 0.35);
-            border-left: 5px solid #06b6d4;
-            border-radius: 6px;
-            padding: 13px;
+            background: #ffffff;
+            border: 1px solid #dfe1e6;
+            border-radius: 4px;
+            padding: 12px;
             margin-bottom: 8px;
-            box-shadow: 4px 4px 0 rgba(14, 165, 233, 0.14);
+            box-shadow: 0 1px 2px rgba(9, 30, 66, 0.18);
         }
         .ticket-card:hover {
-            border-color: rgba(147, 51, 234, 0.55);
-            border-left-color: #a855f7;
-            transform: translate(-1px, -1px);
-            box-shadow: 6px 6px 0 rgba(168, 85, 247, 0.16);
+            background: #fefefe;
+            border-color: #b3bac5;
+            box-shadow: 0 4px 8px rgba(9, 30, 66, 0.18);
         }
         .ticket-title {
-            font-weight: 800;
+            font-weight: 700;
             font-size: 14px;
-            color: #020617;
+            color: #172b4d;
             margin: 7px 0;
         }
         .ticket-desc {
-            color: #334155;
+            color: #42526e;
             font-size: 13px;
-            line-height: 1.45;
+            line-height: 1.4;
             margin: 8px 0 10px;
         }
         .muted {
-            color: #64748b;
+            color: #6b778c;
             font-size: 11px;
-            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-weight: 600;
         }
         .pill {
             display: inline-flex;
             padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: 800;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 700;
             margin-right: 5px;
             margin-bottom: 5px;
-            border: 1px solid rgba(15, 23, 42, 0.1);
-            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            border: 1px solid transparent;
         }
-        .prio-Urgente { background: #ffe4e6; color: #be123c; }
-        .prio-Haute { background: #ffedd5; color: #c2410c; }
-        .prio-Moyenne { background: #fef9c3; color: #a16207; }
-        .prio-Basse { background: #dcfce7; color: #15803d; }
-        .cat-Privé { background: #ede9fe; color: #6d28d9; }
-        .cat-Pro { background: #dbeafe; color: #1d4ed8; }
-        .cat-Freelance { background: #ccfbf1; color: #0f766e; }
-        .due-overdue { color: #be123c; font-weight: 900; }
-        .due-today { color: #c2410c; font-weight: 900; }
-        .due-normal { color: #475569; font-weight: 800; }
+        .prio-Urgente { background: #ffebe6; color: #bf2600; }
+        .prio-Haute { background: #fffae6; color: #974f0c; }
+        .prio-Moyenne { background: #eae6ff; color: #403294; }
+        .prio-Basse { background: #e3fcef; color: #006644; }
+        .cat-Privé { background: #eae6ff; color: #403294; }
+        .cat-Pro { background: #deebff; color: #0747a6; }
+        .cat-Freelance { background: #e3fcef; color: #006644; }
+        .due-overdue { color: #bf2600; font-weight: 800; }
+        .due-today { color: #ff8b00; font-weight: 800; }
+        .due-normal { color: #5e6c84; font-weight: 700; }
         .column-header {
-            background: rgba(255,255,255,0.82);
-            border: 1px solid rgba(6, 182, 212, 0.36);
-            border-radius: 6px;
+            background: #ebecf0;
+            border-radius: 4px;
             padding: 10px 12px;
-            margin-bottom: 12px;
-            font-weight: 900;
-            color: #0f172a;
-            box-shadow: 4px 4px 0 rgba(14, 165, 233, 0.12);
+            margin-bottom: 10px;
+            font-weight: 800;
+            color: #5e6c84;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.04em;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"] {
+            background: #ffffff;
+            border-color: #dfe1e6;
         }
         div[data-testid="stButton"] > button {
-            border-radius: 5px;
-            border: 1px solid rgba(8, 145, 178, 0.42);
-            font-weight: 900;
-            font-family: 'JetBrains Mono', ui-monospace, monospace;
-            background: rgba(255,255,255,0.86);
+            border-radius: 4px;
+            border: 1px solid #dfe1e6;
+            font-weight: 700;
+            background: #f4f5f7;
+            color: #172b4d;
         }
         div[data-testid="stButton"] > button:hover {
-            border-color: #a855f7;
-            color: #7e22ce;
-            box-shadow: 3px 3px 0 rgba(168, 85, 247, 0.16);
+            border-color: #0052cc;
+            color: #0052cc;
+            background: #deebff;
         }
         </style>
         """,
@@ -591,9 +644,9 @@ st.markdown(
     <div class="hero">
         <div>
             <h1>🎫 Personal Ticketing</h1>
-            <p><span class="hero-code">~/tasks</span> — cockpit clair pour prioriser privé, pro et freelance.</p>
+            <p>Scrum personnel pour piloter tes tâches privées, pro et freelance.</p>
         </div>
-        <div class="hero-code">Kanban // Focus // Done</div>
+        <div class="hero-code">Sprint personnel</div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -632,7 +685,7 @@ if not filtered.empty:
             | filtered["project"].str.lower().str.contains(query, na=False)
         ]
 
-tab_board, tab_list, tab_table, tab_trash = st.tabs(["Board", "Aperçu complet", "Tableau", "Corbeille"])
+tab_board, tab_dashboard, tab_list, tab_table, tab_trash = st.tabs(["Board", "Dashboard", "Aperçu complet", "Tableau", "Corbeille"])
 
 with tab_board:
     if filtered.empty:
@@ -649,6 +702,9 @@ with tab_board:
                 for _, row in status_df.sort_values("score", ascending=False).iterrows():
                     ticket_card(row, compact=True)
                     render_ticket_actions(int(row["id"]), "board")
+
+with tab_dashboard:
+    render_dashboard(tickets, deleted_tickets)
 
 with tab_list:
     st.subheader("Aperçu complet des tickets")
