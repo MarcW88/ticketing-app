@@ -158,10 +158,15 @@ def prepare_dataframe(df):
 
 def render_metrics(df):
     active = df[df["status"] != "Terminé"] if not df.empty else df
-    overdue = active[pd.to_datetime(active["due_date"], errors="coerce").dt.date < date.today()] if not active.empty else active
-    due_soon = active[
-        pd.to_datetime(active["due_date"], errors="coerce").dt.date.between(date.today(), date.fromordinal(date.today().toordinal() + 7))
-    ] if not active.empty else active
+    if not active.empty:
+        due_dates = pd.to_datetime(active["due_date"], errors="coerce")
+        today = pd.Timestamp.today().normalize()
+        next_week = today + pd.Timedelta(days=7)
+        overdue = active[due_dates < today]
+        due_soon = active[due_dates.between(today, next_week)]
+    else:
+        overdue = active
+        due_soon = active
 
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Tickets actifs", len(active))
