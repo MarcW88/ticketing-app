@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from html import escape
 import sqlite3
 
 import pandas as pd
@@ -11,6 +12,8 @@ PRIORITIES = ["Urgente", "Haute", "Moyenne", "Basse"]
 CATEGORIES = ["Privé", "Pro", "Freelance"]
 PRIORITY_SCORE = {"Urgente": 4, "Haute": 3, "Moyenne": 2, "Basse": 1}
 STATUS_SCORE = {"Bloqué": 3, "En cours": 2, "À faire": 1, "Backlog": 0, "Terminé": -1}
+STATUS_ICONS = {"Backlog": "📥", "À faire": "🧭", "En cours": "⚙️", "Bloqué": "⛔", "Terminé": "✅"}
+CATEGORY_ICONS = {"Privé": "🏠", "Pro": "💼", "Freelance": "🤝"}
 
 
 st.set_page_config(
@@ -167,6 +170,147 @@ def render_metrics(df):
     col4.metric("À 7 jours", len(due_soon))
 
 
+def inject_styles():
+    st.markdown(
+        """
+        <style>
+        .block-container {
+            padding-top: 1.3rem;
+            padding-bottom: 2rem;
+            max-width: 1500px;
+        }
+        div[data-testid="stMetric"] {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 14px 16px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+        }
+        .hero {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 22px 24px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, #172554 0%, #2563eb 55%, #38bdf8 100%);
+            color: white;
+            margin-bottom: 18px;
+            box-shadow: 0 18px 45px rgba(37, 99, 235, 0.24);
+        }
+        .hero h1 {
+            margin: 0;
+            font-size: 34px;
+            line-height: 1.1;
+        }
+        .hero p {
+            margin: 8px 0 0;
+            color: rgba(255,255,255,0.86);
+        }
+        .ticket-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+        }
+        .ticket-card:hover {
+            border-color: #93c5fd;
+            box-shadow: 0 12px 32px rgba(37, 99, 235, 0.12);
+        }
+        .ticket-title {
+            font-weight: 800;
+            font-size: 15px;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+        .ticket-desc {
+            color: #475569;
+            font-size: 13px;
+            line-height: 1.45;
+            margin: 8px 0 10px;
+        }
+        .muted {
+            color: #64748b;
+            font-size: 12px;
+        }
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 9px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+        }
+        .prio-Urgente { background: #fee2e2; color: #991b1b; }
+        .prio-Haute { background: #ffedd5; color: #9a3412; }
+        .prio-Moyenne { background: #fef3c7; color: #92400e; }
+        .prio-Basse { background: #dcfce7; color: #166534; }
+        .cat-Privé { background: #ede9fe; color: #5b21b6; }
+        .cat-Pro { background: #dbeafe; color: #1d4ed8; }
+        .cat-Freelance { background: #ccfbf1; color: #0f766e; }
+        .due-overdue { color: #b91c1c; font-weight: 800; }
+        .due-today { color: #c2410c; font-weight: 800; }
+        .due-normal { color: #475569; font-weight: 700; }
+        .column-header {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            font-weight: 900;
+            color: #0f172a;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def due_label(row):
+    if pd.isna(row.get("due")):
+        return "Sans échéance", "due-normal"
+    days_left = row["days_left"]
+    if days_left < 0:
+        return f"En retard de {abs(int(days_left))} j", "due-overdue"
+    if days_left == 0:
+        return "Aujourd'hui", "due-today"
+    return f"Dans {int(days_left)} j", "due-normal"
+
+
+def ticket_card(row, compact=False):
+    due_text, due_class = due_label(row)
+    description = escape(str(row["description"] or ""))
+    if compact and len(description) > 95:
+        description = f"{description[:95]}..."
+    project = escape(str(row["project"] or "Aucun projet"))
+    title = escape(str(row["title"]))
+    category = escape(str(row["category"]))
+    priority = escape(str(row["priority"]))
+    ticket_id = int(row["id"])
+    estimate = row["estimate_hours"] or 0
+    category_icon = CATEGORY_ICONS.get(row["category"], "🏷️")
+
+    st.markdown(
+        f"""
+        <div class="ticket-card">
+            <div class="muted">#{ticket_id} · {project}</div>
+            <div class="ticket-title">{title}</div>
+            <span class="pill prio-{priority}">{priority}</span>
+            <span class="pill cat-{category}">{category_icon} {category}</span>
+            <div class="ticket-desc">{description or "Pas de description"}</div>
+            <div class="muted">⏱️ {estimate:g}h · <span class="{due_class}">📅 {due_text}</span> · Score {int(row["score"])}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def ticket_form(prefix, defaults=None):
     defaults = defaults or {}
     title = st.text_input("Titre", value=defaults.get("title", ""), key=f"{prefix}_title")
@@ -210,19 +354,11 @@ def ticket_form(prefix, defaults=None):
     return title, description, category, project, priority, status, due_date, estimate_hours
 
 
-init_db()
-tickets = prepare_dataframe(fetch_tickets())
-
-st.title("🎫 Personal Ticketing")
-st.caption("Priorise tes tâches privées, professionnelles et freelance depuis un seul tableau de bord.")
-
-render_metrics(tickets)
-
-with st.sidebar:
-    st.header("Créer un ticket")
+@st.dialog("Nouveau ticket")
+def create_ticket_dialog():
     with st.form("create_ticket", clear_on_submit=True):
         new_ticket = ticket_form("new")
-        submitted = st.form_submit_button("Ajouter le ticket", type="primary")
+        submitted = st.form_submit_button("Créer le ticket", type="primary", use_container_width=True)
         if submitted:
             if not new_ticket[0].strip():
                 st.error("Le titre est obligatoire.")
@@ -231,12 +367,63 @@ with st.sidebar:
                 st.success("Ticket ajouté.")
                 st.rerun()
 
-st.subheader("Filtres")
-filter_col1, filter_col2, filter_col3, filter_col4 = st.columns(4)
-selected_categories = filter_col1.multiselect("Catégories", CATEGORIES, default=CATEGORIES)
-selected_statuses = filter_col2.multiselect("Statuts", STATUSES, default=["Backlog", "À faire", "En cours", "Bloqué"])
-selected_priorities = filter_col3.multiselect("Priorités", PRIORITIES, default=PRIORITIES)
-search = filter_col4.text_input("Recherche")
+
+@st.dialog("Modifier le ticket")
+def edit_ticket_dialog(ticket_id):
+    current = tickets[tickets["id"] == ticket_id].iloc[0].to_dict()
+    with st.form("edit_ticket"):
+        edited_ticket = ticket_form("edit", current)
+        save_col, delete_col = st.columns(2)
+        save = save_col.form_submit_button("Enregistrer", type="primary", use_container_width=True)
+        remove = delete_col.form_submit_button("Supprimer", use_container_width=True)
+        if save:
+            if not edited_ticket[0].strip():
+                st.error("Le titre est obligatoire.")
+            else:
+                update_ticket(ticket_id, *edited_ticket)
+                st.success("Ticket mis à jour.")
+                st.rerun()
+        if remove:
+            delete_ticket(ticket_id)
+            st.success("Ticket supprimé.")
+            st.rerun()
+
+
+init_db()
+tickets = prepare_dataframe(fetch_tickets())
+
+inject_styles()
+
+st.markdown(
+    """
+    <div class="hero">
+        <div>
+            <h1>🎫 Personal Ticketing</h1>
+            <p>Un espace clair pour piloter tes tâches privées, professionnelles et freelance.</p>
+        </div>
+        <div class="muted" style="color: rgba(255,255,255,0.86);">Vue Kanban + aperçu complet</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+top_left, top_right = st.columns([4, 1])
+with top_left:
+    render_metrics(tickets)
+with top_right:
+    st.write("")
+    st.write("")
+    if st.button("＋ Nouveau ticket", type="primary", use_container_width=True):
+        create_ticket_dialog()
+
+st.write("")
+with st.container(border=True):
+    st.markdown("#### Filtres")
+    filter_col1, filter_col2, filter_col3, filter_col4 = st.columns([1.2, 1.5, 1.2, 1.8])
+    selected_categories = filter_col1.multiselect("Catégories", CATEGORIES, default=CATEGORIES)
+    selected_statuses = filter_col2.multiselect("Statuts", STATUSES, default=STATUSES)
+    selected_priorities = filter_col3.multiselect("Priorités", PRIORITIES, default=PRIORITIES)
+    search = filter_col4.text_input("Recherche", placeholder="Titre, description, projet...")
 
 filtered = tickets.copy()
 if not filtered.empty:
@@ -253,80 +440,59 @@ if not filtered.empty:
             | filtered["project"].str.lower().str.contains(query, na=False)
         ]
 
-left, right = st.columns([1.6, 1])
+tab_board, tab_list, tab_table = st.tabs(["Board", "Aperçu complet", "Tableau"])
 
-with left:
-    st.subheader("Tickets prioritaires")
+with tab_board:
     if filtered.empty:
         st.info("Aucun ticket à afficher.")
     else:
-        for _, row in filtered.iterrows():
-            due_text = "Pas d'échéance"
-            if pd.notna(row.get("due")):
-                if row["days_left"] < 0:
-                    due_text = f"En retard de {abs(int(row['days_left']))} j"
-                elif row["days_left"] == 0:
-                    due_text = "Aujourd'hui"
-                else:
-                    due_text = f"Dans {int(row['days_left'])} j"
+        columns = st.columns(len(STATUSES))
+        for column, status in zip(columns, STATUSES):
+            status_df = filtered[filtered["status"] == status]
+            with column:
+                st.markdown(
+                    f"<div class='column-header'>{STATUS_ICONS.get(status, '')} {status} · {len(status_df)}</div>",
+                    unsafe_allow_html=True,
+                )
+                for _, row in status_df.sort_values("score", ascending=False).iterrows():
+                    ticket_card(row, compact=True)
+                    if st.button("Ouvrir", key=f"open_board_{int(row['id'])}", use_container_width=True):
+                        edit_ticket_dialog(int(row["id"]))
 
-            with st.container(border=True):
-                top1, top2 = st.columns([4, 1])
-                top1.markdown(f"### #{int(row['id'])} — {row['title']}")
-                top2.markdown(priority_badge(row["priority"]), unsafe_allow_html=True)
-                st.markdown(status_badge(row["status"]), unsafe_allow_html=True)
-                st.write(row["description"] or "_")
-                meta1, meta2, meta3 = st.columns(3)
-                meta1.write(f"**Catégorie :** {row['category']}")
-                meta2.write(f"**Projet :** {row['project'] or '-'}")
-                meta3.write(f"**Échéance :** {due_text}")
-
-with right:
-    st.subheader("Modifier un ticket")
-    if tickets.empty:
-        st.info("Crée ton premier ticket via la barre latérale.")
+with tab_list:
+    st.subheader("Aperçu complet des tickets")
+    if filtered.empty:
+        st.info("Aucun ticket à afficher.")
     else:
-        selected_id = st.selectbox(
-            "Ticket",
-            tickets["id"].tolist(),
-            format_func=lambda x: f"#{x} — {tickets.loc[tickets['id'] == x, 'title'].iloc[0]}",
-        )
-        current = tickets[tickets["id"] == selected_id].iloc[0].to_dict()
-        with st.form("edit_ticket"):
-            edited_ticket = ticket_form("edit", current)
-            save_col, delete_col = st.columns(2)
-            save = save_col.form_submit_button("Enregistrer", type="primary")
-            remove = delete_col.form_submit_button("Supprimer")
-            if save:
-                if not edited_ticket[0].strip():
-                    st.error("Le titre est obligatoire.")
-                else:
-                    update_ticket(selected_id, *edited_ticket)
-                    st.success("Ticket mis à jour.")
-                    st.rerun()
-            if remove:
-                delete_ticket(selected_id)
-                st.success("Ticket supprimé.")
-                st.rerun()
+        for _, row in filtered.sort_values(["score", "created_at"], ascending=[False, False]).iterrows():
+            card_col, action_col = st.columns([5, 1])
+            with card_col:
+                ticket_card(row)
+            with action_col:
+                st.write("")
+                st.write("")
+                if st.button("Modifier", key=f"open_list_{int(row['id'])}", use_container_width=True):
+                    edit_ticket_dialog(int(row["id"]))
 
-st.subheader("Vue tableau")
-if tickets.empty:
-    st.info("Aucune donnée pour le moment.")
-else:
-    display_cols = ["id", "title", "category", "project", "priority", "status", "due_date", "estimate_hours", "score"]
-    st.dataframe(
-        filtered[display_cols],
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "id": "ID",
-            "title": "Titre",
-            "category": "Catégorie",
-            "project": "Projet",
-            "priority": "Priorité",
-            "status": "Statut",
-            "due_date": "Échéance",
-            "estimate_hours": "Heures",
-            "score": "Score",
-        },
-    )
+with tab_table:
+    st.subheader("Vue tableau")
+    if tickets.empty:
+        st.info("Aucune donnée pour le moment.")
+    else:
+        display_cols = ["id", "title", "category", "project", "priority", "status", "due_date", "estimate_hours", "score"]
+        st.dataframe(
+            filtered[display_cols],
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "id": "ID",
+                "title": "Titre",
+                "category": "Catégorie",
+                "project": "Projet",
+                "priority": "Priorité",
+                "status": "Statut",
+                "due_date": "Échéance",
+                "estimate_hours": "Heures",
+                "score": "Score",
+            },
+        )
