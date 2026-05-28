@@ -1,7 +1,9 @@
 from datetime import date, datetime
 from html import escape
+import json
 import sqlite3
 
+from openai import OpenAI
 import pandas as pd
 import streamlit as st
 
@@ -14,6 +16,7 @@ PRIORITY_SCORE = {"Urgente": 4, "Haute": 3, "Moyenne": 2, "Basse": 1}
 STATUS_SCORE = {"Bloqué": 3, "En cours": 2, "À faire": 1, "Backlog": 0, "Terminé": -1}
 STATUS_ICONS = {"Backlog": "📥", "À faire": "🧭", "En cours": "⚙️", "Bloqué": "⛔", "Terminé": "✅"}
 CATEGORY_ICONS = {"Privé": "🏠", "Pro": "💼", "Freelance": "🤝"}
+AI_MODEL = "gpt-4o-mini"
 
 
 st.set_page_config(
@@ -117,6 +120,53 @@ def delete_ticket(ticket_id):
     conn = get_connection()
     conn.execute("DELETE FROM tickets WHERE id = ?", (ticket_id,))
     conn.commit()
+
+
+def get_openai_client():
+    api_key = st.secrets.get("OPENAI_API_KEY")
+    if not api_key:
+        return None
+    return OpenAI(api_key=api_key)
+
+
+def improve_ticket_copy(title, description, category, project):
+    client = get_openai_client()
+    if client is None:
+        raise ValueError("Clé OPENAI_API_KEY manquante dans les secrets Streamlit.")
+
+    prompt = f"""
+Tu aides à clarifier un ticket de task management personnel/pro/freelance.
+Réécris uniquement le titre et la description pour que le ticket soit actionnable, lisible et précis.
+Garde le sens original. N'invente pas d'informations.
+
+Contexte:
+- Catégorie: {category}
+- Projet/client: {project or "Non précisé"}
+
+Titre brut:
+{title}
+
+Description brute:
+{description}
+
+Réponds uniquement en JSON valide avec ces clés:
+{{
+  "title": "titre court et actionnable",
+  "description": "description claire avec contexte, objectif et prochaines étapes si possible"
+}}
+"""
+    response = client.chat.completions.create(
+        model=AI_MODEL,
+        messages=[
+            {"role": "system", "content": "Tu es un assistant de productivité qui reformule des tickets en français clair."},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0.2,
+        response_format={"type": "json_object"},
+    )
+    content = response.choices[0].message.content
+    data = json.loads(content)
+    return data.get("title", title).strip(), data.get("description", description).strip()
 
 
 def priority_badge(priority):
@@ -318,17 +368,40 @@ def ticket_card(row, compact=False):
 
 def ticket_form(prefix, defaults=None):
     defaults = defaults or {}
-    title = st.text_input("Titre", value=defaults.get("title", ""), key=f"{prefix}_title")
-    description = st.text_area("Description", value=defaults.get("description", ""), key=f"{prefix}_description")
+    title_key = f"{prefix}_title"
+    description_key = f"{prefix}_description"
+    category_key = f"{prefix}_category"
+    project_key = f"{prefix}_project"
+
+    if title_key not in st.session_state:
+        st.session_state[title_key] = defaults.get("title", "")
+    if description_key not in st.session_state:
+        st.session_state[description_key] = defaults.get("description", "")
+
+    title = st.text_input("Titre", key=title_key)
+    description = st.text_area("Description", key=description_key)
 
     col1, col2 = st.columns(2)
     category = col1.selectbox(
         "Catégorie",
         CATEGORIES,
         index=CATEGORIES.index(defaults.get("category", "Privé")) if defaults.get("category") in CATEGORIES else 0,
-        key=f"{prefix}_category",
+        key=category_key,
     )
-    project = col2.text_input("Projet / client", value=defaults.get("project", ""), key=f"{prefix}_project")
+    project = col2.text_input("Projet / client", value=defaults.get("project", ""), key=project_key)
+
+    if st.button("✨ Améliorer titre + description avec IA", key=f"{prefix}_ai_rewrite", use_container_width=True):
+        if not title.strip() and not description.strip():
+            st.warning("Ajoute d'abord un titre ou une description brute.")
+        else:
+            try:
+                with st.spinner("Réécriture en cours..."):
+                    improved_title, improved_description = improve_ticket_copy(title, description, category, project)
+                st.session_state[title_key] = improved_title
+                st.session_state[description_key] = improved_description
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Impossible d'améliorer le ticket : {exc}")
 
     col3, col4, col5 = st.columns(3)
     priority = col3.selectbox(
