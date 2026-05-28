@@ -49,16 +49,26 @@ def init_db():
             estimate_hours REAL,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
-            completed_at TEXT
+            completed_at TEXT,
+            deleted_at TEXT
         )
         """
     )
+    existing_columns = [row[1] for row in conn.execute("PRAGMA table_info(tickets)").fetchall()]
+    if "deleted_at" not in existing_columns:
+        conn.execute("ALTER TABLE tickets ADD COLUMN deleted_at TEXT")
     conn.commit()
 
 
-def fetch_tickets():
+def fetch_tickets(include_deleted=False):
     conn = get_connection()
-    return pd.read_sql_query("SELECT * FROM tickets ORDER BY created_at DESC", conn)
+    where_clause = "" if include_deleted else "WHERE deleted_at IS NULL"
+    return pd.read_sql_query(f"SELECT * FROM tickets {where_clause} ORDER BY created_at DESC", conn)
+
+
+def fetch_deleted_tickets():
+    conn = get_connection()
+    return pd.read_sql_query("SELECT * FROM tickets WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC", conn)
 
 
 def add_ticket(title, description, category, project, priority, status, due_date, estimate_hours):
@@ -117,8 +127,30 @@ def update_ticket(ticket_id, title, description, category, project, priority, st
 
 
 def delete_ticket(ticket_id):
+    now = datetime.now().isoformat(timespec="seconds")
+    conn = get_connection()
+    conn.execute("UPDATE tickets SET deleted_at = ?, updated_at = ? WHERE id = ?", (now, now, ticket_id))
+    conn.commit()
+
+
+def restore_ticket(ticket_id):
+    now = datetime.now().isoformat(timespec="seconds")
+    conn = get_connection()
+    conn.execute("UPDATE tickets SET deleted_at = NULL, updated_at = ? WHERE id = ?", (now, ticket_id))
+    conn.commit()
+
+
+def permanently_delete_ticket(ticket_id):
     conn = get_connection()
     conn.execute("DELETE FROM tickets WHERE id = ?", (ticket_id,))
+    conn.commit()
+
+
+def update_ticket_status(ticket_id, status):
+    now = datetime.now().isoformat(timespec="seconds")
+    completed_at = now if status == "Terminé" else None
+    conn = get_connection()
+    conn.execute("UPDATE tickets SET status = ?, updated_at = ?, completed_at = ? WHERE id = ?", (status, now, completed_at, ticket_id))
     conn.commit()
 
 
@@ -230,125 +262,148 @@ def inject_styles():
     st.markdown(
         """
         <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&display=swap');
         .block-container {
-            padding-top: 1.3rem;
+            padding-top: 1.1rem;
             padding-bottom: 2rem;
-            max-width: 1500px;
+            max-width: 1540px;
         }
         .stApp {
-            background:
-                radial-gradient(circle at 20% 0%, rgba(34, 211, 238, 0.18), transparent 32%),
-                radial-gradient(circle at 90% 12%, rgba(168, 85, 247, 0.15), transparent 28%),
-                linear-gradient(180deg, #f8fbff 0%, #eef7ff 100%);
+            background-color: #f6fbff;
+            background-image:
+                linear-gradient(rgba(14, 165, 233, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(14, 165, 233, 0.08) 1px, transparent 1px),
+                radial-gradient(circle at 12% 8%, rgba(34, 211, 238, 0.28), transparent 24%),
+                radial-gradient(circle at 88% 12%, rgba(168, 85, 247, 0.22), transparent 22%);
+            background-size: 28px 28px, 28px 28px, 100% 100%, 100% 100%;
+        }
+        h1, h2, h3, .hero-code, .column-header, .ticket-title {
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
         div[data-testid="stMetric"] {
-            background: rgba(255, 255, 255, 0.82);
-            border: 1px solid rgba(14, 165, 233, 0.22);
-            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.76);
+            border: 1px solid rgba(6, 182, 212, 0.35);
+            border-radius: 8px;
             padding: 14px 16px;
-            box-shadow: 0 12px 30px rgba(14, 116, 144, 0.08);
-            backdrop-filter: blur(10px);
+            box-shadow: 5px 5px 0 rgba(103, 232, 249, 0.28);
+            backdrop-filter: blur(12px);
         }
         .hero {
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 1rem;
-            padding: 22px 24px;
-            border-radius: 22px;
-            background:
-                linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(224,242,254,0.92) 50%, rgba(240,253,250,0.92) 100%);
+            padding: 24px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.82);
             color: #0f172a;
             margin-bottom: 18px;
-            border: 1px solid rgba(14, 165, 233, 0.25);
-            box-shadow: 0 18px 45px rgba(14, 116, 144, 0.13);
+            border: 1px solid rgba(6, 182, 212, 0.42);
+            box-shadow: 8px 8px 0 rgba(14, 165, 233, 0.18), -8px -8px 0 rgba(168, 85, 247, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #06b6d4, #a855f7, #22c55e);
         }
         .hero h1 {
             margin: 0;
             font-size: 34px;
-            line-height: 1.1;
+            letter-spacing: -1px;
         }
         .hero p {
             margin: 8px 0 0;
-            color: #475569;
+            color: #334155;
         }
         .hero-code {
-            color: #0891b2;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            color: #0e7490;
             font-weight: 800;
         }
         .ticket-card {
             background: rgba(255, 255, 255, 0.88);
-            border: 1px solid rgba(14, 165, 233, 0.2);
-            border-left: 4px solid #22d3ee;
-            border-radius: 18px;
-            padding: 14px;
+            border: 1px solid rgba(8, 145, 178, 0.35);
+            border-left: 5px solid #06b6d4;
+            border-radius: 6px;
+            padding: 13px;
             margin-bottom: 8px;
-            box-shadow: 0 10px 26px rgba(14, 116, 144, 0.08);
+            box-shadow: 4px 4px 0 rgba(14, 165, 233, 0.14);
         }
         .ticket-card:hover {
-            border-color: rgba(168, 85, 247, 0.45);
+            border-color: rgba(147, 51, 234, 0.55);
             border-left-color: #a855f7;
-            box-shadow: 0 14px 36px rgba(124, 58, 237, 0.13);
+            transform: translate(-1px, -1px);
+            box-shadow: 6px 6px 0 rgba(168, 85, 247, 0.16);
         }
         .ticket-title {
             font-weight: 800;
-            font-size: 15px;
-            color: #0f172a;
-            margin-bottom: 8px;
+            font-size: 14px;
+            color: #020617;
+            margin: 7px 0;
         }
         .ticket-desc {
-            color: #475569;
+            color: #334155;
             font-size: 13px;
             line-height: 1.45;
             margin: 8px 0 10px;
         }
         .muted {
             color: #64748b;
-            font-size: 12px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
         }
         .pill {
             display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 9px;
-            border-radius: 999px;
-            font-size: 11px;
-            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 800;
             margin-right: 5px;
             margin-bottom: 5px;
-            border: 1px solid rgba(15, 23, 42, 0.08);
+            border: 1px solid rgba(15, 23, 42, 0.1);
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
         }
-        .prio-Urgente { background: #fee2e2; color: #991b1b; }
-        .prio-Haute { background: #ffedd5; color: #9a3412; }
-        .prio-Moyenne { background: #fef3c7; color: #92400e; }
-        .prio-Basse { background: #dcfce7; color: #166534; }
-        .cat-Privé { background: #ede9fe; color: #5b21b6; }
+        .prio-Urgente { background: #ffe4e6; color: #be123c; }
+        .prio-Haute { background: #ffedd5; color: #c2410c; }
+        .prio-Moyenne { background: #fef9c3; color: #a16207; }
+        .prio-Basse { background: #dcfce7; color: #15803d; }
+        .cat-Privé { background: #ede9fe; color: #6d28d9; }
         .cat-Pro { background: #dbeafe; color: #1d4ed8; }
         .cat-Freelance { background: #ccfbf1; color: #0f766e; }
-        .due-overdue { color: #b91c1c; font-weight: 800; }
-        .due-today { color: #c2410c; font-weight: 800; }
-        .due-normal { color: #475569; font-weight: 700; }
+        .due-overdue { color: #be123c; font-weight: 900; }
+        .due-today { color: #c2410c; font-weight: 900; }
+        .due-normal { color: #475569; font-weight: 800; }
         .column-header {
-            background: rgba(255,255,255,0.78);
-            border: 1px solid rgba(14, 165, 233, 0.22);
-            border-radius: 14px;
+            background: rgba(255,255,255,0.82);
+            border: 1px solid rgba(6, 182, 212, 0.36);
+            border-radius: 6px;
             padding: 10px 12px;
             margin-bottom: 12px;
             font-weight: 900;
             color: #0f172a;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.45);
+            box-shadow: 4px 4px 0 rgba(14, 165, 233, 0.12);
         }
         div[data-testid="stButton"] > button {
-            border-radius: 12px;
-            border: 1px solid rgba(14, 165, 233, 0.35);
-            font-weight: 800;
+            border-radius: 5px;
+            border: 1px solid rgba(8, 145, 178, 0.42);
+            font-weight: 900;
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            background: rgba(255,255,255,0.86);
+        }
+        div[data-testid="stButton"] > button:hover {
+            border-color: #a855f7;
+            color: #7e22ce;
+            box-shadow: 3px 3px 0 rgba(168, 85, 247, 0.16);
         }
         </style>
         """,
         unsafe_allow_html=True,
     )
-
 
 def due_label(row):
     if pd.isna(row.get("due")):
@@ -390,26 +445,23 @@ def ticket_card(row, compact=False):
 
 
 def render_ticket_actions(ticket_id, prefix):
-    edit_col, done_col, delete_col = st.columns([2, 1, 1])
-    if edit_col.button("Carte / Modifier", key=f"edit_{prefix}_{ticket_id}", use_container_width=True):
-        edit_ticket_dialog(ticket_id)
-    if done_col.button("✓", key=f"done_{prefix}_{ticket_id}", use_container_width=True, help="Marquer comme terminé"):
-        current = tickets[tickets["id"] == ticket_id].iloc[0].to_dict()
-        due_date = datetime.fromisoformat(current["due_date"]).date() if current.get("due_date") else None
-        update_ticket(
-            ticket_id,
-            current["title"],
-            current.get("description", ""),
-            current["category"],
-            current.get("project", ""),
-            current["priority"],
-            "Terminé",
-            due_date,
-            current.get("estimate_hours") or 0,
-        )
+    current_status = tickets[tickets["id"] == ticket_id].iloc[0]["status"]
+    current_index = STATUSES.index(current_status) if current_status in STATUSES else 0
+    prev_status = STATUSES[current_index - 1] if current_index > 0 else None
+    next_status = STATUSES[current_index + 1] if current_index < len(STATUSES) - 1 else None
+
+    left_col, edit_col, right_col, delete_col = st.columns([0.8, 2.1, 0.8, 0.8])
+    if left_col.button("←", key=f"left_{prefix}_{ticket_id}", use_container_width=True, disabled=prev_status is None):
+        update_ticket_status(ticket_id, prev_status)
         st.rerun()
-    if delete_col.button("🗑", key=f"delete_{prefix}_{ticket_id}", use_container_width=True, help="Supprimer la carte"):
+    if edit_col.button("Modifier", key=f"edit_{prefix}_{ticket_id}", use_container_width=True):
+        edit_ticket_dialog(ticket_id)
+    if right_col.button("→", key=f"right_{prefix}_{ticket_id}", use_container_width=True, disabled=next_status is None):
+        update_ticket_status(ticket_id, next_status)
+        st.rerun()
+    if delete_col.button("⌫", key=f"delete_{prefix}_{ticket_id}", use_container_width=True, help="Envoyer dans la corbeille"):
         delete_ticket(ticket_id)
+        st.toast("Ticket envoyé dans la corbeille")
         st.rerun()
 
 
@@ -530,6 +582,7 @@ def edit_ticket_dialog(ticket_id):
 
 init_db()
 tickets = prepare_dataframe(fetch_tickets())
+deleted_tickets = prepare_dataframe(fetch_deleted_tickets())
 
 inject_styles()
 
@@ -579,7 +632,7 @@ if not filtered.empty:
             | filtered["project"].str.lower().str.contains(query, na=False)
         ]
 
-tab_board, tab_list, tab_table = st.tabs(["Board", "Aperçu complet", "Tableau"])
+tab_board, tab_list, tab_table, tab_trash = st.tabs(["Board", "Aperçu complet", "Tableau", "Corbeille"])
 
 with tab_board:
     if filtered.empty:
@@ -628,3 +681,19 @@ with tab_table:
                 "score": "Score",
             },
         )
+
+with tab_trash:
+    st.subheader("Corbeille")
+    st.caption("Les tickets supprimés restent récupérables ici.")
+    if deleted_tickets.empty:
+        st.info("La corbeille est vide.")
+    else:
+        for _, row in deleted_tickets.iterrows():
+            ticket_card(row)
+            restore_col, delete_forever_col = st.columns(2)
+            if restore_col.button("Restaurer", key=f"restore_{int(row['id'])}", use_container_width=True):
+                restore_ticket(int(row["id"]))
+                st.rerun()
+            if delete_forever_col.button("Supprimer définitivement", key=f"purge_{int(row['id'])}", use_container_width=True):
+                permanently_delete_ticket(int(row["id"]))
+                st.rerun()
