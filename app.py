@@ -593,18 +593,22 @@ def improve_ticket_from_form(prefix, ticket):
 
 @st.dialog("Nouveau ticket")
 def create_ticket_dialog():
-    with st.form("create_ticket", clear_on_submit=True):
+    with st.form("create_ticket", clear_on_submit=False):
         new_ticket = ticket_form("new")
         ai_col, submit_col = st.columns(2)
         improve = ai_col.form_submit_button("✨ Améliorer avec IA", use_container_width=True)
         submitted = submit_col.form_submit_button("Créer le ticket", type="primary", use_container_width=True)
         if improve:
+            st.session_state["show_create_dialog"] = True
             improve_ticket_from_form("new", new_ticket)
         if submitted:
             if not new_ticket[0].strip():
                 st.error("Le titre est obligatoire.")
             else:
                 add_ticket(*new_ticket)
+                for key in ["new_title", "new_description", "new_project"]:
+                    st.session_state.pop(key, None)
+                st.session_state["show_create_dialog"] = False
                 st.success("Ticket ajouté.")
                 st.rerun()
 
@@ -659,7 +663,10 @@ with top_right:
     st.write("")
     st.write("")
     if st.button("＋ Nouveau ticket", type="primary", use_container_width=True):
-        create_ticket_dialog()
+        st.session_state["show_create_dialog"] = True
+
+if st.session_state.get("show_create_dialog"):
+    create_ticket_dialog()
 
 st.write("")
 with st.container(border=True):
