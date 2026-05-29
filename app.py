@@ -350,7 +350,7 @@ def inject_styles():
         """
         <style>
         .block-container {
-            padding-top: 1rem;
+            padding-top: 2rem;
             padding-bottom: 2rem;
             max-width: 1500px;
         }
@@ -543,40 +543,17 @@ def parse_ticket_id(label):
 
 
 def render_drag_board(df):
-    if sort_items is None:
-        st.warning("Le déplacement par glisser-déposer sera disponible après le redéploiement des dépendances.")
-        columns = st.columns(len(STATUSES))
-        for column, status in zip(columns, STATUSES):
-            status_df = df[df["status"] == status]
-            with column:
-                st.markdown(
-                    f"<div class='column-header'>{STATUS_ICONS.get(status, '')} {status} · {len(status_df)}</div>",
-                    unsafe_allow_html=True,
-                )
-                for _, row in status_df.sort_values("score", ascending=False).iterrows():
-                    ticket_card(row, compact=True)
-                    render_ticket_actions(int(row["id"]), "board")
-        return
-
-    containers = []
-    for status in STATUSES:
-        status_df = df[df["status"] == status].sort_values("score", ascending=False)
-        containers.append({"header": f"{STATUS_ICONS.get(status, '')} {status}", "items": [sortable_ticket_label(row) for _, row in status_df.iterrows()]})
-
-    sorted_containers = sort_items(containers, multi_containers=True, direction="horizontal", key="kanban_sortable")
-    changed = False
-    for container in sorted_containers:
-        target_status = container["header"].split(" ", 1)[1] if " " in container["header"] else container["header"]
-        for item in container["items"]:
-            ticket_id = parse_ticket_id(item)
-            current_status = tickets.loc[tickets["id"] == ticket_id, "status"].iloc[0]
-            if current_status != target_status:
-                update_ticket_status(ticket_id, target_status)
-                changed = True
-    if changed:
-        st.rerun()
-
-    st.caption("Glisse une carte vers une autre colonne pour changer son statut. Utilise l’onglet Aperçu complet pour modifier, valider ou supprimer une carte.")
+    columns = st.columns(len(STATUSES))
+    for column, status in zip(columns, STATUSES):
+        status_df = df[df["status"] == status]
+        with column:
+            st.markdown(
+                f"<div class='column-header'>{STATUS_ICONS.get(status, '')} {status} · {len(status_df)}</div>",
+                unsafe_allow_html=True,
+            )
+            for _, row in status_df.sort_values("score", ascending=False).iterrows():
+                ticket_card(row, compact=True)
+                render_ticket_actions(int(row["id"]), "board")
 
 
 def render_quick_done_actions(df):
