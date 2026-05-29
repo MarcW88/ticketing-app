@@ -699,13 +699,20 @@ def render_drag_board(df):
             function init(){
                 document.querySelectorAll('.ticket-card[data-ticket-id]').forEach(function(c){
                     if(c._dk)return;c._dk=1;
-                    c.setAttribute('draggable','true');
-                    c.addEventListener('dragstart',function(e){
-                        _d=this.getAttribute('data-ticket-id');
-                        this.style.opacity='0.4';
-                        e.dataTransfer.effectAllowed='move';
+                    c.style.cursor='pointer';
+                    c.addEventListener('click',function(e){
+                        if(e.target.closest('button,a,[role="button"]'))return;
+                        var mc=this.closest('[data-testid="stMarkdownContainer"]');
+                        if(!mc)return;
+                        var sib=mc.nextElementSibling;
+                        while(sib){
+                            var btns=sib.querySelectorAll('button');
+                            for(var i=0;i<btns.length;i++){
+                                if(btns[i].textContent.indexOf('Modifier')>-1){btns[i].click();return;}
+                            }
+                            sib=sib.nextElementSibling;
+                        }
                     });
-                    c.addEventListener('dragend',function(){this.style.opacity='1';});
                 });
                 document.querySelectorAll('.kanban-col[data-status]').forEach(function(z){
                     if(z._dk)return;z._dk=1;
