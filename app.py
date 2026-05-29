@@ -518,9 +518,20 @@ def ticket_card(row, compact=False):
 
 
 def render_ticket_actions(ticket_id, prefix):
-    edit_col, done_col, delete_col = st.columns([2.2, 0.8, 0.8])
+    current_status = tickets[tickets["id"] == ticket_id].iloc[0]["status"]
+    current_index = STATUSES.index(current_status) if current_status in STATUSES else 0
+    prev_status = STATUSES[current_index - 1] if current_index > 0 else None
+    next_status = STATUSES[current_index + 1] if current_index < len(STATUSES) - 1 else None
+
+    left_col, edit_col, right_col, done_col, delete_col = st.columns([0.8, 2.1, 0.8, 0.8, 0.8])
+    if left_col.button("←", key=f"left_{prefix}_{ticket_id}", use_container_width=True, disabled=prev_status is None):
+        update_ticket_status(ticket_id, prev_status)
+        st.rerun()
     if edit_col.button("Modifier", key=f"edit_{prefix}_{ticket_id}", use_container_width=True):
         edit_ticket_dialog(ticket_id)
+    if right_col.button("→", key=f"right_{prefix}_{ticket_id}", use_container_width=True, disabled=next_status is None):
+        update_ticket_status(ticket_id, next_status)
+        st.rerun()
     if done_col.button("✓", key=f"done_{prefix}_{ticket_id}", use_container_width=True, help="Valider la carte"):
         update_ticket_status(ticket_id, "Terminé")
         st.rerun()
@@ -620,8 +631,11 @@ def ticket_form(prefix, defaults=None):
     )
 
     parsed_due = None
-    if defaults.get("due_date"):
-        parsed_due = datetime.fromisoformat(defaults["due_date"]).date()
+    if defaults.get("due_date") and str(defaults["due_date"]).strip():
+        try:
+            parsed_due = datetime.fromisoformat(defaults["due_date"]).date()
+        except (ValueError, TypeError):
+            parsed_due = None
     due_date = st.date_input("Échéance", value=parsed_due, key=f"{prefix}_due")
 
     return title, description, category, project, priority, status, due_date, estimate_hours
