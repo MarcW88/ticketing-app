@@ -364,22 +364,22 @@ def inject_styles():
         }
         div[data-testid="stMetric"] {
             background: #ffffff;
-            border: 1px solid #dfe1e6;
-            border-radius: 8px;
-            padding: 24px 28px;
-            box-shadow: 0 1px 2px rgba(9, 30, 66, 0.14);
+            border: 2px solid #0052cc;
+            border-radius: 12px;
+            padding: 32px 36px;
+            box-shadow: 0 4px 12px rgba(0, 82, 204, 0.15);
         }
         div[data-testid="stMetric"] > div > div > div > div {
-            font-size: 36px !important;
+            font-size: 48px !important;
             font-weight: 900 !important;
-            color: #172b4d !important;
+            color: #0052cc !important;
         }
         div[data-testid="stMetric"] > div > div > div > div + div {
-            font-size: 14px !important;
-            font-weight: 700 !important;
-            color: #5e6c84 !important;
+            font-size: 16px !important;
+            font-weight: 800 !important;
+            color: #172b4d !important;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.06em;
         }
         .hero {
             display: flex;
