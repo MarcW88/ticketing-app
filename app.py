@@ -516,7 +516,7 @@ def ticket_card(row, compact=False):
 
     st.markdown(
         f"""
-        <div class="ticket-card" draggable="true" data-ticket-id="{ticket_id}">
+        <div class="ticket-card">
             <div class="muted">#{ticket_id} · {project}</div>
             <div class="ticket-title">{title}</div>
             <span class="pill prio-{priority}">{priority}</span>
