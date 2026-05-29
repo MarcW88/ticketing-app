@@ -350,7 +350,7 @@ def inject_styles():
         """
         <style>
         .block-container {
-            padding-top: 3rem;
+            padding-top: 4rem;
             padding-bottom: 2rem;
             max-width: 1500px;
         }
@@ -366,17 +366,17 @@ def inject_styles():
             background: #ffffff;
             border: 1px solid #dfe1e6;
             border-radius: 8px;
-            padding: 18px 20px;
+            padding: 24px 28px;
             box-shadow: 0 1px 2px rgba(9, 30, 66, 0.14);
         }
         div[data-testid="stMetric"] > div > div > div > div {
-            font-size: 28px !important;
-            font-weight: 800 !important;
+            font-size: 36px !important;
+            font-weight: 900 !important;
             color: #172b4d !important;
         }
         div[data-testid="stMetric"] > div > div > div > div + div {
-            font-size: 13px !important;
-            font-weight: 600 !important;
+            font-size: 14px !important;
+            font-weight: 700 !important;
             color: #5e6c84 !important;
             text-transform: uppercase;
             letter-spacing: 0.04em;
@@ -624,7 +624,7 @@ def render_drag_board(df):
                         const ticketId = draggedCard.getAttribute('data-ticket-id');
                         const targetStatus = col.getAttribute('data-status');
                         if (ticketId && targetStatus) {
-                            const moveInput = document.querySelector('input[key="move_data"]');
+                            const moveInput = document.querySelector('input[data-testid="stTextInput"]');
                             if (moveInput) {
                                 moveInput.value = JSON.stringify({ticket_id: ticketId, status: targetStatus});
                                 moveInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -800,17 +800,19 @@ with st.container(border=True):
     st.markdown("#### Filtres")
     filter_col1, filter_col2, filter_col3, filter_col4 = st.columns([1.2, 1.5, 1.2, 1.8])
     selected_categories = filter_col1.multiselect("Catégories", CATEGORIES, default=CATEGORIES)
-    selected_statuses = filter_col2.multiselect("Statuts", STATUSES, default=STATUSES)
-    selected_priorities = filter_col3.multiselect("Priorités", PRIORITIES, default=PRIORITIES)
+    selected_statuses = filter_col2.selectbox("Statut", ["Tous"] + STATUSES, index=0)
+    selected_priorities = filter_col3.selectbox("Priorité", ["Toutes"] + PRIORITIES, index=0)
     search = filter_col4.text_input("Recherche", placeholder="Titre, description, projet...")
 
 filtered = tickets.copy()
 if not filtered.empty:
     filtered = filtered[
         filtered["category"].isin(selected_categories)
-        & filtered["status"].isin(selected_statuses)
-        & filtered["priority"].isin(selected_priorities)
     ]
+    if selected_statuses != "Tous":
+        filtered = filtered[filtered["status"] == selected_statuses]
+    if selected_priorities != "Toutes":
+        filtered = filtered[filtered["priority"] == selected_priorities]
     metric_filter = st.session_state.get("metric_filter")
     if metric_filter:
         active, in_progress, overdue, due_soon = get_metric_slices(filtered)
