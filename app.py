@@ -702,19 +702,6 @@ def render_ticket_actions(ticket_id, prefix):
 
 
 def render_drag_board(df):
-    move_raw = st.text_input("", placeholder="kanbanmovechannel", key="kanban_move", label_visibility="collapsed")
-    if move_raw:
-        try:
-            data = json.loads(move_raw)
-            tid = int(data.get("ticket_id"))
-            tst = data.get("status")
-            if tid and tst and tst in STATUSES:
-                update_ticket_status(tid, tst)
-                st.session_state["kanban_move"] = ""
-                st.rerun()
-        except (json.JSONDecodeError, ValueError, TypeError):
-            pass
-
     columns = st.columns(len(STATUSES))
     for column, status in zip(columns, STATUSES):
         status_df = df[df["status"] == status]
@@ -727,62 +714,6 @@ def render_drag_board(df):
             for _, row in status_df.sort_values("score", ascending=False).iterrows():
                 ticket_card(row, compact=True)
                 render_ticket_actions(int(row["id"]), "board")
-            st.markdown(
-                f"<div class='kanban-col kanban-dropzone' data-status='{status}'>↓ Déposer ici</div>",
-                unsafe_allow_html=True,
-            )
-
-    st.markdown(
-        """
-        <svg onload="(function(){
-            var _d=null;
-            function gI(){return document.querySelector('input[placeholder=&quot;kanbanmovechannel&quot;]');}
-            function rS(i,v){
-                var s=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;
-                s.call(i,v);
-                i.dispatchEvent(new Event('input',{bubbles:true}));
-                i.dispatchEvent(new Event('change',{bubbles:true}));
-            }
-            function init(){
-                document.querySelectorAll('.ticket-card[data-ticket-id]').forEach(function(c){
-                    if(c._dk)return;c._dk=1;
-                    c.style.cursor='pointer';
-                    c.addEventListener('click',function(e){
-                        if(e.target.closest('button,a,[role="button"]'))return;
-                        var mc=this.closest('[data-testid="stMarkdownContainer"]');
-                        if(!mc)return;
-                        var sib=mc.nextElementSibling;
-                        while(sib){
-                            var btns=sib.querySelectorAll('button');
-                            for(var i=0;i<btns.length;i++){
-                                if(btns[i].textContent.indexOf('Modifier')>-1){btns[i].click();return;}
-                            }
-                            sib=sib.nextElementSibling;
-                        }
-                    });
-                });
-                document.querySelectorAll('.kanban-col[data-status]').forEach(function(z){
-                    if(z._dk)return;z._dk=1;
-                    z.addEventListener('dragover',function(e){
-                        e.preventDefault();this.classList.add('drag-over');
-                    });
-                    z.addEventListener('dragleave',function(e){
-                        if(!this.contains(e.relatedTarget))this.classList.remove('drag-over');
-                    });
-                    z.addEventListener('drop',function(e){
-                        e.preventDefault();this.classList.remove('drag-over');
-                        if(_d){var i=gI();if(i)rS(i,JSON.stringify({ticket_id:_d,status:this.getAttribute('data-status')}));}
-                    });
-                });
-            }
-            init();
-            var t;
-            new MutationObserver(function(){clearTimeout(t);t=setTimeout(init,300);})
-                .observe(document.body,{childList:true,subtree:true});
-        })()" style="position:absolute;width:0;height:0;overflow:hidden;"></svg>
-        """,
-        unsafe_allow_html=True,
-    )
 
 
 def render_quick_done_actions(df):
