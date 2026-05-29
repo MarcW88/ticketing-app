@@ -560,23 +560,24 @@ def ticket_card(row, compact=False):
 
 def render_ticket_actions(ticket_id, prefix):
     current_status = tickets[tickets["id"] == ticket_id].iloc[0]["status"]
-    current_index = STATUSES.index(current_status) if current_status in STATUSES else 0
-    prev_status = STATUSES[current_index - 1] if current_index > 0 else None
-    next_status = STATUSES[current_index + 1] if current_index < len(STATUSES) - 1 else None
 
-    left_col, edit_col, right_col, done_col, delete_col = st.columns([0.8, 2.1, 0.8, 0.8, 0.8])
-    if left_col.button("←", key=f"left_{prefix}_{ticket_id}", use_container_width=True, disabled=prev_status is None):
-        update_ticket_status(ticket_id, prev_status)
+    status_col, edit_col, done_col, delete_col = st.columns([2.5, 2.0, 0.7, 0.7])
+    new_status = status_col.selectbox(
+        "Déplacer vers",
+        STATUSES,
+        index=STATUSES.index(current_status) if current_status in STATUSES else 0,
+        key=f"status_sel_{prefix}_{ticket_id}",
+        label_visibility="collapsed",
+    )
+    if new_status != current_status:
+        update_ticket_status(ticket_id, new_status)
         st.rerun()
-    if edit_col.button("Modifier", key=f"edit_{prefix}_{ticket_id}", use_container_width=True):
+    if edit_col.button("✏️ Modifier", key=f"edit_{prefix}_{ticket_id}", use_container_width=True):
         edit_ticket_dialog(ticket_id)
-    if right_col.button("→", key=f"right_{prefix}_{ticket_id}", use_container_width=True, disabled=next_status is None):
-        update_ticket_status(ticket_id, next_status)
-        st.rerun()
-    if done_col.button("✓", key=f"done_{prefix}_{ticket_id}", use_container_width=True, help="Valider la carte"):
+    if done_col.button("✓", key=f"done_{prefix}_{ticket_id}", use_container_width=True, help="Valider"):
         update_ticket_status(ticket_id, "Terminé")
         st.rerun()
-    if delete_col.button("⌫", key=f"delete_{prefix}_{ticket_id}", use_container_width=True, help="Envoyer dans la corbeille"):
+    if delete_col.button("🗑", key=f"delete_{prefix}_{ticket_id}", use_container_width=True, help="Corbeille"):
         delete_ticket(ticket_id)
         st.toast("Ticket envoyé dans la corbeille")
         st.rerun()
