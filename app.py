@@ -1228,6 +1228,22 @@ with tab_time:
             )
         else:
             st.warning("⚠️ `streamlit-calendar` non installé. Lancez : `pip install streamlit-calendar`")
+        st.markdown("#### Activité quotidienne par type de tâche")
+        day_cat = sessions_df.copy()
+        day_cat["date"] = day_cat["started_at"].astype(str).str[:10]
+        day_cat["heures"] = (day_cat["seconds"] / 3600).round(2)
+        pivot = (
+            day_cat.groupby(["date", "category"])["heures"]
+            .sum()
+            .reset_index()
+            .pivot(index="date", columns="category", values="heures")
+            .fillna(0)
+            .sort_index()
+        )
+        pivot.index.name = None
+        pivot.columns.name = None
+        st.bar_chart(pivot, use_container_width=True, height=280)
+
         st.markdown("#### Résumé par ticket")
         summary = (
             sessions_df.groupby(["ticket_id", "title"])
