@@ -355,164 +355,234 @@ def inject_styles():
     st.markdown(
         """
         <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+        html, body, [class*="css"] {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
         .block-container {
-            padding-top: 4rem;
+            padding-top: 3.5rem;
             padding-bottom: 2rem;
             max-width: 1500px;
         }
         .stApp {
-            background: #f4f5f7;
-            color: #172b4d;
+            background: #0E1117;
+            color: #F9FAFB;
         }
-        h1, h2, h3 {
-            color: #172b4d;
+        h1, h2, h3, h4 {
+            font-family: 'Space Grotesk', sans-serif;
+            color: #F9FAFB;
             letter-spacing: -0.02em;
         }
+        /* ---- KPI cards ---- */
         [data-testid="stMetric"] {
-            background: #ffffff;
-            border: 2px solid #0052cc;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(24,212,183,0.25);
             border-radius: 12px;
-            padding: 28px 24px 16px;
-            box-shadow: 0 4px 14px rgba(0, 82, 204, 0.15);
+            padding: 28px 20px 16px;
+            box-shadow: 0 0 24px rgba(24,212,183,0.07);
             text-align: center;
+            transition: all 0.2s;
+        }
+        [data-testid="stMetric"]:hover {
+            border-color: rgba(24,212,183,0.55);
+            box-shadow: 0 0 32px rgba(24,212,183,0.15);
         }
         [data-testid="stMetricValue"],
         [data-testid="stMetricValue"] * {
+            font-family: 'Space Grotesk', sans-serif !important;
             font-size: 52px !important;
-            font-weight: 900 !important;
-            color: #0052cc !important;
+            font-weight: 700 !important;
+            color: #18D4B7 !important;
             line-height: 1.1 !important;
         }
         [data-testid="stMetricLabel"],
         [data-testid="stMetricLabel"] * {
-            font-size: 13px !important;
-            font-weight: 700 !important;
-            color: #172b4d !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            color: rgba(255,255,255,0.5) !important;
             text-transform: uppercase !important;
-            letter-spacing: 0.06em !important;
+            letter-spacing: 0.09em !important;
         }
-        .kanban-dropzone {
-            min-height: 60px;
-            border: 2px dashed #dfe1e6;
+        /* ---- App header ---- */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .app-header-brand {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: #18D4B7;
+            letter-spacing: -0.01em;
+        }
+        .app-header-sub {
+            font-size: 13px;
+            color: rgba(255,255,255,0.45);
+            margin-top: 3px;
+        }
+        /* ---- Ticket cards ---- */
+        .ticket-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             border-radius: 8px;
-            margin-top: 8px;
+            padding: 14px 16px;
+            margin-bottom: 6px;
+            transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+        }
+        .ticket-card:hover {
+            background: rgba(255,255,255,0.07);
+            border-color: rgba(24,212,183,0.35);
+            box-shadow: 0 0 18px rgba(24,212,183,0.1);
+            transform: translateY(-1px);
+        }
+        .ticket-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            color: #F9FAFB;
+            margin: 6px 0;
+        }
+        .ticket-desc {
+            color: rgba(255,255,255,0.55);
+            font-size: 13px;
+            line-height: 1.45;
+            margin: 7px 0 10px;
+        }
+        .muted {
+            color: rgba(255,255,255,0.35);
+            font-size: 11px;
+            font-weight: 500;
+        }
+        /* ---- Pills ---- */
+        .pill {
+            display: inline-flex;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-right: 4px;
+            margin-bottom: 4px;
+            letter-spacing: 0.03em;
+        }
+        .prio-Urgente { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+        .prio-Haute   { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+        .prio-Moyenne { background: rgba(24,212,183,0.12); color: #18D4B7; border: 1px solid rgba(24,212,183,0.3); }
+        .prio-Basse   { background: rgba(99,102,241,0.13); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
+        .cat-Priv\u00e9 { background: rgba(99,102,241,0.12); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.25); }
+        .cat-Pro      { background: rgba(59,130,246,0.12); color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); }
+        .cat-Freelance{ background: rgba(24,212,183,0.12); color: #18D4B7; border: 1px solid rgba(24,212,183,0.25); }
+        .due-overdue  { color: #f87171; font-weight: 700; }
+        .due-today    { color: #fbbf24; font-weight: 700; }
+        .due-normal   { color: rgba(255,255,255,0.35); }
+        /* ---- Column headers ---- */
+        .column-header {
+            background: rgba(24,212,183,0.06);
+            border: 1px solid rgba(24,212,183,0.15);
+            border-radius: 6px;
+            padding: 9px 12px;
+            margin-bottom: 10px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            color: rgba(24,212,183,0.75);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+        }
+        /* ---- Kanban dropzone ---- */
+        .kanban-dropzone {
+            min-height: 52px;
+            border: 2px dashed rgba(24,212,183,0.18);
+            border-radius: 8px;
+            margin-top: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #b3bac5;
-            font-size: 12px;
+            color: rgba(24,212,183,0.35);
+            font-size: 11px;
             font-weight: 600;
             transition: all 0.15s;
         }
         .drag-over {
-            background: rgba(0, 82, 204, 0.08) !important;
-            border: 2px dashed #0052cc !important;
-            color: #0052cc !important;
+            background: rgba(24,212,183,0.07) !important;
+            border: 2px dashed #18D4B7 !important;
+            color: #18D4B7 !important;
         }
-        .ticket-card { cursor: grab; }
-        .hero {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            padding: 22px 24px;
-            border-radius: 10px;
-            background: #ffffff;
-            color: #172b4d;
-            margin-bottom: 18px;
-            border: 1px solid #dfe1e6;
-            box-shadow: 0 2px 8px rgba(9, 30, 66, 0.10);
-        }
-        .hero h1 {
-            margin: 0;
-            font-size: 30px;
-            font-weight: 800;
-        }
-        .hero p {
-            margin: 8px 0 0;
-            color: #5e6c84;
-            font-size: 14px;
-        }
-        .hero-code {
-            color: #0052cc;
-            font-weight: 800;
-        }
-        .ticket-card {
-            background: #ffffff;
-            border: 1px solid #dfe1e6;
-            border-radius: 4px;
-            padding: 12px;
-            margin-bottom: 8px;
-            box-shadow: 0 1px 2px rgba(9, 30, 66, 0.18);
-        }
-        .ticket-card:hover {
-            background: #fefefe;
-            border-color: #b3bac5;
-            box-shadow: 0 4px 8px rgba(9, 30, 66, 0.18);
-        }
-        .ticket-title {
-            font-weight: 700;
-            font-size: 14px;
-            color: #172b4d;
-            margin: 7px 0;
-        }
-        .ticket-desc {
-            color: #42526e;
-            font-size: 13px;
-            line-height: 1.4;
-            margin: 8px 0 10px;
-        }
-        .muted {
-            color: #6b778c;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        .pill {
-            display: inline-flex;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: 700;
-            margin-right: 5px;
-            margin-bottom: 5px;
-            border: 1px solid transparent;
-        }
-        .prio-Urgente { background: #ffebe6; color: #bf2600; }
-        .prio-Haute { background: #fffae6; color: #974f0c; }
-        .prio-Moyenne { background: #eae6ff; color: #403294; }
-        .prio-Basse { background: #e3fcef; color: #006644; }
-        .cat-Privé { background: #eae6ff; color: #403294; }
-        .cat-Pro { background: #deebff; color: #0747a6; }
-        .cat-Freelance { background: #e3fcef; color: #006644; }
-        .due-overdue { color: #bf2600; font-weight: 800; }
-        .due-today { color: #ff8b00; font-weight: 800; }
-        .due-normal { color: #5e6c84; font-weight: 700; }
-        .column-header {
-            background: #ebecf0;
-            border-radius: 4px;
-            padding: 10px 12px;
-            margin-bottom: 10px;
-            font-weight: 800;
-            color: #5e6c84;
-            text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 0.04em;
-        }
-        div[data-testid="stVerticalBlockBorderWrapper"] {
-            background: #ffffff;
-            border-color: #dfe1e6;
-        }
+        /* ---- Buttons ---- */
         div[data-testid="stButton"] > button {
-            border-radius: 4px;
-            border: 1px solid #dfe1e6;
-            font-weight: 700;
-            background: #f4f5f7;
-            color: #172b4d;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
+            font-weight: 600;
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.75);
+            font-family: 'Inter', sans-serif;
+            transition: all 0.15s;
         }
         div[data-testid="stButton"] > button:hover {
-            border-color: #0052cc;
-            color: #0052cc;
-            background: #deebff;
+            border-color: rgba(24,212,183,0.6);
+            color: #18D4B7;
+            background: rgba(24,212,183,0.08);
+        }
+        div[data-testid="stButton"] > button[kind="primary"] {
+            background: #18D4B7;
+            color: #0E1117;
+            border-color: #18D4B7;
+            font-weight: 700;
+        }
+        div[data-testid="stButton"] > button[kind="primary"]:hover {
+            background: #0FB89C;
+            border-color: #0FB89C;
+            color: #0E1117;
+        }
+        /* ---- Containers / borders ---- */
+        div[data-testid="stVerticalBlockBorderWrapper"] {
+            background: rgba(255,255,255,0.03);
+            border-color: rgba(255,255,255,0.07);
+        }
+        /* ---- Tabs ---- */
+        button[data-baseweb="tab"] {
+            color: rgba(255,255,255,0.45) !important;
+            font-family: 'Inter', sans-serif !important;
+        }
+        button[data-baseweb="tab"][aria-selected="true"] {
+            color: #18D4B7 !important;
+        }
+        div[data-baseweb="tab-highlight"] {
+            background-color: #18D4B7 !important;
+        }
+        /* ---- Expander (clickable card) ---- */
+        details[data-testid="stExpander"] > summary {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            color: rgba(255,255,255,0.8);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        details[data-testid="stExpander"] > summary:hover {
+            border-color: rgba(24,212,183,0.4);
+            color: #18D4B7;
+            background: rgba(24,212,183,0.05);
+        }
+        details[data-testid="stExpander"][open] > summary {
+            border-color: rgba(24,212,183,0.4);
+            color: #18D4B7;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        /* ---- Inputs & selects ---- */
+        div[data-testid="stTextInput"] input,
+        div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+            background: rgba(255,255,255,0.05) !important;
+            border-color: rgba(255,255,255,0.1) !important;
+            color: #F9FAFB !important;
         }
         </style>
         """,
@@ -607,8 +677,13 @@ def render_drag_board(df):
                 unsafe_allow_html=True,
             )
             for _, row in status_df.sort_values("score", ascending=False).iterrows():
-                ticket_card(row, compact=True)
-                render_ticket_actions(int(row["id"]), "board")
+                tid = int(row["id"])
+                prio = str(row["priority"])
+                title_short = str(row["title"])[:48]
+                expander_label = f"#{tid} · {title_short}  [{prio}]"
+                with st.expander(expander_label, expanded=False):
+                    ticket_card(row)
+                    render_ticket_actions(tid, "board")
             st.markdown(
                 f"<div class='kanban-col kanban-dropzone' data-status='{status}'>↓ Déposer ici</div>",
                 unsafe_allow_html=True,
@@ -801,6 +876,14 @@ tickets = prepare_dataframe(fetch_tickets())
 deleted_tickets = prepare_dataframe(fetch_deleted_tickets())
 
 inject_styles()
+
+st.markdown(
+    "<div class='app-header'>"
+    "<div><div class='app-header-brand'>Marc Williame — Task Board</div>"
+    "<div class='app-header-sub'>Consultant SEO orienté Data &amp; IA</div></div>"
+    "</div>",
+    unsafe_allow_html=True,
+)
 
 top_left, top_right = st.columns([4, 1])
 with top_left:
