@@ -807,6 +807,8 @@ def ticket_card(row, compact=False):
     estimate = row["estimate_hours"] or 0
     category_icon = CATEGORY_ICONS.get(row["category"], "🏷️")
 
+    estimate_html = f"⏱️ {estimate:g}h · " if estimate else ""
+
     timer_html = ""
     status = str(row.get("status", ""))
     total_secs = int(row.get("total_seconds") or 0)
@@ -834,7 +836,7 @@ def ticket_card(row, compact=False):
             <span class="pill cat-{category}">{category_icon} {category}</span>
             <div class="ticket-desc">{description or "Pas de description"}</div>
             {timer_html}
-            <div class="muted">⏱️ {estimate:g}h · <span class="{due_class}">📅 {due_text}</span> · Score {int(row["score"])}</div>
+            <div class="muted">{estimate_html}<span class="{due_class}">📅 {due_text}</span> · Score {int(row["score"])}</div>
         </div>
         """,
         unsafe_allow_html=True,
