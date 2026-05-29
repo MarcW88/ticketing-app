@@ -12,6 +12,11 @@ try:
 except ImportError:
     sort_items = None
 
+try:
+    from streamlit_calendar import calendar as st_calendar
+except ImportError:
+    st_calendar = None
+
 
 DB_PATH = "tickets.db"
 STATUSES = ["À trier", "À faire", "En cours", "Bloqué", "Terminé"]
@@ -39,6 +44,17 @@ def get_connection():
     return conn
 
 
+def format_duration(seconds):
+    seconds = int(seconds or 0)
+    if seconds < 60:
+        return f"{seconds}s"
+    minutes = seconds // 60
+    if minutes < 60:
+        return f"{minutes}min"
+    hours, mins = divmod(minutes, 60)
+    return f"{hours}h {mins}min" if mins else f"{hours}h"
+
+
 def init_db():
     conn = get_connection()
     conn.execute(
@@ -57,14 +73,30 @@ def init_db():
             updated_at TEXT NOT NULL,
             completed_at TEXT,
             deleted_at TEXT,
-            archived_at TEXT
+            archived_at TEXT,
+            time_started_at TEXT,
+            total_seconds INTEGER DEFAULT 0
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS time_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticket_id INTEGER NOT NULL,
+            started_at TEXT NOT NULL,
+            ended_at TEXT NOT NULL,
+            seconds INTEGER NOT NULL
         )
         """
     )
     existing_columns = [row[1] for row in conn.execute("PRAGMA table_info(tickets)").fetchall()]
-    for col in ["deleted_at", "archived_at"]:
+    for col, col_def in [
+        ("deleted_at", "TEXT"), ("archived_at", "TEXT"),
+        ("time_started_at", "TEXT"), ("total_seconds", "INTEGER DEFAULT 0"),
+    ]:
         if col not in existing_columns:
-            conn.execute(f"ALTER TABLE tickets ADD COLUMN {col} TEXT")
+            conn.execute(f"ALTER TABLE tickets ADD COLUMN {col} {col_def}")
     conn.commit()
 
 
@@ -119,6 +151,48 @@ def auto_archive_completed():
     conn.commit()
 
 
+def fetch_time_sessions():
+    conn = get_connection()
+    return pd.read_sql_query(
+        """
+        SELECT ts.id, ts.ticket_id, ts.started_at, ts.ended_at, ts.seconds,
+               t.title, t.category, t.project
+        FROM time_sessions ts
+        LEFT JOIN tickets t ON t.id = ts.ticket_id
+        ORDER BY ts.started_at DESC
+        """,
+        conn,
+    )
+
+
+def _handle_timer_transition(conn, ticket_id, new_status, now):
+    row = conn.execute(
+        "SELECT status, time_started_at, total_seconds FROM tickets WHERE id = ?", (ticket_id,)
+    ).fetchone()
+    if not row:
+        return None, 0
+    old_status = row["status"]
+    time_started_at = row["time_started_at"]
+    total_seconds = int(row["total_seconds"] or 0)
+
+    if old_status == "En cours" and new_status != "En cours" and time_started_at:
+        try:
+            elapsed = int((datetime.fromisoformat(now) - datetime.fromisoformat(time_started_at)).total_seconds())
+            if elapsed > 0:
+                total_seconds += elapsed
+                conn.execute(
+                    "INSERT INTO time_sessions (ticket_id, started_at, ended_at, seconds) VALUES (?, ?, ?, ?)",
+                    (ticket_id, time_started_at, now, elapsed),
+                )
+        except (ValueError, TypeError):
+            pass
+        time_started_at = None
+    elif new_status == "En cours" and old_status != "En cours":
+        time_started_at = now
+
+    return time_started_at, total_seconds
+
+
 def fetch_deleted_tickets():
     conn = get_connection()
     return pd.read_sql_query("SELECT * FROM tickets WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC", conn)
@@ -155,25 +229,19 @@ def update_ticket(ticket_id, title, description, category, project, priority, st
     now = datetime.now().isoformat(timespec="seconds")
     completed_at = now if status == "Terminé" else None
     conn = get_connection()
+    time_started_at, total_seconds = _handle_timer_transition(conn, ticket_id, status, now)
     conn.execute(
         """
         UPDATE tickets
         SET title = ?, description = ?, category = ?, project = ?, priority = ?,
-            status = ?, due_date = ?, estimate_hours = ?, updated_at = ?, completed_at = ?
+            status = ?, due_date = ?, estimate_hours = ?, updated_at = ?, completed_at = ?,
+            time_started_at = ?, total_seconds = ?
         WHERE id = ?
         """,
         (
-            title,
-            description,
-            category,
-            project,
-            priority,
-            status,
-            due_date.isoformat() if due_date else None,
-            estimate_hours,
-            now,
-            completed_at,
-            ticket_id,
+            title, description, category, project, priority, status,
+            due_date.isoformat() if due_date else None, estimate_hours,
+            now, completed_at, time_started_at, total_seconds, ticket_id,
         ),
     )
     conn.commit()
@@ -203,7 +271,11 @@ def update_ticket_status(ticket_id, status):
     now = datetime.now().isoformat(timespec="seconds")
     completed_at = now if status == "Terminé" else None
     conn = get_connection()
-    conn.execute("UPDATE tickets SET status = ?, updated_at = ?, completed_at = ? WHERE id = ?", (status, now, completed_at, ticket_id))
+    time_started_at, total_seconds = _handle_timer_transition(conn, ticket_id, status, now)
+    conn.execute(
+        "UPDATE tickets SET status = ?, updated_at = ?, completed_at = ?, time_started_at = ?, total_seconds = ? WHERE id = ?",
+        (status, now, completed_at, time_started_at, total_seconds, ticket_id),
+    )
     conn.commit()
 
 
@@ -631,6 +703,32 @@ def inject_styles():
             border-color: rgba(255,255,255,0.1) !important;
             color: #F9FAFB !important;
         }
+        /* ---- Timer badges ---- */
+        .timer-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(24,212,183,0.12);
+            color: #18D4B7;
+            border: 1px solid rgba(24,212,183,0.35);
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            margin: 4px 0 2px;
+            letter-spacing: 0.02em;
+        }
+        .timer-done {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(99,102,241,0.1);
+            color: #a5b4fc;
+            border: 1px solid rgba(99,102,241,0.25);
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            margin: 4px 0 2px;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -660,6 +758,19 @@ def ticket_card(row, compact=False):
     estimate = row["estimate_hours"] or 0
     category_icon = CATEGORY_ICONS.get(row["category"], "🏷️")
 
+    timer_html = ""
+    status = str(row.get("status", ""))
+    total_secs = int(row.get("total_seconds") or 0)
+    tsa = row.get("time_started_at")
+    if status == "En cours" and tsa and str(tsa) not in ("", "nan", "None"):
+        try:
+            elapsed = int((datetime.now() - datetime.fromisoformat(str(tsa))).total_seconds())
+            timer_html = f'<div class="timer-badge">⏱ {format_duration(total_secs + elapsed)} en cours</div>'
+        except (ValueError, TypeError):
+            pass
+    elif total_secs > 0:
+        timer_html = f'<div class="timer-done">✅ {format_duration(total_secs)} travaillé</div>'
+
     st.markdown(
         f"""
         <div class="ticket-card" data-ticket-id="{ticket_id}">
@@ -668,6 +779,7 @@ def ticket_card(row, compact=False):
             <span class="pill prio-{priority}">{priority}</span>
             <span class="pill cat-{category}">{category_icon} {category}</span>
             <div class="ticket-desc">{description or "Pas de description"}</div>
+            {timer_html}
             <div class="muted">⏱️ {estimate:g}h · <span class="{due_class}">📅 {due_text}</span> · Score {int(row["score"])}</div>
         </div>
         """,
@@ -911,8 +1023,8 @@ if not filtered.empty:
             | filtered["project"].str.lower().str.contains(query, na=False)
         ]
 
-tab_board, tab_dashboard, tab_list, tab_table, tab_archive, tab_trash = st.tabs(
-    ["Board", "Dashboard", "Aperçu complet", "Tableau", "🗃 Archives", "Corbeille"]
+tab_board, tab_dashboard, tab_list, tab_table, tab_archive, tab_time, tab_trash = st.tabs(
+    ["Board", "Dashboard", "Aperçu complet", "Tableau", "🗃 Archives", "⏱ Temps", "Corbeille"]
 )
 
 with tab_board:
@@ -973,6 +1085,56 @@ with tab_archive:
             if arc_col2.button("Supprimer définitivement", key=f"arch_purge_{int(row['id'])}", use_container_width=True):
                 permanently_delete_ticket(int(row["id"]))
                 st.rerun()
+
+with tab_time:
+    st.subheader("Temps travaillé")
+    st.caption("Le timer démarre automatiquement quand un ticket passe en ‘En cours’ et s’arrête à chaque changement de statut.")
+    sessions_df = fetch_time_sessions()
+    if sessions_df.empty:
+        st.info("⏱ Aucune session enregistrée. Déplacez un ticket en ‘En cours’ pour démarrer le chrono.")
+    else:
+        if st_calendar:
+            events = []
+            for _, s in sessions_df.iterrows():
+                events.append({
+                    "title": f"#{int(s['ticket_id'])} {str(s.get('title', ''))[:28]}",
+                    "start": str(s["started_at"])[:16],
+                    "end": str(s["ended_at"])[:16],
+                    "backgroundColor": "#18D4B7",
+                    "borderColor": "#0FB89C",
+                    "textColor": "#0E1117",
+                })
+            st_calendar(
+                events=events,
+                options={
+                    "initialView": "timeGridWeek",
+                    "headerToolbar": {
+                        "left": "prev,next today",
+                        "center": "title",
+                        "right": "dayGridMonth,timeGridWeek,timeGridDay",
+                    },
+                    "slotMinTime": "06:00:00",
+                    "slotMaxTime": "23:00:00",
+                    "locale": "fr",
+                    "height": 600,
+                },
+            )
+        else:
+            st.warning("⚠️ `streamlit-calendar` non installé. Lancez : `pip install streamlit-calendar`")
+        st.markdown("#### Résumé par ticket")
+        summary = (
+            sessions_df.groupby(["ticket_id", "title"])
+            .agg(total_seconds=("seconds", "sum"), sessions=("id", "count"))
+            .reset_index()
+            .sort_values("total_seconds", ascending=False)
+        )
+        summary["Durée totale"] = summary["total_seconds"].apply(format_duration)
+        summary["Ticket"] = summary.apply(lambda r: f"#{int(r['ticket_id'])} {r['title']}", axis=1)
+        st.dataframe(
+            summary[["Ticket", "sessions", "Durée totale"]].rename(columns={"sessions": "Sessions"}),
+            use_container_width=True,
+            hide_index=True,
+        )
 
 with tab_trash:
     st.subheader("Corbeille")
