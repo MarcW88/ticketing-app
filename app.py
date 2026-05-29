@@ -271,11 +271,17 @@ def render_metrics(df):
     ]
     cols = st.columns(4)
     for col, (filter_key, label, value) in zip(cols, metrics):
-        button_label = f"{label}\n\n{value}"
-        button_type = "primary" if active_filter == filter_key else "secondary"
-        if col.button(button_label, key=f"metric_{filter_key}", type=button_type, use_container_width=True):
-            st.session_state["metric_filter"] = None if active_filter == filter_key else filter_key
-            st.rerun()
+        with col:
+            st.metric(label, value)
+            is_active = active_filter == filter_key
+            if st.button(
+                "✕ Retirer" if is_active else "Filtrer",
+                key=f"metric_{filter_key}",
+                use_container_width=True,
+                type="primary" if is_active else "secondary",
+            ):
+                st.session_state["metric_filter"] = None if is_active else filter_key
+                st.rerun()
 
 
 def weekly_dashboard_data(active_df, deleted_df):
@@ -362,25 +368,48 @@ def inject_styles():
             color: #172b4d;
             letter-spacing: -0.02em;
         }
-        div[data-testid="stMetric"] {
+        [data-testid="stMetric"] {
             background: #ffffff;
             border: 2px solid #0052cc;
             border-radius: 12px;
-            padding: 32px 36px;
-            box-shadow: 0 4px 12px rgba(0, 82, 204, 0.15);
+            padding: 28px 24px 16px;
+            box-shadow: 0 4px 14px rgba(0, 82, 204, 0.15);
+            text-align: center;
         }
-        div[data-testid="stMetric"] > div > div > div > div {
-            font-size: 48px !important;
+        [data-testid="stMetricValue"],
+        [data-testid="stMetricValue"] * {
+            font-size: 52px !important;
             font-weight: 900 !important;
             color: #0052cc !important;
+            line-height: 1.1 !important;
         }
-        div[data-testid="stMetric"] > div > div > div > div + div {
-            font-size: 16px !important;
-            font-weight: 800 !important;
+        [data-testid="stMetricLabel"],
+        [data-testid="stMetricLabel"] * {
+            font-size: 13px !important;
+            font-weight: 700 !important;
             color: #172b4d !important;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
+            text-transform: uppercase !important;
+            letter-spacing: 0.06em !important;
         }
+        .kanban-dropzone {
+            min-height: 60px;
+            border: 2px dashed #dfe1e6;
+            border-radius: 8px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #b3bac5;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+        .drag-over {
+            background: rgba(0, 82, 204, 0.08) !important;
+            border: 2px dashed #0052cc !important;
+            color: #0052cc !important;
+        }
+        .ticket-card { cursor: grab; }
         .hero {
             display: flex;
             justify-content: space-between;
@@ -516,7 +545,7 @@ def ticket_card(row, compact=False):
 
     st.markdown(
         f"""
-        <div class="ticket-card">
+        <div class="ticket-card" data-ticket-id="{ticket_id}">
             <div class="muted">#{ticket_id} · {project}</div>
             <div class="ticket-title">{title}</div>
             <span class="pill prio-{priority}">{priority}</span>
@@ -553,28 +582,16 @@ def render_ticket_actions(ticket_id, prefix):
         st.rerun()
 
 
-def sortable_ticket_label(row):
-    title = str(row["title"])
-    ticket_id = int(row["id"])
-    priority = str(row["priority"])
-    project = str(row["project"] or "Aucun projet")
-    return f"#{ticket_id} · {title} · {priority} · {project}"
-
-
-def parse_ticket_id(label):
-    return int(label.split(" · ", 1)[0].replace("#", ""))
-
-
 def render_drag_board(df):
-    move_data = st.text_input("move_data", key="move_data", label_visibility="hidden")
-    if move_data:
+    move_raw = st.text_input("", placeholder="kanbanmovechannel", key="kanban_move", label_visibility="collapsed")
+    if move_raw:
         try:
-            data = json.loads(move_data)
-            ticket_id = int(data.get("ticket_id"))
-            target_status = data.get("status")
-            if ticket_id and target_status and target_status in STATUSES:
-                update_ticket_status(ticket_id, target_status)
-                st.session_state["move_data"] = ""
+            data = json.loads(move_raw)
+            tid = int(data.get("ticket_id"))
+            tst = data.get("status")
+            if tid and tst and tst in STATUSES:
+                update_ticket_status(tid, tst)
+                st.session_state["kanban_move"] = ""
                 st.rerun()
         except (json.JSONDecodeError, ValueError, TypeError):
             pass
@@ -584,58 +601,59 @@ def render_drag_board(df):
         status_df = df[df["status"] == status]
         with column:
             st.markdown(
-                f"<div class='column-header' data-status='{status}'>{STATUS_ICONS.get(status, '')} {status} · {len(status_df)}</div>",
+                f"<div class='column-header kanban-col' data-status='{status}'>"
+                f"{STATUS_ICONS.get(status, '')} {status} · {len(status_df)}</div>",
                 unsafe_allow_html=True,
             )
             for _, row in status_df.sort_values("score", ascending=False).iterrows():
                 ticket_card(row, compact=True)
                 render_ticket_actions(int(row["id"]), "board")
+            st.markdown(
+                f"<div class='kanban-col kanban-dropzone' data-status='{status}'>↓ Déposer ici</div>",
+                unsafe_allow_html=True,
+            )
 
     st.markdown(
         """
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.ticket-card[draggable="true"]');
-            const columns = document.querySelectorAll('.column-header');
-            let draggedCard = null;
-
-            cards.forEach(card => {
-                card.addEventListener('dragstart', function(e) {
-                    draggedCard = this;
-                    this.style.opacity = '0.5';
-                    e.dataTransfer.effectAllowed = 'move';
+        <svg onload="(function(){
+            var _d=null;
+            function gI(){return document.querySelector('input[placeholder=&quot;kanbanmovechannel&quot;]');}
+            function rS(i,v){
+                var s=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;
+                s.call(i,v);
+                i.dispatchEvent(new Event('input',{bubbles:true}));
+                i.dispatchEvent(new Event('change',{bubbles:true}));
+            }
+            function init(){
+                document.querySelectorAll('.ticket-card[data-ticket-id]').forEach(function(c){
+                    if(c._dk)return;c._dk=1;
+                    c.setAttribute('draggable','true');
+                    c.addEventListener('dragstart',function(e){
+                        _d=this.getAttribute('data-ticket-id');
+                        this.style.opacity='0.4';
+                        e.dataTransfer.effectAllowed='move';
+                    });
+                    c.addEventListener('dragend',function(){this.style.opacity='1';});
                 });
-
-                card.addEventListener('dragend', function() {
-                    this.style.opacity = '1';
-                    draggedCard = null;
+                document.querySelectorAll('.kanban-col[data-status]').forEach(function(z){
+                    if(z._dk)return;z._dk=1;
+                    z.addEventListener('dragover',function(e){
+                        e.preventDefault();this.classList.add('drag-over');
+                    });
+                    z.addEventListener('dragleave',function(e){
+                        if(!this.contains(e.relatedTarget))this.classList.remove('drag-over');
+                    });
+                    z.addEventListener('drop',function(e){
+                        e.preventDefault();this.classList.remove('drag-over');
+                        if(_d){var i=gI();if(i)rS(i,JSON.stringify({ticket_id:_d,status:this.getAttribute('data-status')}));}
+                    });
                 });
-            });
-
-            columns.forEach(col => {
-                col.addEventListener('dragover', function(e) {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                });
-
-                col.addEventListener('drop', function(e) {
-                    e.preventDefault();
-                    if (draggedCard) {
-                        const ticketId = draggedCard.getAttribute('data-ticket-id');
-                        const targetStatus = col.getAttribute('data-status');
-                        if (ticketId && targetStatus) {
-                            const moveInput = document.querySelector('input[data-testid="stTextInput"]');
-                            if (moveInput) {
-                                moveInput.value = JSON.stringify({ticket_id: ticketId, status: targetStatus});
-                                moveInput.dispatchEvent(new Event('input', { bubbles: true }));
-                                moveInput.dispatchEvent(new Event('change', { bubbles: true }));
-                            }
-                        }
-                    }
-                });
-            });
-        });
-        </script>
+            }
+            init();
+            var t;
+            new MutationObserver(function(){clearTimeout(t);t=setTimeout(init,300);})
+                .observe(document.body,{childList:true,subtree:true});
+        })()" style="position:absolute;width:0;height:0;overflow:hidden;"></svg>
         """,
         unsafe_allow_html=True,
     )
@@ -799,16 +817,15 @@ st.write("")
 with st.container(border=True):
     st.markdown("#### Filtres")
     filter_col1, filter_col2, filter_col3, filter_col4 = st.columns([1.2, 1.5, 1.2, 1.8])
-    selected_categories = filter_col1.multiselect("Catégories", CATEGORIES, default=CATEGORIES)
+    selected_category = filter_col1.selectbox("Catégorie", ["Toutes"] + CATEGORIES, index=0)
     selected_statuses = filter_col2.selectbox("Statut", ["Tous"] + STATUSES, index=0)
     selected_priorities = filter_col3.selectbox("Priorité", ["Toutes"] + PRIORITIES, index=0)
     search = filter_col4.text_input("Recherche", placeholder="Titre, description, projet...")
 
 filtered = tickets.copy()
 if not filtered.empty:
-    filtered = filtered[
-        filtered["category"].isin(selected_categories)
-    ]
+    if selected_category != "Toutes":
+        filtered = filtered[filtered["category"] == selected_category]
     if selected_statuses != "Tous":
         filtered = filtered[filtered["status"] == selected_statuses]
     if selected_priorities != "Toutes":
