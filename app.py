@@ -515,6 +515,26 @@ def render_dashboard(active_df, deleted_df):
         status_counts = active_df.groupby("status").size().reindex(STATUSES, fill_value=0)
         st.bar_chart(status_counts, use_container_width=True)
 
+    st.markdown("#### Activité quotidienne par type de tâche")
+    _sessions = fetch_time_sessions()
+    if not _sessions.empty:
+        _dc = _sessions.copy()
+        _dc["date"] = _dc["started_at"].astype(str).str[:10]
+        _dc["heures"] = (_dc["seconds"] / 3600).round(2)
+        _pivot = (
+            _dc.groupby(["date", "category"])["heures"]
+            .sum()
+            .reset_index()
+            .pivot(index="date", columns="category", values="heures")
+            .fillna(0)
+            .sort_index()
+        )
+        _pivot.index.name = None
+        _pivot.columns.name = None
+        st.bar_chart(_pivot, use_container_width=True, height=280)
+    else:
+        st.info("Aucune session enregistrée. Le timer démarre quand un ticket passe en 'En cours'.")
+
     st.markdown("#### Détail hebdomadaire")
     st.dataframe(weekly, hide_index=True, use_container_width=True)
 
