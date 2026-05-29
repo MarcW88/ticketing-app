@@ -350,7 +350,7 @@ def inject_styles():
         """
         <style>
         .block-container {
-            padding-top: 2rem;
+            padding-top: 3rem;
             padding-bottom: 2rem;
             max-width: 1500px;
         }
@@ -366,8 +366,20 @@ def inject_styles():
             background: #ffffff;
             border: 1px solid #dfe1e6;
             border-radius: 8px;
-            padding: 14px 16px;
+            padding: 18px 20px;
             box-shadow: 0 1px 2px rgba(9, 30, 66, 0.14);
+        }
+        div[data-testid="stMetric"] > div > div > div > div {
+            font-size: 28px !important;
+            font-weight: 800 !important;
+            color: #172b4d !important;
+        }
+        div[data-testid="stMetric"] > div > div > div > div + div {
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: #5e6c84 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
         .hero {
             display: flex;
@@ -504,7 +516,7 @@ def ticket_card(row, compact=False):
 
     st.markdown(
         f"""
-        <div class="ticket-card">
+        <div class="ticket-card" draggable="true" data-ticket-id="{ticket_id}">
             <div class="muted">#{ticket_id} · {project}</div>
             <div class="ticket-title">{title}</div>
             <span class="pill prio-{priority}">{priority}</span>
@@ -554,17 +566,79 @@ def parse_ticket_id(label):
 
 
 def render_drag_board(df):
+    move_data = st.text_input("move_data", key="move_data", label_visibility="hidden")
+    if move_data:
+        try:
+            data = json.loads(move_data)
+            ticket_id = int(data.get("ticket_id"))
+            target_status = data.get("status")
+            if ticket_id and target_status and target_status in STATUSES:
+                update_ticket_status(ticket_id, target_status)
+                st.session_state["move_data"] = ""
+                st.rerun()
+        except (json.JSONDecodeError, ValueError, TypeError):
+            pass
+
     columns = st.columns(len(STATUSES))
     for column, status in zip(columns, STATUSES):
         status_df = df[df["status"] == status]
         with column:
             st.markdown(
-                f"<div class='column-header'>{STATUS_ICONS.get(status, '')} {status} · {len(status_df)}</div>",
+                f"<div class='column-header' data-status='{status}'>{STATUS_ICONS.get(status, '')} {status} · {len(status_df)}</div>",
                 unsafe_allow_html=True,
             )
             for _, row in status_df.sort_values("score", ascending=False).iterrows():
                 ticket_card(row, compact=True)
                 render_ticket_actions(int(row["id"]), "board")
+
+    st.markdown(
+        """
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.ticket-card[draggable="true"]');
+            const columns = document.querySelectorAll('.column-header');
+            let draggedCard = null;
+
+            cards.forEach(card => {
+                card.addEventListener('dragstart', function(e) {
+                    draggedCard = this;
+                    this.style.opacity = '0.5';
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+
+                card.addEventListener('dragend', function() {
+                    this.style.opacity = '1';
+                    draggedCard = null;
+                });
+            });
+
+            columns.forEach(col => {
+                col.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                });
+
+                col.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    if (draggedCard) {
+                        const ticketId = draggedCard.getAttribute('data-ticket-id');
+                        const targetStatus = col.getAttribute('data-status');
+                        if (ticketId && targetStatus) {
+                            const moveInput = document.querySelector('input[key="move_data"]');
+                            if (moveInput) {
+                                moveInput.value = JSON.stringify({ticket_id: ticketId, status: targetStatus});
+                                moveInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                moveInput.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        }
+                    }
+                });
+            });
+        });
+        </script>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_quick_done_actions(df):
