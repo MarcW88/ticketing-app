@@ -630,20 +630,21 @@ def ticket_card(row, compact=False):
 
 def render_ticket_actions(ticket_id, prefix):
     current_status = tickets[tickets["id"] == ticket_id].iloc[0]["status"]
+    current_index = STATUSES.index(current_status) if current_status in STATUSES else 0
+    prev_status = STATUSES[current_index - 1] if current_index > 0 else None
+    next_status = STATUSES[current_index + 1] if current_index < len(STATUSES) - 1 else None
 
-    status_col, edit_col, done_col, delete_col = st.columns([2.5, 2.0, 0.7, 0.7])
-    new_status = status_col.selectbox(
-        "Déplacer vers",
-        STATUSES,
-        index=STATUSES.index(current_status) if current_status in STATUSES else 0,
-        key=f"status_sel_{prefix}_{ticket_id}",
-        label_visibility="collapsed",
-    )
-    if new_status != current_status:
-        update_ticket_status(ticket_id, new_status)
+    left_col, edit_col, right_col, done_col, delete_col = st.columns([0.7, 2.4, 0.7, 0.7, 0.7])
+    if left_col.button("←", key=f"left_{prefix}_{ticket_id}", use_container_width=True,
+                       disabled=prev_status is None, help=prev_status or ""):
+        update_ticket_status(ticket_id, prev_status)
         st.rerun()
     if edit_col.button("✏️ Modifier", key=f"edit_{prefix}_{ticket_id}", use_container_width=True):
         edit_ticket_dialog(ticket_id)
+    if right_col.button("→", key=f"right_{prefix}_{ticket_id}", use_container_width=True,
+                        disabled=next_status is None, help=next_status or ""):
+        update_ticket_status(ticket_id, next_status)
+        st.rerun()
     if done_col.button("✓", key=f"done_{prefix}_{ticket_id}", use_container_width=True, help="Valider"):
         update_ticket_status(ticket_id, "Terminé")
         st.rerun()
@@ -677,13 +678,8 @@ def render_drag_board(df):
                 unsafe_allow_html=True,
             )
             for _, row in status_df.sort_values("score", ascending=False).iterrows():
-                tid = int(row["id"])
-                prio = str(row["priority"])
-                title_short = str(row["title"])[:48]
-                expander_label = f"#{tid} · {title_short}  [{prio}]"
-                with st.expander(expander_label, expanded=False):
-                    ticket_card(row)
-                    render_ticket_actions(tid, "board")
+                ticket_card(row, compact=True)
+                render_ticket_actions(int(row["id"]), "board")
             st.markdown(
                 f"<div class='kanban-col kanban-dropzone' data-status='{status}'>↓ Déposer ici</div>",
                 unsafe_allow_html=True,
@@ -878,10 +874,7 @@ deleted_tickets = prepare_dataframe(fetch_deleted_tickets())
 inject_styles()
 
 st.markdown(
-    "<div class='app-header'>"
-    "<div><div class='app-header-brand'>Marc Williame — Task Board</div>"
-    "<div class='app-header-sub'>Consultant SEO orienté Data &amp; IA</div></div>"
-    "</div>",
+    "<div class='app-header'><div class='app-header-brand'>Task Board</div></div>",
     unsafe_allow_html=True,
 )
 
