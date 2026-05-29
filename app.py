@@ -230,6 +230,18 @@ def resume_ticket(ticket_id):
     conn.commit()
 
 
+def delete_time_session(session_id):
+    conn = get_connection()
+    row = conn.execute("SELECT ticket_id, seconds FROM time_sessions WHERE id = ?", (session_id,)).fetchone()
+    if row:
+        conn.execute(
+            "UPDATE tickets SET total_seconds = MAX(0, COALESCE(total_seconds,0) - ?) WHERE id = ?",
+            (row["seconds"], row["ticket_id"]),
+        )
+        conn.execute("DELETE FROM time_sessions WHERE id = ?", (session_id,))
+    conn.commit()
+
+
 def fetch_deleted_tickets():
     conn = get_connection()
     return pd.read_sql_query("SELECT * FROM tickets WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC", conn)
@@ -1052,6 +1064,35 @@ with top_right:
     st.write("")
     if st.button("＋ Nouveau ticket", type="primary", use_container_width=True):
         st.session_state["show_create_dialog"] = True
+    if not tickets.empty:
+        running = tickets[
+            (tickets["status"] == "En cours") &
+            (tickets["time_started_at"].notna()) &
+            (tickets["time_started_at"].astype(str).str.strip() != "")
+        ]
+        paused = tickets[
+            (tickets["status"] == "En cours") &
+            (tickets["paused_at"].notna()) &
+            (tickets["paused_at"].astype(str).str.strip() != "")
+        ]
+        for _, trow in pd.concat([running, paused]).drop_duplicates("id").iterrows():
+            tid = int(trow["id"])
+            tsa = trow.get("time_started_at")
+            psa = trow.get("paused_at")
+            total_secs = int(trow.get("total_seconds") or 0)
+            is_psd = bool(psa) and str(psa) not in ("", "nan", "None")
+            if is_psd:
+                lbl = f"▶ #{tid} · {format_duration(total_secs)}"
+            else:
+                try:
+                    el = int((datetime.now() - datetime.fromisoformat(str(tsa))).total_seconds())
+                    lbl = f"⏸ #{tid} · {format_duration(total_secs + el)}"
+                except (ValueError, TypeError):
+                    continue
+            if st.button(lbl, key=f"top_timer_{tid}", use_container_width=True,
+                         help="Reprendre" if is_psd else "Pause"):
+                resume_ticket(tid) if is_psd else pause_ticket(tid)
+                st.rerun()
 
 if st.session_state.get("show_create_dialog"):
     create_ticket_dialog()
@@ -1203,6 +1244,19 @@ with tab_time:
             use_container_width=True,
             hide_index=True,
         )
+        st.markdown("#### Sessions détaillées")
+        for _, s in sessions_df.iterrows():
+            s_col, d_col = st.columns([6, 1])
+            started = str(s["started_at"])[:16].replace("T", " ")
+            ended = str(s["ended_at"])[:16].replace("T", " ")
+            title_short = str(s.get("title", ""))[:30]
+            s_col.markdown(
+                f"**#{int(s['ticket_id'])}** {title_short} · "
+                f"`{started}` → `{ended}` · **{format_duration(int(s['seconds']))}**"
+            )
+            if d_col.button("🗑", key=f"del_sess_{int(s['id'])}", use_container_width=True, help="Supprimer cette session"):
+                delete_time_session(int(s["id"]))
+                st.rerun()
 
 with tab_trash:
     st.subheader("Corbeille")
