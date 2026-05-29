@@ -7,6 +7,11 @@ from openai import OpenAI
 import pandas as pd
 import streamlit as st
 
+try:
+    from streamlit_sortables import sort_items
+except ImportError:
+    sort_items = None
+
 
 DB_PATH = "tickets.db"
 STATUSES = ["À trier", "À faire", "En cours", "Bloqué", "Terminé"]
@@ -17,6 +22,7 @@ STATUS_SCORE = {"Bloqué": 3, "En cours": 2, "À faire": 1, "À trier": 0, "Term
 STATUS_ICONS = {"À trier": "🧬", "À faire": "🎯", "En cours": "⚙️", "Bloqué": "🧯", "Terminé": "✅"}
 CATEGORY_ICONS = {"Privé": "🏠", "Pro": "💼", "Freelance": "🤝"}
 AI_MODEL = "gpt-4o-mini"
+DEFAULT_STATUS = "À trier"
 
 
 st.set_page_config(
@@ -239,7 +245,7 @@ def prepare_dataframe(df):
     return df.sort_values(["status", "score", "created_at"], ascending=[True, False, False])
 
 
-def render_metrics(df):
+def get_metric_slices(df):
     active = df[df["status"] != "Terminé"] if not df.empty else df
     if not active.empty:
         due_dates = pd.to_datetime(active["due_date"], errors="coerce")
@@ -250,12 +256,26 @@ def render_metrics(df):
     else:
         overdue = active
         due_soon = active
+    in_progress = df[df["status"] == "En cours"] if not df.empty else df
+    return active, in_progress, overdue, due_soon
 
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Tickets actifs", len(active))
-    col2.metric("En cours", len(df[df["status"] == "En cours"]) if not df.empty else 0)
-    col3.metric("En retard", len(overdue))
-    col4.metric("À 7 jours", len(due_soon))
+
+def render_metrics(df):
+    active, in_progress, overdue, due_soon = get_metric_slices(df)
+    active_filter = st.session_state.get("metric_filter")
+    metrics = [
+        ("active", "Tickets actifs", len(active)),
+        ("in_progress", "En cours", len(in_progress)),
+        ("overdue", "En retard", len(overdue)),
+        ("due_soon", "À 7 jours", len(due_soon)),
+    ]
+    cols = st.columns(4)
+    for col, (filter_key, label, value) in zip(cols, metrics):
+        button_label = f"{label}\n\n{value}"
+        button_type = "primary" if active_filter == filter_key else "secondary"
+        if col.button(button_label, key=f"metric_{filter_key}", type=button_type, use_container_width=True):
+            st.session_state["metric_filter"] = None if active_filter == filter_key else filter_key
+            st.rerun()
 
 
 def weekly_dashboard_data(active_df, deleted_df):
@@ -498,24 +518,79 @@ def ticket_card(row, compact=False):
 
 
 def render_ticket_actions(ticket_id, prefix):
-    current_status = tickets[tickets["id"] == ticket_id].iloc[0]["status"]
-    current_index = STATUSES.index(current_status) if current_status in STATUSES else 0
-    prev_status = STATUSES[current_index - 1] if current_index > 0 else None
-    next_status = STATUSES[current_index + 1] if current_index < len(STATUSES) - 1 else None
-
-    left_col, edit_col, right_col, delete_col = st.columns([0.8, 2.1, 0.8, 0.8])
-    if left_col.button("←", key=f"left_{prefix}_{ticket_id}", use_container_width=True, disabled=prev_status is None):
-        update_ticket_status(ticket_id, prev_status)
-        st.rerun()
+    edit_col, done_col, delete_col = st.columns([2.2, 0.8, 0.8])
     if edit_col.button("Modifier", key=f"edit_{prefix}_{ticket_id}", use_container_width=True):
         edit_ticket_dialog(ticket_id)
-    if right_col.button("→", key=f"right_{prefix}_{ticket_id}", use_container_width=True, disabled=next_status is None):
-        update_ticket_status(ticket_id, next_status)
+    if done_col.button("✓", key=f"done_{prefix}_{ticket_id}", use_container_width=True, help="Valider la carte"):
+        update_ticket_status(ticket_id, "Terminé")
         st.rerun()
     if delete_col.button("⌫", key=f"delete_{prefix}_{ticket_id}", use_container_width=True, help="Envoyer dans la corbeille"):
         delete_ticket(ticket_id)
         st.toast("Ticket envoyé dans la corbeille")
         st.rerun()
+
+
+def sortable_ticket_label(row):
+    title = str(row["title"])
+    ticket_id = int(row["id"])
+    priority = str(row["priority"])
+    project = str(row["project"] or "Aucun projet")
+    return f"#{ticket_id} · {title} · {priority} · {project}"
+
+
+def parse_ticket_id(label):
+    return int(label.split(" · ", 1)[0].replace("#", ""))
+
+
+def render_drag_board(df):
+    if sort_items is None:
+        st.warning("Le déplacement par glisser-déposer sera disponible après le redéploiement des dépendances.")
+        columns = st.columns(len(STATUSES))
+        for column, status in zip(columns, STATUSES):
+            status_df = df[df["status"] == status]
+            with column:
+                st.markdown(
+                    f"<div class='column-header'>{STATUS_ICONS.get(status, '')} {status} · {len(status_df)}</div>",
+                    unsafe_allow_html=True,
+                )
+                for _, row in status_df.sort_values("score", ascending=False).iterrows():
+                    ticket_card(row, compact=True)
+                    render_ticket_actions(int(row["id"]), "board")
+        return
+
+    containers = []
+    for status in STATUSES:
+        status_df = df[df["status"] == status].sort_values("score", ascending=False)
+        containers.append({"header": f"{STATUS_ICONS.get(status, '')} {status}", "items": [sortable_ticket_label(row) for _, row in status_df.iterrows()]})
+
+    sorted_containers = sort_items(containers, multi_containers=True, direction="horizontal", key="kanban_sortable")
+    changed = False
+    for container in sorted_containers:
+        target_status = container["header"].split(" ", 1)[1] if " " in container["header"] else container["header"]
+        for item in container["items"]:
+            ticket_id = parse_ticket_id(item)
+            current_status = tickets.loc[tickets["id"] == ticket_id, "status"].iloc[0]
+            if current_status != target_status:
+                update_ticket_status(ticket_id, target_status)
+                changed = True
+    if changed:
+        st.rerun()
+
+    st.caption("Glisse une carte vers une autre colonne pour changer son statut. Utilise l’onglet Aperçu complet pour modifier, valider ou supprimer une carte.")
+
+
+def render_quick_done_actions(df):
+    candidates = df[df["status"] != "Terminé"] if not df.empty else df
+    if candidates.empty:
+        return
+    with st.expander("✓ Validation rapide", expanded=False):
+        st.caption("Valide une carte sans l’ouvrir et sans la déplacer manuellement.")
+        for _, row in candidates.sort_values("score", ascending=False).head(12).iterrows():
+            label_col, action_col = st.columns([5, 1])
+            label_col.markdown(f"**#{int(row['id'])}** · {escape(str(row['title']))}")
+            if action_col.button("✓", key=f"quick_done_{int(row['id'])}", use_container_width=True):
+                update_ticket_status(int(row["id"]), "Terminé")
+                st.rerun()
 
 
 def ticket_form(prefix, defaults=None):
@@ -556,7 +631,7 @@ def ticket_form(prefix, defaults=None):
     status = col4.selectbox(
         "Statut",
         STATUSES,
-        index=STATUSES.index(defaults.get("status", "À faire")) if defaults.get("status") in STATUSES else 1,
+        index=STATUSES.index(defaults.get("status", DEFAULT_STATUS)) if defaults.get("status") in STATUSES else STATUSES.index(DEFAULT_STATUS),
         key=f"{prefix}_status",
     )
     estimate_hours = col5.number_input(
@@ -643,19 +718,6 @@ deleted_tickets = prepare_dataframe(fetch_deleted_tickets())
 
 inject_styles()
 
-st.markdown(
-    """
-    <div class="hero">
-        <div>
-            <h1>🎫 Personal Ticketing</h1>
-            <p>Scrum personnel pour piloter tes tâches privées, pro et freelance.</p>
-        </div>
-        <div class="hero-code">Sprint personnel</div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
 top_left, top_right = st.columns([4, 1])
 with top_left:
     render_metrics(tickets)
@@ -684,6 +746,16 @@ if not filtered.empty:
         & filtered["status"].isin(selected_statuses)
         & filtered["priority"].isin(selected_priorities)
     ]
+    metric_filter = st.session_state.get("metric_filter")
+    if metric_filter:
+        active, in_progress, overdue, due_soon = get_metric_slices(filtered)
+        metric_slices = {
+            "active": active,
+            "in_progress": in_progress,
+            "overdue": overdue,
+            "due_soon": due_soon,
+        }
+        filtered = metric_slices.get(metric_filter, filtered)
     if search:
         query = search.lower()
         filtered = filtered[
@@ -698,17 +770,8 @@ with tab_board:
     if filtered.empty:
         st.info("Aucun ticket à afficher.")
     else:
-        columns = st.columns(len(STATUSES))
-        for column, status in zip(columns, STATUSES):
-            status_df = filtered[filtered["status"] == status]
-            with column:
-                st.markdown(
-                    f"<div class='column-header'>{STATUS_ICONS.get(status, '')} {status} · {len(status_df)}</div>",
-                    unsafe_allow_html=True,
-                )
-                for _, row in status_df.sort_values("score", ascending=False).iterrows():
-                    ticket_card(row, compact=True)
-                    render_ticket_actions(int(row["id"]), "board")
+        render_drag_board(filtered)
+        render_quick_done_actions(filtered)
 
 with tab_dashboard:
     render_dashboard(tickets, deleted_tickets)
