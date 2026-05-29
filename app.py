@@ -839,20 +839,18 @@ def ticket_card(row, compact=False):
     elif total_secs > 0:
         timer_html = f'<div class="timer-done">✅ {format_duration(total_secs)} travaillé</div>'
 
-    st.markdown(
-        f"""
-        <div class="ticket-card" data-ticket-id="{ticket_id}">
-            <div class="muted">#{ticket_id} · {project}</div>
-            <div class="ticket-title">{title}</div>
-            <span class="pill prio-{priority}">{priority}</span>
-            <span class="pill cat-{category}">{category_icon} {category}</span>
-            <div class="ticket-desc">{description or "Pas de description"}</div>
-            {timer_html}
-            <div class="muted">{estimate_html}<span class="{due_class}">📅 {due_text}</span> · Score {int(row["score"])}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    card_html = "".join([
+        f'<div class="ticket-card" data-ticket-id="{ticket_id}">',
+        f'<div class="muted">#{ticket_id} · {project}</div>',
+        f'<div class="ticket-title">{title}</div>',
+        f'<span class="pill prio-{priority}">{priority}</span>',
+        f'<span class="pill cat-{category}">{category_icon} {category}</span>',
+        f'<div class="ticket-desc">{description or "Pas de description"}</div>',
+        timer_html,
+        f'<div class="muted">{estimate_html}<span class="{due_class}">📅 {due_text}</span> · Score {int(row["score"])}</div>',
+        "</div>",
+    ])
+    st.markdown(card_html, unsafe_allow_html=True)
 
 
 def render_ticket_actions(ticket_id, prefix):
