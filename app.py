@@ -515,33 +515,28 @@ def render_dashboard(active_df, deleted_df):
         status_counts = active_df.groupby("status").size().reindex(STATUSES, fill_value=0)
         st.bar_chart(status_counts, use_container_width=True)
 
-    st.markdown("#### Tâches effectuées aujourd'hui")
-    _sessions = fetch_time_sessions()
-    _today = datetime.now().strftime("%Y-%m-%d")
-    if not _sessions.empty:
-        _today_s = _sessions[_sessions["started_at"].astype(str).str[:10] == _today]
-        if _today_s.empty:
-            st.info("Aucune session enregistrée aujourd'hui.")
+    st.markdown("#### Tâches terminées")
+    if not active_df.empty:
+        done_df = active_df[active_df["status"] == "Terminé"].copy()
+        if done_df.empty:
+            st.info("Aucune tâche terminée pour le moment.")
         else:
-            _today_agg = (
-                _today_s.groupby(["ticket_id", "title", "project", "category"])
-                .agg(seconds=("seconds", "sum"), sessions=("id", "count"))
-                .reset_index()
-                .sort_values("seconds", ascending=False)
+            done_df = done_df.sort_values("completed_at", ascending=False)
+            done_display = done_df.copy()
+            done_display["Tâche"] = done_display.apply(lambda r: f"#{int(r['id'])} {r['title']}", axis=1)
+            done_display["Client / Projet"] = done_display["project"].fillna("—")
+            done_display["Terminé le"] = done_display["completed_at"].astype(str).str[:10].replace("nan", "—")
+            done_display["Temps travaillé"] = done_display["total_seconds"].apply(
+                lambda s: format_duration(int(s)) if s and int(s) > 0 else "—"
             )
-            _today_agg["Durée"] = _today_agg["seconds"].apply(format_duration)
-            _today_agg["Tâche"] = _today_agg.apply(lambda r: f"#{int(r['ticket_id'])} {r['title']}", axis=1)
-            _today_agg["Client / Projet"] = _today_agg["project"].fillna("—")
             st.dataframe(
-                _today_agg[["Tâche", "Client / Projet", "category", "sessions", "Durée"]]
-                .rename(columns={"category": "Catégorie", "sessions": "Sessions"}),
+                done_display[["Tâche", "Client / Projet", "category", "Terminé le", "Temps travaillé"]]
+                .rename(columns={"category": "Catégorie"}),
                 use_container_width=True,
                 hide_index=True,
             )
-            total_today = _today_agg["seconds"].sum()
-            st.caption(f"Total aujourd'hui : **{format_duration(int(total_today))}**")
     else:
-        st.info("Aucune session enregistrée. Le timer démarre quand un ticket passe en 'En cours'.")
+        st.info("Aucune tâche terminée.")
 
     st.markdown("#### Détail hebdomadaire")
     st.dataframe(weekly, hide_index=True, use_container_width=True)
