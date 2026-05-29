@@ -515,23 +515,31 @@ def render_dashboard(active_df, deleted_df):
         status_counts = active_df.groupby("status").size().reindex(STATUSES, fill_value=0)
         st.bar_chart(status_counts, use_container_width=True)
 
-    st.markdown("#### Activité quotidienne par type de tâche")
+    st.markdown("#### Tâches effectuées aujourd'hui")
     _sessions = fetch_time_sessions()
+    _today = datetime.now().strftime("%Y-%m-%d")
     if not _sessions.empty:
-        _dc = _sessions.copy()
-        _dc["date"] = _dc["started_at"].astype(str).str[:10]
-        _dc["heures"] = (_dc["seconds"] / 3600).round(2)
-        _pivot = (
-            _dc.groupby(["date", "category"])["heures"]
-            .sum()
-            .reset_index()
-            .pivot(index="date", columns="category", values="heures")
-            .fillna(0)
-            .sort_index()
-        )
-        _pivot.index.name = None
-        _pivot.columns.name = None
-        st.bar_chart(_pivot, use_container_width=True, height=280)
+        _today_s = _sessions[_sessions["started_at"].astype(str).str[:10] == _today]
+        if _today_s.empty:
+            st.info("Aucune session enregistrée aujourd'hui.")
+        else:
+            _today_agg = (
+                _today_s.groupby(["ticket_id", "title", "project", "category"])
+                .agg(seconds=("seconds", "sum"), sessions=("id", "count"))
+                .reset_index()
+                .sort_values("seconds", ascending=False)
+            )
+            _today_agg["Durée"] = _today_agg["seconds"].apply(format_duration)
+            _today_agg["Tâche"] = _today_agg.apply(lambda r: f"#{int(r['ticket_id'])} {r['title']}", axis=1)
+            _today_agg["Client / Projet"] = _today_agg["project"].fillna("—")
+            st.dataframe(
+                _today_agg[["Tâche", "Client / Projet", "category", "sessions", "Durée"]]
+                .rename(columns={"category": "Catégorie", "sessions": "Sessions"}),
+                use_container_width=True,
+                hide_index=True,
+            )
+            total_today = _today_agg["seconds"].sum()
+            st.caption(f"Total aujourd'hui : **{format_duration(int(total_today))}**")
     else:
         st.info("Aucune session enregistrée. Le timer démarre quand un ticket passe en 'En cours'.")
 
