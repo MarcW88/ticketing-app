@@ -75,6 +75,7 @@ def init_db():
             deleted_at TEXT,
             archived_at TEXT,
             time_started_at TEXT,
+            paused_at TEXT,
             total_seconds INTEGER DEFAULT 0
         )
         """
@@ -93,7 +94,7 @@ def init_db():
     existing_columns = [row[1] for row in conn.execute("PRAGMA table_info(tickets)").fetchall()]
     for col, col_def in [
         ("deleted_at", "TEXT"), ("archived_at", "TEXT"),
-        ("time_started_at", "TEXT"), ("total_seconds", "INTEGER DEFAULT 0"),
+        ("time_started_at", "TEXT"), ("paused_at", "TEXT"), ("total_seconds", "INTEGER DEFAULT 0"),
     ]:
         if col not in existing_columns:
             conn.execute(f"ALTER TABLE tickets ADD COLUMN {col} {col_def}")
@@ -167,30 +168,66 @@ def fetch_time_sessions():
 
 def _handle_timer_transition(conn, ticket_id, new_status, now):
     row = conn.execute(
-        "SELECT status, time_started_at, total_seconds FROM tickets WHERE id = ?", (ticket_id,)
+        "SELECT status, time_started_at, paused_at, total_seconds FROM tickets WHERE id = ?", (ticket_id,)
     ).fetchone()
     if not row:
-        return None, 0
+        return None, None, 0
     old_status = row["status"]
     time_started_at = row["time_started_at"]
+    paused_at = row["paused_at"]
     total_seconds = int(row["total_seconds"] or 0)
 
-    if old_status == "En cours" and new_status != "En cours" and time_started_at:
-        try:
-            elapsed = int((datetime.fromisoformat(now) - datetime.fromisoformat(time_started_at)).total_seconds())
-            if elapsed > 0:
-                total_seconds += elapsed
-                conn.execute(
-                    "INSERT INTO time_sessions (ticket_id, started_at, ended_at, seconds) VALUES (?, ?, ?, ?)",
-                    (ticket_id, time_started_at, now, elapsed),
-                )
-        except (ValueError, TypeError):
-            pass
+    if old_status == "En cours" and new_status != "En cours":
+        if time_started_at and not paused_at:
+            try:
+                elapsed = int((datetime.fromisoformat(now) - datetime.fromisoformat(time_started_at)).total_seconds())
+                if elapsed > 0:
+                    total_seconds += elapsed
+                    conn.execute(
+                        "INSERT INTO time_sessions (ticket_id, started_at, ended_at, seconds) VALUES (?, ?, ?, ?)",
+                        (ticket_id, time_started_at, now, elapsed),
+                    )
+            except (ValueError, TypeError):
+                pass
         time_started_at = None
+        paused_at = None
     elif new_status == "En cours" and old_status != "En cours":
         time_started_at = now
+        paused_at = None
 
-    return time_started_at, total_seconds
+    return time_started_at, paused_at, total_seconds
+
+
+def pause_ticket(ticket_id):
+    now = datetime.now().isoformat(timespec="seconds")
+    conn = get_connection()
+    row = conn.execute("SELECT time_started_at, total_seconds FROM tickets WHERE id = ?", (ticket_id,)).fetchone()
+    if row and row["time_started_at"]:
+        try:
+            elapsed = int((datetime.fromisoformat(now) - datetime.fromisoformat(row["time_started_at"])).total_seconds())
+            new_total = int(row["total_seconds"] or 0) + max(elapsed, 0)
+            if elapsed > 0:
+                conn.execute(
+                    "INSERT INTO time_sessions (ticket_id, started_at, ended_at, seconds) VALUES (?, ?, ?, ?)",
+                    (ticket_id, row["time_started_at"], now, elapsed),
+                )
+        except (ValueError, TypeError):
+            new_total = int(row["total_seconds"] or 0)
+        conn.execute(
+            "UPDATE tickets SET paused_at = ?, time_started_at = NULL, total_seconds = ?, updated_at = ? WHERE id = ?",
+            (now, new_total, now, ticket_id),
+        )
+    conn.commit()
+
+
+def resume_ticket(ticket_id):
+    now = datetime.now().isoformat(timespec="seconds")
+    conn = get_connection()
+    conn.execute(
+        "UPDATE tickets SET time_started_at = ?, paused_at = NULL, updated_at = ? WHERE id = ?",
+        (now, now, ticket_id),
+    )
+    conn.commit()
 
 
 def fetch_deleted_tickets():
@@ -229,19 +266,19 @@ def update_ticket(ticket_id, title, description, category, project, priority, st
     now = datetime.now().isoformat(timespec="seconds")
     completed_at = now if status == "Terminé" else None
     conn = get_connection()
-    time_started_at, total_seconds = _handle_timer_transition(conn, ticket_id, status, now)
+    time_started_at, paused_at, total_seconds = _handle_timer_transition(conn, ticket_id, status, now)
     conn.execute(
         """
         UPDATE tickets
         SET title = ?, description = ?, category = ?, project = ?, priority = ?,
             status = ?, due_date = ?, estimate_hours = ?, updated_at = ?, completed_at = ?,
-            time_started_at = ?, total_seconds = ?
+            time_started_at = ?, paused_at = ?, total_seconds = ?
         WHERE id = ?
         """,
         (
             title, description, category, project, priority, status,
             due_date.isoformat() if due_date else None, estimate_hours,
-            now, completed_at, time_started_at, total_seconds, ticket_id,
+            now, completed_at, time_started_at, paused_at, total_seconds, ticket_id,
         ),
     )
     conn.commit()
@@ -271,10 +308,10 @@ def update_ticket_status(ticket_id, status):
     now = datetime.now().isoformat(timespec="seconds")
     completed_at = now if status == "Terminé" else None
     conn = get_connection()
-    time_started_at, total_seconds = _handle_timer_transition(conn, ticket_id, status, now)
+    time_started_at, paused_at, total_seconds = _handle_timer_transition(conn, ticket_id, status, now)
     conn.execute(
-        "UPDATE tickets SET status = ?, updated_at = ?, completed_at = ?, time_started_at = ?, total_seconds = ? WHERE id = ?",
-        (status, now, completed_at, time_started_at, total_seconds, ticket_id),
+        "UPDATE tickets SET status = ?, updated_at = ?, completed_at = ?, time_started_at = ?, paused_at = ?, total_seconds = ? WHERE id = ?",
+        (status, now, completed_at, time_started_at, paused_at, total_seconds, ticket_id),
     )
     conn.commit()
 
@@ -729,6 +766,18 @@ def inject_styles():
             font-weight: 600;
             margin: 4px 0 2px;
         }
+        .timer-paused {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(245,158,11,0.1);
+            color: #fbbf24;
+            border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            margin: 4px 0 2px;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -762,12 +811,17 @@ def ticket_card(row, compact=False):
     status = str(row.get("status", ""))
     total_secs = int(row.get("total_seconds") or 0)
     tsa = row.get("time_started_at")
-    if status == "En cours" and tsa and str(tsa) not in ("", "nan", "None"):
-        try:
-            elapsed = int((datetime.now() - datetime.fromisoformat(str(tsa))).total_seconds())
-            timer_html = f'<div class="timer-badge">⏱ {format_duration(total_secs + elapsed)} en cours</div>'
-        except (ValueError, TypeError):
-            pass
+    psa = row.get("paused_at")
+    is_paused = bool(psa) and str(psa) not in ("", "nan", "None")
+    if status == "En cours":
+        if is_paused:
+            timer_html = f'<div class="timer-paused">⏸ {format_duration(total_secs)} en pause</div>'
+        elif tsa and str(tsa) not in ("", "nan", "None"):
+            try:
+                elapsed = int((datetime.now() - datetime.fromisoformat(str(tsa))).total_seconds())
+                timer_html = f'<div class="timer-badge">⏱ {format_duration(total_secs + elapsed)} en cours</div>'
+            except (ValueError, TypeError):
+                pass
     elif total_secs > 0:
         timer_html = f'<div class="timer-done">✅ {format_duration(total_secs)} travaillé</div>'
 
@@ -788,12 +842,24 @@ def ticket_card(row, compact=False):
 
 
 def render_ticket_actions(ticket_id, prefix):
-    current_status = tickets[tickets["id"] == ticket_id].iloc[0]["status"]
+    row_data = tickets[tickets["id"] == ticket_id].iloc[0]
+    current_status = row_data["status"]
     current_index = STATUSES.index(current_status) if current_status in STATUSES else 0
     prev_status = STATUSES[current_index - 1] if current_index > 0 else None
     next_status = STATUSES[current_index + 1] if current_index < len(STATUSES) - 1 else None
+    psa = row_data.get("paused_at")
+    is_paused = bool(psa) and str(psa) not in ("", "nan", "None")
 
-    left_col, edit_col, right_col, done_col, delete_col = st.columns([0.7, 2.4, 0.7, 0.7, 0.7])
+    if current_status == "En cours":
+        left_col, pause_col, edit_col, right_col, done_col, delete_col = st.columns([0.5, 0.8, 2.0, 0.5, 0.5, 0.5])
+        if pause_col.button("▶" if is_paused else "⏸",
+                             key=f"pause_{prefix}_{ticket_id}", use_container_width=True,
+                             help="Reprendre" if is_paused else "Pause"):
+            resume_ticket(ticket_id) if is_paused else pause_ticket(ticket_id)
+            st.rerun()
+    else:
+        left_col, edit_col, right_col, done_col, delete_col = st.columns([0.7, 2.4, 0.7, 0.7, 0.7])
+
     if left_col.button("←", key=f"left_{prefix}_{ticket_id}", use_container_width=True,
                        disabled=prev_status is None, help=prev_status or ""):
         update_ticket_status(ticket_id, prev_status)
