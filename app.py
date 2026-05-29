@@ -56,20 +56,67 @@ def init_db():
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             completed_at TEXT,
-            deleted_at TEXT
+            deleted_at TEXT,
+            archived_at TEXT
         )
         """
     )
     existing_columns = [row[1] for row in conn.execute("PRAGMA table_info(tickets)").fetchall()]
-    if "deleted_at" not in existing_columns:
-        conn.execute("ALTER TABLE tickets ADD COLUMN deleted_at TEXT")
+    for col in ["deleted_at", "archived_at"]:
+        if col not in existing_columns:
+            conn.execute(f"ALTER TABLE tickets ADD COLUMN {col} TEXT")
     conn.commit()
 
 
 def fetch_tickets(include_deleted=False):
     conn = get_connection()
-    where_clause = "" if include_deleted else "WHERE deleted_at IS NULL"
+    if include_deleted:
+        where_clause = ""
+    else:
+        where_clause = "WHERE deleted_at IS NULL AND archived_at IS NULL"
     return pd.read_sql_query(f"SELECT * FROM tickets {where_clause} ORDER BY created_at DESC", conn)
+
+
+def fetch_archived_tickets():
+    conn = get_connection()
+    return pd.read_sql_query(
+        "SELECT * FROM tickets WHERE archived_at IS NOT NULL AND deleted_at IS NULL ORDER BY archived_at DESC",
+        conn,
+    )
+
+
+def archive_ticket(ticket_id):
+    now = datetime.now().isoformat(timespec="seconds")
+    conn = get_connection()
+    conn.execute("UPDATE tickets SET archived_at = ?, updated_at = ? WHERE id = ?", (now, now, ticket_id))
+    conn.commit()
+
+
+def restore_from_archive(ticket_id):
+    now = datetime.now().isoformat(timespec="seconds")
+    conn = get_connection()
+    conn.execute("UPDATE tickets SET archived_at = NULL, updated_at = ? WHERE id = ?", (now, ticket_id))
+    conn.commit()
+
+
+def auto_archive_completed():
+    threshold = (datetime.now() - pd.Timedelta(days=7)).isoformat(timespec="seconds")
+    conn = get_connection()
+    conn.execute(
+        """
+        UPDATE tickets
+        SET archived_at = COALESCE(completed_at, updated_at)
+        WHERE status = 'Terminé'
+        AND (
+            (completed_at IS NOT NULL AND completed_at <= ?)
+            OR (completed_at IS NULL AND updated_at <= ?)
+        )
+        AND deleted_at IS NULL
+        AND archived_at IS NULL
+        """,
+        (threshold, threshold),
+    )
+    conn.commit()
 
 
 def fetch_deleted_tickets():
@@ -875,6 +922,7 @@ def edit_ticket_dialog(ticket_id):
 
 
 init_db()
+auto_archive_completed()
 tickets = prepare_dataframe(fetch_tickets())
 deleted_tickets = prepare_dataframe(fetch_deleted_tickets())
 
@@ -932,7 +980,9 @@ if not filtered.empty:
             | filtered["project"].str.lower().str.contains(query, na=False)
         ]
 
-tab_board, tab_dashboard, tab_list, tab_table, tab_trash = st.tabs(["Board", "Dashboard", "Aperçu complet", "Tableau", "Corbeille"])
+tab_board, tab_dashboard, tab_list, tab_table, tab_archive, tab_trash = st.tabs(
+    ["Board", "Dashboard", "Aperçu complet", "Tableau", "🗃 Archives", "Corbeille"]
+)
 
 with tab_board:
     if filtered.empty:
@@ -975,6 +1025,23 @@ with tab_table:
                 "score": "Score",
             },
         )
+
+with tab_archive:
+    st.subheader("Archives")
+    st.caption("Tickets 'Terminé' archivés automatiquement 7 jours après leur complétion.")
+    archived = prepare_dataframe(fetch_archived_tickets())
+    if archived.empty:
+        st.info("Aucun ticket archivé pour le moment.")
+    else:
+        for _, row in archived.iterrows():
+            ticket_card(row)
+            arc_col1, arc_col2 = st.columns(2)
+            if arc_col1.button("↩ Restaurer", key=f"arch_restore_{int(row['id'])}", use_container_width=True):
+                restore_from_archive(int(row["id"]))
+                st.rerun()
+            if arc_col2.button("Supprimer définitivement", key=f"arch_purge_{int(row['id'])}", use_container_width=True):
+                permanently_delete_ticket(int(row["id"]))
+                st.rerun()
 
 with tab_trash:
     st.subheader("Corbeille")
