@@ -44,6 +44,11 @@ def get_connection():
     return conn
 
 
+def round_to_half_hour(seconds):
+    """Round seconds to the nearest 30-minute mark."""
+    return round(seconds / 1800) * 1800
+
+
 def format_duration(seconds):
     seconds = int(seconds or 0)
     if seconds < 60:
@@ -180,7 +185,8 @@ def _handle_timer_transition(conn, ticket_id, new_status, now):
     if old_status == "En cours" and new_status != "En cours":
         if time_started_at and not paused_at:
             try:
-                elapsed = int((datetime.fromisoformat(now) - datetime.fromisoformat(time_started_at)).total_seconds())
+                raw = int((datetime.fromisoformat(now) - datetime.fromisoformat(time_started_at)).total_seconds())
+                elapsed = round_to_half_hour(raw)
                 if elapsed > 0:
                     total_seconds += elapsed
                     conn.execute(
@@ -204,7 +210,8 @@ def pause_ticket(ticket_id):
     row = conn.execute("SELECT time_started_at, total_seconds FROM tickets WHERE id = ?", (ticket_id,)).fetchone()
     if row and row["time_started_at"]:
         try:
-            elapsed = int((datetime.fromisoformat(now) - datetime.fromisoformat(row["time_started_at"])).total_seconds())
+            raw = int((datetime.fromisoformat(now) - datetime.fromisoformat(row["time_started_at"])).total_seconds())
+            elapsed = round_to_half_hour(raw)
             new_total = int(row["total_seconds"] or 0) + max(elapsed, 0)
             if elapsed > 0:
                 conn.execute(
