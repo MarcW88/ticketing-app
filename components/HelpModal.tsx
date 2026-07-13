@@ -270,8 +270,9 @@ function SectionBoard() {
       </div>
 
       <InfoBox>
-        🔄 Pour déplacer une quête : clique sur <strong>···</strong> sur la carte → <em>Changer le statut</em>,
-        ou utilise les boutons d'action rapide en bas de chaque carte.
+        �️ <strong>Glisser-déposer :</strong> fais glisser une carte d'une colonne à l'autre directement.
+        Tu peux aussi utiliser le menu <strong>···</strong> ou les boutons rapides sur chaque carte.
+        Glisser vers <em>Terminée ✅</em> accorde les XP automatiquement.
       </InfoBox>
     </div>
   );
@@ -282,7 +283,7 @@ function SectionUniverses() {
     { icon: '🍄', color: '#e4522b', name: 'Mario — Plateforme', desc: 'Petites tâches simples, corrections rapides, todo du quotidien. Mots-clés : fix, correction, mise à jour…' },
     { icon: '🗡️', color: '#2c3e50', name: 'Assassin\'s Creed — Infiltration', desc: 'Tâches techniques : audit, migration, refonte, SEO, architecture. Mots-clés : audit, migration, crawl, architecture…' },
     { icon: '🕷️', color: '#c0392b', name: 'Spider-Man — Urbain', desc: 'Réunions, ateliers, reporting, communication client. Mots-clés : call, réunion, atelier, rapport…' },
-    { icon: '⚛️', color: '#2980b9', name: 'Blake Crouch — Temporel', desc: 'Expérimentations, tests A/B, versions multiples. Mots-clés : test, expériment, variant, version…' },
+    { icon: '⚛️', color: '#6D28D9', name: 'Lignes de Réalité — Temporel', desc: 'Expérimentations, tests A/B, versions multiples, feature flags. Mots-clés : test, variant, version, branch…' },
     { icon: '🎬', color: '#1a1a2e', name: 'Film Noir — Narration', desc: 'Rédaction, articles, scripts, contenu éditorial. Mots-clés : article, texte, copy, story, script…' },
   ];
 
