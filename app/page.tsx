@@ -12,6 +12,7 @@ import NewQuestModal from '@/components/NewQuestModal';
 import AchievementToast from '@/components/AchievementToast';
 import LevelUpOverlay from '@/components/LevelUpOverlay';
 import HelpModal from '@/components/HelpModal';
+import TimesheetPanel from '@/components/TimesheetPanel';
 
 export default function Page() {
   const [quests, setQuests] = useState<Quest[]>([]);
@@ -25,6 +26,7 @@ export default function Page() {
   const [mounted, setMounted] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showTimesheet, setShowTimesheet] = useState(false);
   const xpGainTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load from localStorage on mount
@@ -128,8 +130,26 @@ export default function Page() {
       const { updatedState, newAchievements, xpEarned, leveledUp, newLevel } =
         completeQuestWithXP(quest, gameState, prev);
 
+      // Auto-stop timer if running and record the session
+      const now = new Date().toISOString();
+      let extraTimeSpent = 0;
+      let extraSession = null;
+      if (quest.timerStartedAt) {
+        extraTimeSpent = Math.floor((Date.now() - new Date(quest.timerStartedAt).getTime()) / 1000);
+        if (extraTimeSpent > 0) {
+          extraSession = { startedAt: quest.timerStartedAt, endedAt: now, duration: extraTimeSpent };
+        }
+      }
+
       const newQuests = prev.map(q =>
-        q.id === id ? { ...q, status: 'done' as const, completedAt: new Date().toISOString() } : q
+        q.id === id ? {
+          ...q,
+          status: 'done' as const,
+          completedAt: now,
+          timerStartedAt: undefined,
+          timeSpent: (q.timeSpent ?? 0) + extraTimeSpent,
+          timeSessions: [...(q.timeSessions ?? []), ...(extraSession ? [extraSession] : [])],
+        } : q
       );
 
       setGameState(updatedState);
@@ -198,10 +218,13 @@ export default function Page() {
     setQuests(prev => {
       const quest = prev.find(q => q.id === id);
       if (!quest?.timerStartedAt) return prev;
-      const elapsed = Math.floor((Date.now() - new Date(quest.timerStartedAt).getTime()) / 1000);
+      const endedAt = new Date().toISOString();
+      const duration = Math.floor((Date.now() - new Date(quest.timerStartedAt).getTime()) / 1000);
+      if (duration < 1) return prev;
+      const session = { startedAt: quest.timerStartedAt, endedAt, duration };
       const newQuests = prev.map(q =>
         q.id === id
-          ? { ...q, timeSpent: (q.timeSpent ?? 0) + elapsed, timerStartedAt: undefined }
+          ? { ...q, timeSpent: (q.timeSpent ?? 0) + duration, timerStartedAt: undefined, timeSessions: [...(q.timeSessions ?? []), session] }
           : q
       );
       Storage.saveQuests(newQuests);
@@ -296,6 +319,16 @@ export default function Page() {
           onTimerReset={handleTimerReset}
         />
       )}
+
+      {/* Timesheet button */}
+      <button
+        onClick={() => setShowTimesheet(true)}
+        className="fixed bottom-6 left-24 z-40 flex items-center gap-2 px-3 py-2 rounded-full text-xs font-bold border transition-all shadow-md"
+        style={{ background: 'rgba(247,241,231,0.92)', color: 'var(--tweed)', borderColor: 'var(--line)' }}
+        title="Voir la timesheet"
+      >
+        📊 Timesheet
+      </button>
 
       {/* Stats toggle */}
       <button
@@ -429,6 +462,12 @@ export default function Page() {
           setShowHelp(false);
           try { localStorage.setItem('quest-log-guide-seen', '1'); } catch {}
         }}
+      />
+
+      <TimesheetPanel
+        quests={quests}
+        isOpen={showTimesheet}
+        onClose={() => setShowTimesheet(false)}
       />
 
       <AchievementToast

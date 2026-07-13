@@ -11,6 +11,12 @@ export interface Subtask {
   done: boolean;
 }
 
+export interface TimeSession {
+  startedAt: string;  // ISO
+  endedAt: string;    // ISO
+  duration: number;   // seconds
+}
+
 export interface Quest {
   id: string;
   title: string;
@@ -30,8 +36,9 @@ export interface Quest {
   xpReward: number;
   subtasks: Subtask[];
   tags: string[];
-  timeSpent?: number;       // total seconds accumulated
-  timerStartedAt?: string;  // ISO string — present means timer is running
+  timeSpent?: number;         // total seconds accumulated
+  timerStartedAt?: string;    // ISO string — present means timer is running
+  timeSessions?: TimeSession[]; // history of individual work sessions
 }
 
 export interface GameState {
