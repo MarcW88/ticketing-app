@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import type { Quest, UniverseId, QuestRisk, DayMode } from '@/lib/types';
 import { UNIVERSE_CONFIG, RISK_CONFIG, DAY_MODES, XP_BY_RISK } from '@/lib/constants';
-import { autoDetectUniverse } from '@/lib/universeDetector';
+import { autoDetectUniverse, autoDetectRisk } from '@/lib/universeDetector';
 
 interface NewQuestModalProps {
   isOpen: boolean;
@@ -25,6 +25,9 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
   const [userPickedUniverse, setUserPickedUniverse] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
   const [risk, setRisk] = useState<QuestRisk>('medium');
+  const [detectedRisk, setDetectedRisk] = useState<QuestRisk | null>(null);
+  const [userPickedRisk, setUserPickedRisk] = useState(false);
+  const [riskReason, setRiskReason] = useState('');
   const [client, setClient] = useState('');
   const [lore, setLore] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -49,6 +52,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
       setDueDate(editingQuest.dueDate ?? '');
       setSubtasksRaw(editingQuest.subtasks.map(s => s.title).join('\n'));
       setUserPickedUniverse(true);
+      setUserPickedRisk(true);
     } else {
       // Prefill universe from day mode
       const defaultUniverse = DAY_MODES[dayMode]?.defaultUniverse;
@@ -62,6 +66,9 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
       setSubtasksRaw('');
       setUserPickedUniverse(!!defaultUniverse);
       setDetectedUniverse(null);
+      setDetectedRisk(null);
+      setUserPickedRisk(false);
+      setRiskReason('');
       setShowAdvanced(false);
     }
     setTimeout(() => titleRef.current?.focus(), 80);
@@ -82,6 +89,18 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
     return () => clearTimeout(t);
   }, [title, description, userPickedUniverse]);
 
+  // Auto-detect risk from title + description + due date
+  useEffect(() => {
+    if (!title || userPickedRisk) return;
+    const t = setTimeout(() => {
+      const result = autoDetectRisk(title, description, dueDate);
+      setDetectedRisk(result.risk);
+      setRisk(result.risk);
+      setRiskReason(result.reason);
+    }, 450);
+    return () => clearTimeout(t);
+  }, [title, description, dueDate, userPickedRisk]);
+
   function handlePickUniverse(u: UniverseId) {
     setUniverse(u);
     setUserPickedUniverse(true);
@@ -91,6 +110,14 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
   function handleTitleChange(v: string) {
     setTitle(v);
     if (userPickedUniverse) setUserPickedUniverse(false);
+    if (userPickedRisk) setUserPickedRisk(false);
+  }
+
+  function handlePickRisk(r: QuestRisk) {
+    setRisk(r);
+    setUserPickedRisk(true);
+    setDetectedRisk(null);
+    setRiskReason('');
   }
 
   function handleSave() {
@@ -243,25 +270,43 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
 
               {/* Risk */}
               <div>
-                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--tweed)' }}>
-                  Intensité
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--tweed)' }}>
+                    Intensité
+                  </label>
+                  {detectedRisk && detectedRisk === risk && riskReason && (
+                    <motion.span
+                      initial={{ opacity: 0, x: 8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="text-xs px-2 py-0.5 rounded-full"
+                      style={{ background: `${RISK_CONFIG[risk].bg}`, color: RISK_CONFIG[risk].color }}
+                    >
+                      ✨ {riskReason}
+                    </motion.span>
+                  )}
+                </div>
                 <div className="flex gap-2">
                   {RISK_OPTIONS.map(r => {
                     const rcfg = RISK_CONFIG[r];
                     const isSelected = risk === r;
+                    const isAutoDetected = detectedRisk === r && !userPickedRisk;
                     const xp = Math.round(XP_BY_RISK[r] * dayModeBoost);
                     return (
                       <button
                         key={r}
-                        onClick={() => setRisk(r)}
-                        className="flex-1 py-2.5 rounded-xl border-2 transition-all duration-200 text-xs font-semibold"
+                        onClick={() => handlePickRisk(r)}
+                        className="flex-1 py-2.5 rounded-xl border-2 transition-all duration-200 text-xs font-semibold relative"
                         style={{
                           borderColor: isSelected ? rcfg.color : 'var(--line)',
                           background: isSelected ? rcfg.bg : 'rgba(255,248,234,0.6)',
                           color: isSelected ? rcfg.color : 'var(--tweed)',
+                          transform: isSelected ? 'scale(1.04)' : 'scale(1)',
                         }}
                       >
+                        {isAutoDetected && (
+                          <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full text-white flex items-center justify-center"
+                            style={{ background: rcfg.color, fontSize: '8px' }}>✨</span>
+                        )}
                         <div>{rcfg.label}</div>
                         <div className="text-xs font-bold mt-0.5" style={{ color: isSelected ? rcfg.color : 'var(--tweed)', opacity: 0.8 }}>
                           +{xp} XP
@@ -286,7 +331,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
                   <input
                     type="date"
                     value={dueDate}
-                    onChange={e => setDueDate(e.target.value)}
+                    onChange={e => { setDueDate(e.target.value); setUserPickedRisk(false); }}
                     className="noctua-input"
                   />
                 </div>
