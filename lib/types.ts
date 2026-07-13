@@ -30,6 +30,8 @@ export interface Quest {
   xpReward: number;
   subtasks: Subtask[];
   tags: string[];
+  timeSpent?: number;       // total seconds accumulated
+  timerStartedAt?: string;  // ISO string — present means timer is running
 }
 
 export interface GameState {

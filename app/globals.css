@@ -206,3 +206,8 @@ textarea.noctua-input { resize: vertical; min-height: 72px; }
   border-radius: 50%;
   animation: particleUp 0.9s ease-out forwards;
 }
+
+@keyframes timerPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.7); }
+}

@@ -184,6 +184,41 @@ export default function Page() {
     setIsModalOpen(true);
   }, []);
 
+  const handleTimerStart = useCallback((id: string) => {
+    setQuests(prev => {
+      const newQuests = prev.map(q =>
+        q.id === id ? { ...q, timerStartedAt: new Date().toISOString() } : q
+      );
+      Storage.saveQuests(newQuests);
+      return newQuests;
+    });
+  }, []);
+
+  const handleTimerPause = useCallback((id: string) => {
+    setQuests(prev => {
+      const quest = prev.find(q => q.id === id);
+      if (!quest?.timerStartedAt) return prev;
+      const elapsed = Math.floor((Date.now() - new Date(quest.timerStartedAt).getTime()) / 1000);
+      const newQuests = prev.map(q =>
+        q.id === id
+          ? { ...q, timeSpent: (q.timeSpent ?? 0) + elapsed, timerStartedAt: undefined }
+          : q
+      );
+      Storage.saveQuests(newQuests);
+      return newQuests;
+    });
+  }, []);
+
+  const handleTimerReset = useCallback((id: string) => {
+    setQuests(prev => {
+      const newQuests = prev.map(q =>
+        q.id === id ? { ...q, timeSpent: 0, timerStartedAt: undefined } : q
+      );
+      Storage.saveQuests(newQuests);
+      return newQuests;
+    });
+  }, []);
+
   // Tavern wisdom quote (changes daily)
   const wisdomIndex = Math.floor(Date.now() / 86400000) % TAVERN_WISDOM.length;
   const wisdom = TAVERN_WISDOM[wisdomIndex];
@@ -256,6 +291,9 @@ export default function Page() {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onNewQuest={openNewQuest}
+          onTimerStart={handleTimerStart}
+          onTimerPause={handleTimerPause}
+          onTimerReset={handleTimerReset}
         />
       )}
 

@@ -13,6 +13,9 @@ interface QuestBoardProps {
   onEdit: (quest: Quest) => void;
   onDelete: (id: string) => void;
   onNewQuest: () => void;
+  onTimerStart: (id: string) => void;
+  onTimerPause: (id: string) => void;
+  onTimerReset: (id: string) => void;
 }
 
 const COLUMNS: { status: QuestStatus; label: string; icon: string; accent: string; dropDisabled?: boolean }[] = [
@@ -57,6 +60,9 @@ export default function QuestBoard({
   onEdit,
   onDelete,
   onNewQuest,
+  onTimerStart,
+  onTimerPause,
+  onTimerReset,
 }: QuestBoardProps) {
   const filtered = universeFilter === 'all'
     ? quests
@@ -164,6 +170,9 @@ export default function QuestBoard({
                                 onComplete={onComplete}
                                 onEdit={onEdit}
                                 onDelete={onDelete}
+                                onTimerStart={onTimerStart}
+                                onTimerPause={onTimerPause}
+                                onTimerReset={onTimerReset}
                               />
                             </div>
                           )}

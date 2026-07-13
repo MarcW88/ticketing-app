@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import type { Quest, QuestStatus } from '@/lib/types';
 import { UNIVERSE_CONFIG, RISK_CONFIG, STATUS_CONFIG, NEMESIS_MESSAGES } from '@/lib/constants';
+import QuestTimer from './QuestTimer';
 
 interface QuestCardProps {
   quest: Quest;
@@ -11,6 +12,9 @@ interface QuestCardProps {
   onComplete: (id: string) => void;
   onEdit: (quest: Quest) => void;
   onDelete: (id: string) => void;
+  onTimerStart: (id: string) => void;
+  onTimerPause: (id: string) => void;
+  onTimerReset: (id: string) => void;
 }
 
 function getDaysUntilDue(dueDate: string): number {
@@ -35,7 +39,7 @@ function getDueDateColor(dueDate: string): string {
   return '#526a68';
 }
 
-export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, onDelete }: QuestCardProps) {
+export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, onDelete, onTimerStart, onTimerPause, onTimerReset }: QuestCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -210,6 +214,17 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
           +{quest.xpReward} XP
         </span>
       </div>
+
+      {/* Timer — shown on active / haunted / cursed cards */}
+      {(quest.status === 'active' || isHaunted || isCursed) && (
+        <QuestTimer
+          timeSpent={quest.timeSpent ?? 0}
+          timerStartedAt={quest.timerStartedAt}
+          onStart={() => onTimerStart(quest.id)}
+          onPause={() => onTimerPause(quest.id)}
+          onReset={() => onTimerReset(quest.id)}
+        />
+      )}
 
       {/* Action row */}
       {!isDone && (
