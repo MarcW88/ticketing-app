@@ -35,6 +35,27 @@ export function calculateQuestXP(risk: QuestRisk, dayMode: string): number {
   return Math.round(XP_BY_RISK[risk] * boost);
 }
 
+export function updateRiskByDeadline(quests: Quest[]): Quest[] {
+  const LEVELS: QuestRisk[] = ['low', 'medium', 'high', 'critical'];
+  return quests.map(q => {
+    if (q.status === 'done') return q;
+    if (!q.dueDate) return q;
+
+    const days = Math.ceil((new Date(q.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+
+    let minRisk: QuestRisk = 'low';
+    if (days <= 1)  minRisk = 'critical';
+    else if (days <= 3) minRisk = 'high';
+    else if (days <= 7) minRisk = 'medium';
+    else return q; // >7 days: no change
+
+    // Only escalate — never downgrade
+    if (LEVELS.indexOf(minRisk) <= LEVELS.indexOf(q.risk)) return q;
+
+    return { ...q, risk: minRisk, xpReward: XP_BY_RISK[minRisk] };
+  });
+}
+
 export function updateHauntedCursed(quests: Quest[]): Quest[] {
   const now = new Date();
   return quests.map(q => {

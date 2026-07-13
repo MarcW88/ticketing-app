@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Quest, GameState, QuestStatus, UniverseId, DayMode } from '@/lib/types';
 import { Storage } from '@/lib/storage';
-import { updateHauntedCursed, completeQuestWithXP, updateStreak, getLevelInfo } from '@/lib/gameEngine';
+import { updateHauntedCursed, updateRiskByDeadline, completeQuestWithXP, updateStreak, getLevelInfo } from '@/lib/gameEngine';
 import { UNIVERSE_CONFIG, TAVERN_WISDOM, DEFAULT_GAME_STATE, ACHIEVEMENTS } from '@/lib/constants';
 import Header from '@/components/Header';
 import UniverseFilter from '@/components/UniverseFilter';
@@ -34,7 +34,7 @@ export default function Page() {
     try {
       const savedQuests = Storage.getQuests();
       const savedState = Storage.getState();
-      const updatedQuests = updateHauntedCursed(savedQuests);
+      const updatedQuests = updateRiskByDeadline(updateHauntedCursed(savedQuests));
       const updatedState = updateStreak(savedState);
       setQuests(updatedQuests);
       setGameState(updatedState);
