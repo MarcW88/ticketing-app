@@ -41,6 +41,13 @@ export interface Quest {
   timeSessions?: TimeSession[]; // history of individual work sessions
 }
 
+export interface XPChallenge {
+  target: number;
+  startXP: number;
+  label: string;
+  createdAt: string;
+}
+
 export interface GameState {
   xp: number;
   level: number;
@@ -51,6 +58,7 @@ export interface GameState {
   companion: CompanionId;
   dayMode: DayMode;
   questsCompleted: number;
+  challenge?: XPChallenge;
 }
 
 export interface UniverseConfig {

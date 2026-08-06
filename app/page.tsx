@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Quest, GameState, QuestStatus, DayMode } from '@/lib/types';
+import type { Quest, GameState, QuestStatus, DayMode, XPChallenge } from '@/lib/types';
 import { Storage } from '@/lib/storage';
 import { updateHauntedCursed, updateRiskByDeadline, completeQuestWithXP, updateStreak, getLevelInfo } from '@/lib/gameEngine';
 import { TAVERN_WISDOM, DEFAULT_GAME_STATE, ACHIEVEMENTS } from '@/lib/constants';
@@ -202,6 +202,31 @@ export default function Page() {
     });
   }, []);
 
+  const handleSetChallenge = useCallback((target: number, label: string) => {
+    setGameState(prev => {
+      const challenge: XPChallenge = { target, label, startXP: prev.xpTotal, createdAt: new Date().toISOString() };
+      const updated = { ...prev, challenge };
+      Storage.saveState(updated);
+      return updated;
+    });
+  }, []);
+
+  const handleClearChallenge = useCallback(() => {
+    setGameState(prev => {
+      const updated = { ...prev, challenge: undefined };
+      Storage.saveState(updated);
+      return updated;
+    });
+  }, []);
+
+  const handleResetXP = useCallback(() => {
+    setGameState(prev => {
+      const updated = { ...prev, xp: 0, level: 1, challenge: undefined };
+      Storage.saveState(updated);
+      return updated;
+    });
+  }, []);
+
   const handleDismissAchievement = useCallback((id: string) => {
     setPendingAchievements(prev => prev.filter(a => a !== id));
   }, []);
@@ -279,6 +304,9 @@ export default function Page() {
         onDayModeChange={handleDayModeChange}
         onNewQuest={openNewQuest}
         onHelp={() => setShowHelp(true)}
+        onSetChallenge={handleSetChallenge}
+        onClearChallenge={handleClearChallenge}
+        onResetXP={handleResetXP}
       />
 
       <UniverseFilter
