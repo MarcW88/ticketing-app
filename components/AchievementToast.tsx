@@ -38,36 +38,40 @@ export default function AchievementToast({ achievementIds, onDismiss }: Achievem
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 80, scale: 0.88 }}
               transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-              className="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border"
+              className="pointer-events-auto relative flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl overflow-hidden"
               style={{
-                background: 'var(--cream)',
-                borderColor: 'var(--copper)',
-                borderWidth: 1.5,
+                background: '#080C17',
+                border: '1px solid rgba(201,150,60,0.30)',
                 minWidth: 260,
                 maxWidth: 320,
               }}
             >
-              {/* Glow border top */}
-              <div className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl"
-                style={{ background: 'linear-gradient(90deg, var(--copper), var(--sand), var(--copper))' }} />
+              {/* Gold top accent line */}
+              <div className="absolute inset-x-0 top-0 h-px"
+                style={{ background: 'linear-gradient(90deg, transparent, #C9963C, transparent)' }} />
 
-              <span className="text-3xl">{def.icon}</span>
+              {/* Gold dot indicator */}
+              <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(201,150,60,0.12)', border: '1px solid rgba(201,150,60,0.35)' }}>
+                <div className="w-2 h-2 rounded-full" style={{ background: '#C9963C' }} />
+              </div>
+
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--copper)' }}>
-                  Succès débloqué
+                <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#C9963C' }}>
+                  Exploit accompli
                 </p>
-                <p className="font-display font-bold text-sm leading-tight" style={{ color: 'var(--ink)' }}>
+                <p className="font-semibold text-sm leading-tight mt-0.5" style={{ color: '#E8EEF4' }}>
                   {def.title}
                 </p>
-                <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--tweed)' }}>
+                <p className="text-xs mt-0.5 truncate" style={{ color: 'rgba(220,230,245,0.50)' }}>
                   {def.description}
                 </p>
               </div>
 
               <button
                 onClick={() => { setVisible(p => p.filter(v => v !== id)); onDismiss(id); }}
-                className="shrink-0 text-xs rounded-full w-5 h-5 flex items-center justify-center hover:bg-black/5"
-                style={{ color: 'var(--tweed)' }}
+                className="shrink-0 text-xs rounded-full w-5 h-5 flex items-center justify-center transition-colors hover:bg-white/10"
+                style={{ color: 'rgba(220,230,245,0.40)' }}
               >
                 ✕
               </button>
