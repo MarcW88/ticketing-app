@@ -33,6 +33,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
   const [dueDate, setDueDate] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [subtasksRaw, setSubtasksRaw] = useState('');
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
 
   const titleRef = useRef<HTMLInputElement>(null);
   const isEditing = !!editingQuest;
@@ -51,6 +52,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
       setLore(editingQuest.lore ?? '');
       setDueDate(editingQuest.dueDate ?? '');
       setSubtasksRaw(editingQuest.subtasks.map(s => s.title).join('\n'));
+      setImageUrl(editingQuest.imageUrl);
       setUserPickedUniverse(true);
       setUserPickedRisk(true);
     } else {
@@ -64,6 +66,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
       setLore('');
       setDueDate('');
       setSubtasksRaw('');
+      setImageUrl(undefined);
       setUserPickedUniverse(!!defaultUniverse);
       setDetectedUniverse(null);
       setDetectedRisk(null);
@@ -142,7 +145,16 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
       xpReward: previewXP,
       subtasks,
       tags: [],
+      imageUrl,
     });
+  }
+
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => setImageUrl(ev.target?.result as string);
+    reader.readAsDataURL(file);
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -363,6 +375,37 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
                         className="noctua-input"
                         rows={4}
                       />
+                    </div>
+
+                    {/* Image */}
+                    <div>
+                      <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--sand)' }}>
+                        Image de la carte <span className="normal-case font-normal">(optionnel)</span>
+                      </label>
+                      {imageUrl && (
+                        <div className="relative mb-2 rounded-lg overflow-hidden" style={{ height: '100px' }}>
+                          <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+                          <button
+                            onClick={() => setImageUrl(undefined)}
+                            className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full flex items-center justify-center text-xs josefin"
+                            style={{ background: 'rgba(0,0,0,0.65)', color: '#E8EEF4' }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      )}
+                      <label
+                        className="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border transition-all josefin text-xs"
+                        style={{ borderColor: 'rgba(201,150,60,0.25)', color: 'rgba(220,230,245,0.65)', background: 'rgba(255,255,255,0.04)', letterSpacing: '0.05em' }}
+                      >
+                        <span>+ Choisir une image</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleImageChange}
+                        />
+                      </label>
                     </div>
                   </motion.div>
                 )}

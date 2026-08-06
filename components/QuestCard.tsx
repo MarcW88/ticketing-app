@@ -45,7 +45,7 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
 
   const universe = UNIVERSE_CONFIG[quest.universe];
   const risk = RISK_CONFIG[quest.risk];
-  const status = STATUS_CONFIG[quest.status];
+  const status = STATUS_CONFIG[quest.status as keyof typeof STATUS_CONFIG];
 
   const isHaunted = quest.status === 'haunted';
   const isCursed = quest.status === 'cursed';
@@ -79,13 +79,25 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
       className={cardClass}
       onClick={() => onEdit(quest)}
     >
+      {/* Card image banner */}
+      {quest.imageUrl && (
+        <div className="-mx-4 -mt-4 mb-3 overflow-hidden rounded-t-lg" style={{ height: '90px' }}>
+          <img
+            src={quest.imageUrl}
+            alt=""
+            className="w-full h-full object-cover"
+            style={{ opacity: isDone ? 0.4 : 0.85 }}
+          />
+        </div>
+      )}
+
       {/* Risk + Menu row */}
       <div className="flex items-center justify-between mb-2" onClick={e => e.stopPropagation()}>
         <div className="flex items-center gap-1.5">
           {/* Risk */}
           <span
-            className="text-xs font-semibold px-2 py-0.5 rounded-full"
-            style={{ background: risk.bg, color: risk.color }}
+            className="text-xs font-semibold px-2 py-0.5 rounded-full josefin"
+            style={{ background: risk.bg, color: risk.color, letterSpacing: '0.05em' }}
           >
             {risk.label}
           </span>
@@ -93,7 +105,7 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
           <div className="relative">
             <button
               onClick={e => { e.stopPropagation(); setShowMenu(!showMenu); setConfirmDelete(false); }}
-              className="w-6 h-6 flex items-center justify-center rounded-full text-xs hover:bg-black/5 transition-colors"
+              className="w-6 h-6 flex items-center justify-center rounded-full text-xs hover:bg-black/5 transition-colors josefin"
               style={{ color: 'var(--tweed)' }}
             >
               ···
@@ -107,40 +119,40 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
                 onClick={e => e.stopPropagation()}
               >
                 {quest.status === 'backlog' && (
-                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors"
-                    style={{ color: 'var(--sand)' }}
+                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors josefin"
+                    style={{ color: 'var(--sand)', letterSpacing: '0.04em' }}
                     onClick={() => { onStatusChange(quest.id, 'active'); setShowMenu(false); }}>
                     Passer en cours
                   </button>
                 )}
                 {quest.status === 'active' && (
-                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors"
-                    style={{ color: 'var(--sand)' }}
+                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors josefin"
+                    style={{ color: 'var(--sand)', letterSpacing: '0.04em' }}
                     onClick={() => { onStatusChange(quest.id, 'backlog'); setShowMenu(false); }}>
                     Retour au Port
                   </button>
                 )}
                 {(isHaunted || isCursed) && (
-                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors"
-                    style={{ color: 'var(--sand)' }}
+                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors josefin"
+                    style={{ color: 'var(--sand)', letterSpacing: '0.04em' }}
                     onClick={() => { onStatusChange(quest.id, 'active'); setShowMenu(false); }}>
                     Reprendre
                   </button>
                 )}
-                <button className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors"
-                  style={{ color: 'var(--sand)' }}
+                <button className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors josefin"
+                  style={{ color: 'var(--sand)', letterSpacing: '0.04em' }}
                   onClick={() => { onEdit(quest); setShowMenu(false); }}>
                   Modifier
                 </button>
                 {!confirmDelete ? (
-                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-red-900/20 transition-colors"
-                    style={{ color: '#E06060' }}
+                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-red-900/20 transition-colors josefin"
+                    style={{ color: '#E06060', letterSpacing: '0.04em' }}
                     onClick={() => setConfirmDelete(true)}>
                     Supprimer
                   </button>
                 ) : (
-                  <button className="w-full text-left px-3 py-2 text-sm font-bold bg-red-900/20 hover:bg-red-900/30 transition-colors"
-                    style={{ color: '#E06060' }}
+                  <button className="w-full text-left px-3 py-2 text-sm font-bold bg-red-900/20 hover:bg-red-900/30 transition-colors josefin"
+                    style={{ color: '#E06060', letterSpacing: '0.04em' }}
                     onClick={() => { onDelete(quest.id); setShowMenu(false); }}>
                     Confirmer ✕
                   </button>
@@ -153,16 +165,16 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
 
       {/* Title */}
       <h3
-        className="font-semibold text-base leading-snug mb-1"
-        style={{ color: isDone ? 'rgba(240,232,216,0.45)' : '#FFFFFF', textDecoration: isDone ? 'line-through' : 'none' }}
+        className="font-semibold text-base leading-snug mb-1 josefin"
+        style={{ color: isDone ? 'rgba(240,232,216,0.45)' : '#FFFFFF', textDecoration: isDone ? 'line-through' : 'none', letterSpacing: '0.03em' }}
       >
         {quest.title}
       </h3>
 
       {/* Lore / nemesis message */}
       {(quest.lore || nemesisMsg) && (
-        <p className="text-xs italic mb-2 leading-relaxed"
-          style={{ color: isCursed ? '#991b1b' : isHaunted ? '#6d28d9' : 'var(--tweed)' }}>
+        <p className="text-xs italic mb-2 leading-relaxed josefin"
+          style={{ color: isCursed ? '#991b1b' : isHaunted ? '#6d28d9' : 'var(--tweed)', letterSpacing: '0.03em' }}>
           {nemesisMsg ?? quest.lore}
         </p>
       )}
@@ -170,7 +182,7 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
       {/* Subtasks progress */}
       {quest.subtasks.length > 0 && (
         <div className="mb-2">
-          <div className="flex items-center justify-between text-xs mb-1" style={{ color: 'var(--tweed)' }}>
+          <div className="flex items-center justify-between text-xs mb-1 josefin" style={{ color: 'var(--tweed)', letterSpacing: '0.04em' }}>
             <span>Sous-quêtes</span>
             <span>{subtasksDone}/{quest.subtasks.length}</span>
           </div>
@@ -191,20 +203,20 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
         <div className="flex items-center gap-2 flex-wrap">
           {/* Client */}
           {quest.client && (
-            <span className="text-xs px-2 py-0.5 rounded-full border"
-              style={{ borderColor: 'rgba(201,150,60,0.2)', color: 'rgba(240,232,216,0.80)', background: 'rgba(255,255,255,0.05)' }}>
+            <span className="text-xs px-2 py-0.5 rounded-full border josefin"
+              style={{ borderColor: 'rgba(201,150,60,0.2)', color: 'rgba(240,232,216,0.80)', background: 'rgba(255,255,255,0.05)', letterSpacing: '0.04em' }}>
               {quest.client}
             </span>
           )}
           {/* Due date */}
           {quest.dueDate && (
-            <span className="text-xs font-medium" style={{ color: getDueDateColor(quest.dueDate) }}>
+            <span className="text-xs font-medium josefin" style={{ color: getDueDateColor(quest.dueDate), letterSpacing: '0.04em' }}>
               📅 {formatDueDate(quest.dueDate)}
             </span>
           )}
         </div>
         {/* XP */}
-        <span className="text-xs font-bold shrink-0" style={{ color: 'var(--copper)' }}>
+        <span className="text-xs font-bold shrink-0 josefin" style={{ color: 'var(--copper)', letterSpacing: '0.05em' }}>
           +{quest.xpReward} XP
         </span>
       </div>
@@ -226,8 +238,8 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
           {quest.status === 'backlog' && (
             <button
               onClick={() => onStatusChange(quest.id, 'active')}
-              className="flex-1 text-xs font-semibold py-1.5 rounded-lg border transition-all hover:shadow-sm"
-              style={{ borderColor: 'var(--gold)', color: 'var(--gold)', background: 'transparent' }}
+              className="flex-1 text-xs font-semibold py-1.5 rounded-lg border transition-all hover:shadow-sm josefin"
+              style={{ borderColor: 'var(--gold)', color: 'var(--gold)', background: 'transparent', letterSpacing: '0.08em' }}
             >
               Commencer
             </button>
@@ -235,8 +247,8 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
           {(quest.status === 'active' || isHaunted || isCursed) && (
             <button
               onClick={() => onComplete(quest.id)}
-              className="flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all hover:shadow-sm"
-              style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F' }}
+              className="flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all hover:shadow-sm josefin"
+              style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', letterSpacing: '0.08em' }}
             >
               Terminer {isCursed && '(−XP)'}
             </button>
