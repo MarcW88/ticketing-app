@@ -62,9 +62,10 @@ export default function QuestBoard({
   onTimerPause,
   onTimerReset,
 }: QuestBoardProps) {
+  const visibleQuests = quests.filter(q => q.status !== 'archived');
   const filtered = (universeFilter === 'all' || !['backlog','active','done','haunted','cursed'].includes(universeFilter))
-    ? quests
-    : quests.filter(q => q.status === universeFilter || (universeFilter === 'haunted' && q.status === 'cursed'));
+    ? visibleQuests
+    : visibleQuests.filter(q => q.status === universeFilter || (universeFilter === 'haunted' && q.status === 'cursed'));
 
   function getColumnQuests(status: QuestStatus) {
     if (status === 'haunted') {

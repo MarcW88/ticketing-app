@@ -66,10 +66,10 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border"
             style={{ background: 'rgba(11,18,32,0.85)', borderColor: 'var(--line)' }}>
             <div>
-              <div className="text-xs font-bold leading-none" style={{ color: 'var(--gold)' }}>
+              <div className="text-xs font-bold leading-none josefin" style={{ color: 'var(--gold)', letterSpacing: '0.08em' }}>
                 Niv. {gameState.level}
               </div>
-              <div className="text-xs leading-none mt-0.5" style={{ color: 'rgba(240,232,216,0.50)' }}>
+              <div className="text-xs leading-none mt-0.5 josefin" style={{ color: 'rgba(240,232,216,0.50)', letterSpacing: '0.06em' }}>
                 {levelInfo.title}
               </div>
             </div>
@@ -82,11 +82,11 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
               <button
                 key={mode}
                 onClick={() => onDayModeChange(mode)}
-                className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
+                className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 josefin"
                 style={
                   gameState.dayMode === mode
-                    ? { background: 'var(--gold)', color: '#06090F', boxShadow: '0 2px 8px rgba(201,150,60,0.3)' }
-                    : { color: 'rgba(240,232,216,0.55)' }
+                    ? { background: 'var(--gold)', color: '#06090F', boxShadow: '0 2px 8px rgba(201,150,60,0.3)', letterSpacing: '0.06em' }
+                    : { color: 'rgba(240,232,216,0.55)', letterSpacing: '0.06em' }
                 }
                 title={`Boost XP ×${cfg.xpBoost}`}
               >
@@ -101,7 +101,7 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
               whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={onHelp}
               title="Guide"
-              className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border transition-all"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border transition-all josefin"
               style={{ borderColor: 'var(--line)', color: 'rgba(240,232,216,0.60)', background: 'rgba(255,255,255,0.05)' }}
             >
               ?
@@ -109,8 +109,8 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
             <motion.button
               whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
               onClick={onNewQuest}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all"
-              style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', boxShadow: '0 4px 16px rgba(201,150,60,0.25)' }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all josefin"
+              style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', boxShadow: '0 4px 16px rgba(201,150,60,0.25)', letterSpacing: '0.05em' }}
             >
               Nouvelle mission
             </motion.button>

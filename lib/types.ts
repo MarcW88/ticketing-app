@@ -1,7 +1,7 @@
 export type UniverseId = 'odyssey' | 'mario' | 'assassins_creed' | 'spiderman' | 'crouch' | 'film_noir';
 export type MissionClass = 'odyssey' | 'platform' | 'infiltration' | 'urban' | 'temporal' | 'narration';
 export type QuestRisk = 'low' | 'medium' | 'high' | 'critical';
-export type QuestStatus = 'backlog' | 'active' | 'done' | 'haunted' | 'cursed';
+export type QuestStatus = 'backlog' | 'active' | 'done' | 'haunted' | 'cursed' | 'archived';
 export type CompanionId = 'athena' | 'hermes' | 'mentor';
 export type DayMode = 'normal' | 'sirenes' | 'cyclope' | 'tempete';
 

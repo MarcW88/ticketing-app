@@ -14,7 +14,7 @@ type StatusKey = keyof typeof STATUS_CONFIG;
 const STATUS_KEYS: StatusKey[] = ['backlog', 'active', 'haunted', 'cursed', 'done'];
 
 export default function UniverseFilter({ current, quests, onChange }: UniverseFilterProps) {
-  const totalActive = quests.filter(q => q.status !== 'done').length;
+  const totalActive = quests.filter(q => q.status !== 'done' && q.status !== 'archived').length;
 
   return (
     <div
@@ -55,11 +55,11 @@ function StatusTab({ label, color, count, isActive, onClick }: {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 shrink-0"
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 shrink-0 josefin"
       style={
         isActive
-          ? { background: `rgba(201,150,60,0.12)`, color, border: `1.5px solid ${color}`, fontWeight: 700 }
-          : { color: 'rgba(240,232,216,0.60)', border: '1.5px solid transparent' }
+          ? { background: `rgba(201,150,60,0.12)`, color, border: `1.5px solid ${color}`, fontWeight: 600, letterSpacing: '0.06em' }
+          : { color: 'rgba(240,232,216,0.60)', border: '1.5px solid transparent', letterSpacing: '0.06em' }
       }
     >
       <span>{label}</span>

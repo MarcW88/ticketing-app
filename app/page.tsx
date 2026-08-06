@@ -160,8 +160,19 @@ export default function Page() {
         } : q
       );
 
+      // Auto-archive oldest done quests when count reaches 15
+      const doneQuests = newQuests.filter(q => q.status === 'done');
+      let finalQuests = newQuests;
+      if (doneQuests.length >= 15) {
+        const sorted = [...doneQuests].sort((a, b) =>
+          (a.completedAt ?? a.updatedAt).localeCompare(b.completedAt ?? b.updatedAt)
+        );
+        const toArchive = new Set(sorted.slice(0, sorted.length - 14).map(q => q.id));
+        finalQuests = newQuests.map(q => toArchive.has(q.id) ? { ...q, status: 'archived' as const } : q);
+      }
+
       setGameState(updatedState);
-      saveAll(newQuests, updatedState);
+      saveAll(finalQuests, updatedState);
 
       // XP float animation
       setXPGain(xpEarned);
@@ -178,7 +189,7 @@ export default function Page() {
         setPendingAchievements(p => [...p, ...newAchievements]);
       }
 
-      return newQuests;
+      return finalQuests;
     });
   }, [gameState, saveAll]);
 
