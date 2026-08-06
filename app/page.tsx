@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Quest, GameState, QuestStatus, UniverseId, DayMode } from '@/lib/types';
+import type { Quest, GameState, QuestStatus, DayMode } from '@/lib/types';
 import { Storage } from '@/lib/storage';
 import { updateHauntedCursed, updateRiskByDeadline, completeQuestWithXP, updateStreak, getLevelInfo } from '@/lib/gameEngine';
-import { UNIVERSE_CONFIG, TAVERN_WISDOM, DEFAULT_GAME_STATE, ACHIEVEMENTS } from '@/lib/constants';
+import { TAVERN_WISDOM, DEFAULT_GAME_STATE, ACHIEVEMENTS } from '@/lib/constants';
 import Header from '@/components/Header';
 import UniverseFilter from '@/components/UniverseFilter';
 import QuestBoard from '@/components/QuestBoard';
@@ -17,7 +17,7 @@ import TimesheetPanel from '@/components/TimesheetPanel';
 export default function Page() {
   const [quests, setQuests] = useState<Quest[]>([]);
   const [gameState, setGameState] = useState<GameState>({ ...DEFAULT_GAME_STATE });
-  const [universeFilter, setUniverseFilter] = useState<UniverseId | 'all'>('all');
+  const [universeFilter, setUniverseFilter] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingQuest, setEditingQuest] = useState<Quest | null>(null);
   const [pendingAchievements, setPendingAchievements] = useState<string[]>([]);
@@ -34,7 +34,10 @@ export default function Page() {
     try {
       const savedQuests = Storage.getQuests();
       const savedState = Storage.getState();
-      const updatedQuests = updateRiskByDeadline(updateHauntedCursed(savedQuests));
+      const migratedQuests = savedQuests.map(q =>
+        q.universe !== 'odyssey' ? { ...q, universe: 'odyssey' as const, missionClass: 'odyssey' as const } : q
+      );
+      const updatedQuests = updateRiskByDeadline(updateHauntedCursed(migratedQuests));
       const updatedState = updateStreak(savedState);
       setQuests(updatedQuests);
       setGameState(updatedState);
@@ -77,8 +80,8 @@ export default function Page() {
           description: data.description,
           status: 'backlog',
           risk: data.risk ?? 'medium',
-          universe: data.universe ?? 'mario',
-          missionClass: data.missionClass ?? 'platform',
+          universe: 'odyssey' as const,
+          missionClass: 'odyssey' as const,
           client: data.client,
           lore: data.lore,
           dueDate: data.dueDate,
@@ -283,23 +286,22 @@ export default function Page() {
       {/* Empty state */}
       {quests.length === 0 && (
         <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
-          <div className="text-6xl mb-6 animate-float">🌌</div>
-          <h2 className="font-display text-2xl font-bold mb-2" style={{ color: 'var(--petrol)' }}>
-            Le Codex est vide
+          <div className="text-6xl mb-6">⚔️</div>
+          <h2 className="font-display text-2xl font-bold mb-2" style={{ color: 'var(--gold)' }}>
+            L’Odyssée Commence
           </h2>
-          <p className="text-sm max-w-md mb-6" style={{ color: 'var(--tweed)' }}>
-            Votre première quête vous attend. Choisissez un univers, définissez votre mission,
-            et commencez à bâtir votre légende.
+          <p className="text-sm max-w-md mb-6 italic" style={{ color: 'var(--tweed)' }}>
+            Votre première épreuve vous attend. Définissez votre mission et partez à la conquête d’Ithaque.
           </p>
           <button
             onClick={openNewQuest}
-            className="flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all"
-            style={{ background: 'var(--petrol)', color: 'var(--cream)', boxShadow: '0 6px 24px rgba(82,106,104,0.35)' }}
+            className="flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all font-display"
+            style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', boxShadow: '0 6px 24px rgba(201,150,60,0.35)' }}
           >
-            ⚔️ Créer la Première Quête
+            ⚔️ Première Épreuve
           </button>
-          <p className="text-xs mt-8 italic max-w-xs" style={{ color: 'var(--tweed)', opacity: 0.7 }}>
-            &quot;{wisdom}&quot;
+          <p className="text-xs mt-8 italic max-w-xs font-display" style={{ color: 'var(--gold)', opacity: 0.6 }}>
+            &ldquo;{wisdom}&rdquo;
           </p>
         </div>
       )}
@@ -324,7 +326,7 @@ export default function Page() {
       <button
         onClick={() => setShowTimesheet(true)}
         className="fixed bottom-6 left-24 z-40 flex items-center gap-2 px-3 py-2 rounded-full text-xs font-bold border transition-all shadow-md"
-        style={{ background: 'rgba(247,241,231,0.92)', color: 'var(--tweed)', borderColor: 'var(--line)' }}
+        style={{ background: 'rgba(6,9,15,0.92)', color: 'var(--tweed)', borderColor: 'var(--line)' }}
         title="Voir la timesheet"
       >
         📊 Timesheet
@@ -335,8 +337,8 @@ export default function Page() {
         onClick={() => setShowStats(!showStats)}
         className="fixed bottom-6 left-6 z-40 flex items-center gap-2 px-3 py-2 rounded-full text-xs font-bold border transition-all shadow-md"
         style={{
-          background: showStats ? 'var(--petrol)' : 'rgba(247,241,231,0.92)',
-          color: showStats ? 'var(--cream)' : 'var(--tweed)',
+          background: showStats ? 'var(--gold)' : 'rgba(6,9,15,0.92)',
+          color: showStats ? '#06090F' : 'var(--tweed)',
           borderColor: 'var(--line)',
           backdropFilter: 'blur(8px)',
         }}
@@ -348,7 +350,7 @@ export default function Page() {
       {showStats && (
         <div
           className="fixed bottom-16 left-6 z-40 w-72 rounded-2xl shadow-xl border p-5 space-y-4"
-          style={{ background: 'var(--cream)', borderColor: 'var(--line)', backdropFilter: 'blur(10px)' }}
+          style={{ background: 'rgba(11,18,32,0.97)', borderColor: 'var(--line)', backdropFilter: 'blur(10px)' }}
         >
           <div className="flex items-center justify-between">
             <h3 className="font-display font-bold text-sm" style={{ color: 'var(--petrol)' }}>
@@ -364,11 +366,11 @@ export default function Page() {
           {/* Stats grid */}
           <div className="grid grid-cols-3 gap-2 text-center">
             {[
-              { label: 'Terminées', value: done.length, icon: '✅' },
-              { label: 'Actives', value: active.length, icon: '⚙️' },
-              { label: 'Hantées', value: haunted.length, icon: haunted.length > 0 ? '👻' : '🕊️' },
+              { label: 'Ithaque', value: done.length, icon: '🏛️' },
+              { label: 'En Mer', value: active.length, icon: '⚔️' },
+              { label: 'Épreuves', value: haunted.length, icon: haunted.length > 0 ? '🌀' : '🦉' },
             ].map(s => (
-              <div key={s.label} className="rounded-xl p-2" style={{ background: 'rgba(238,228,211,0.5)' }}>
+              <div key={s.label} className="rounded-xl p-2" style={{ background: 'rgba(201,150,60,0.08)' }}>
                 <p className="text-xl">{s.icon}</p>
                 <p className="font-bold text-base" style={{ color: 'var(--petrol)' }}>{s.value}</p>
                 <p className="text-xs" style={{ color: 'var(--tweed)' }}>{s.label}</p>
@@ -378,11 +380,11 @@ export default function Page() {
 
           {/* XP + Streak */}
           <div className="flex gap-2">
-            <div className="flex-1 rounded-xl p-2.5 text-center" style={{ background: 'rgba(194,145,93,0.1)' }}>
-              <p className="font-bold text-sm" style={{ color: 'var(--copper)' }}>{gameState.xpTotal.toLocaleString()}</p>
+            <div className="flex-1 rounded-xl p-2.5 text-center" style={{ background: 'rgba(201,150,60,0.08)' }}>
+              <p className="font-bold text-sm" style={{ color: 'var(--gold)' }}>{gameState.xpTotal.toLocaleString()}</p>
               <p className="text-xs" style={{ color: 'var(--tweed)' }}>XP total</p>
             </div>
-            <div className="flex-1 rounded-xl p-2.5 text-center" style={{ background: 'rgba(194,145,93,0.1)' }}>
+            <div className="flex-1 rounded-xl p-2.5 text-center" style={{ background: 'rgba(201,150,60,0.08)' }}>
               <p className="font-bold text-sm" style={{ color: gameState.streak >= 3 ? '#c2410c' : 'var(--copper)' }}>
                 {gameState.streak > 0 ? `🔥 ${gameState.streak}` : '—'}
               </p>
@@ -390,30 +392,22 @@ export default function Page() {
             </div>
           </div>
 
-          {/* Universe breakdown */}
+          {/* Journey progress */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--tweed)' }}>
-              Par univers
+            <p className="text-xs font-semibold uppercase tracking-wide mb-2 font-display" style={{ color: 'var(--gold)' }}>
+              Voyage vers Ithaque
             </p>
-            {Object.values(UNIVERSE_CONFIG).map(u => {
-              const count = done.filter(q => q.universe === u.id).length;
-              const total = quests.filter(q => q.universe === u.id).length;
-              if (total === 0) return null;
-              return (
-                <div key={u.id} className="flex items-center gap-2 mb-1.5">
-                  <span className="text-sm shrink-0">{u.icon}</span>
-                  <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(139,122,100,0.18)' }}>
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${total ? (count / total) * 100 : 0}%`, background: u.color }}
-                    />
-                  </div>
-                  <span className="text-xs shrink-0" style={{ color: 'var(--tweed)', minWidth: 28, textAlign: 'right' }}>
-                    {count}/{total}
-                  </span>
-                </div>
-              );
-            })}
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(201,150,60,0.12)' }}>
+                <div
+                  className="h-full rounded-full xp-shimmer transition-all duration-500"
+                  style={{ width: `${quests.length ? (done.length / quests.length) * 100 : 0}%` }}
+                />
+              </div>
+              <span className="text-xs shrink-0 font-bold" style={{ color: 'var(--gold)' }}>
+                {done.length}/{quests.length}
+              </span>
+            </div>
           </div>
 
           {/* Achievements */}

@@ -109,44 +109,44 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
                 initial={{ opacity: 0, scale: 0.85, y: 4 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 className="absolute right-0 top-8 w-40 rounded-xl shadow-lg border z-50 overflow-hidden"
-                style={{ background: 'var(--cream)', borderColor: 'var(--line)' }}
+                style={{ background: 'rgba(11,18,32,0.97)', borderColor: 'var(--line)' }}
                 onClick={e => e.stopPropagation()}
               >
                 {quest.status === 'backlog' && (
-                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-black/5 transition-colors"
-                    style={{ color: 'var(--ink)' }}
+                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors"
+                    style={{ color: 'var(--sand)' }}
                     onClick={() => { onStatusChange(quest.id, 'active'); setShowMenu(false); }}>
-                    ⚙️ Démarrer
+                    ⚔️ Appareiller
                   </button>
                 )}
                 {quest.status === 'active' && (
-                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-black/5 transition-colors"
-                    style={{ color: 'var(--ink)' }}
+                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors"
+                    style={{ color: 'var(--sand)' }}
                     onClick={() => { onStatusChange(quest.id, 'backlog'); setShowMenu(false); }}>
-                    📋 Repasser en Backlog
+                    ⚓ Retour au Port
                   </button>
                 )}
                 {(isHaunted || isCursed) && (
-                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-black/5 transition-colors"
-                    style={{ color: 'var(--ink)' }}
+                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors"
+                    style={{ color: 'var(--sand)' }}
                     onClick={() => { onStatusChange(quest.id, 'active'); setShowMenu(false); }}>
-                    ⚔️ Reprendre la Quête
+                    ⚔️ Reprendre l&apos;Épreuve
                   </button>
                 )}
-                <button className="w-full text-left px-3 py-2 text-sm hover:bg-black/5 transition-colors"
-                  style={{ color: 'var(--ink)' }}
+                <button className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors"
+                  style={{ color: 'var(--sand)' }}
                   onClick={() => { onEdit(quest); setShowMenu(false); }}>
                   ✏️ Modifier
                 </button>
                 {!confirmDelete ? (
-                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-red-50 transition-colors"
-                    style={{ color: '#991b1b' }}
+                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-red-900/20 transition-colors"
+                    style={{ color: '#E06060' }}
                     onClick={() => setConfirmDelete(true)}>
                     🗑️ Supprimer
                   </button>
                 ) : (
-                  <button className="w-full text-left px-3 py-2 text-sm font-bold bg-red-50 hover:bg-red-100 transition-colors"
-                    style={{ color: '#991b1b' }}
+                  <button className="w-full text-left px-3 py-2 text-sm font-bold bg-red-900/20 hover:bg-red-900/30 transition-colors"
+                    style={{ color: '#E06060' }}
                     onClick={() => { onDelete(quest.id); setShowMenu(false); }}>
                     Confirmer ✕
                   </button>
@@ -233,18 +233,18 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
             <button
               onClick={() => onStatusChange(quest.id, 'active')}
               className="flex-1 text-xs font-semibold py-1.5 rounded-lg border transition-all hover:shadow-sm"
-              style={{ borderColor: 'var(--petrol)', color: 'var(--petrol)', background: 'transparent' }}
+              style={{ borderColor: 'var(--gold)', color: 'var(--gold)', background: 'transparent' }}
             >
-              ⚙️ Démarrer
+              ⚔️ Appareiller
             </button>
           )}
           {(quest.status === 'active' || isHaunted || isCursed) && (
             <button
               onClick={() => onComplete(quest.id)}
-              className="flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all hover:shadow-sm"
-              style={{ background: 'var(--petrol)', color: 'var(--cream)', boxShadow: '0 2px 8px rgba(82,106,104,0.2)' }}
+              className="flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all hover:shadow-sm font-display"
+              style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', boxShadow: '0 2px 8px rgba(201,150,60,0.25)' }}
             >
-              ✅ Terminer {isCursed && '(−XP)'}
+              🏛️ Ithaque ! {isCursed && '(−XP)'}
             </button>
           )}
         </div>

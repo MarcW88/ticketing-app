@@ -1,13 +1,12 @@
 'use client';
 
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import type { Quest, QuestStatus, UniverseId } from '@/lib/types';
-import { UNIVERSE_CONFIG } from '@/lib/constants';
+import type { Quest, QuestStatus } from '@/lib/types';
 import QuestCard from './QuestCard';
 
 interface QuestBoardProps {
   quests: Quest[];
-  universeFilter: UniverseId | 'all';
+  universeFilter: string;
   onStatusChange: (id: string, status: QuestStatus) => void;
   onComplete: (id: string) => void;
   onEdit: (quest: Quest) => void;
@@ -19,20 +18,20 @@ interface QuestBoardProps {
 }
 
 const COLUMNS: { status: QuestStatus; label: string; icon: string; accent: string; dropDisabled?: boolean }[] = [
-  { status: 'backlog', label: 'Backlog',  icon: '📋', accent: '#c2915d' },
-  { status: 'active',  label: 'En Quête', icon: '⚙️', accent: '#526a68' },
-  { status: 'done',    label: 'Terminée', icon: '✅', accent: '#2D6A4F' },
-  { status: 'haunted', label: 'Maudites', icon: '👻', accent: '#6D28D9', dropDisabled: true },
+  { status: 'backlog', label: "Port d'Ithaque", icon: '⚓', accent: '#C9963C' },
+  { status: 'active',  label: 'En Mer',          icon: '⚔️', accent: '#6AACCF' },
+  { status: 'done',    label: 'Ithaque',          icon: '🏛️', accent: '#7FAB70' },
+  { status: 'haunted', label: 'Épreuves',         icon: '🌀', accent: '#9B7FE0', dropDisabled: true },
 ];
 
 function EmptyColumn({ status, onNewQuest, isDraggingOver }: { status: QuestStatus; onNewQuest: () => void; isDraggingOver: boolean }) {
   if (isDraggingOver) return null;
   const msgs: Record<string, { text: string; cta: string | null; icon: string }> = {
-    backlog: { text: 'Aucune quête en attente.', cta: '+ Ajouter une quête', icon: '📜' },
-    active:  { text: 'Aucune quête active.', cta: null, icon: '⚔️' },
-    done:    { text: 'Glisse une carte ici pour terminer une quête et gagner de l\'XP.', cta: null, icon: '🏆' },
-    haunted: { text: 'Aucune quête en retard. Bon travail !', cta: null, icon: '🕊️' },
-    cursed:  { text: 'Aucune quête maudite.', cta: null, icon: '🕊️' },
+    backlog: { text: 'Aucune épreuve en attente.', cta: '+ Nouvelle épreuve', icon: '⚓' },
+    active:  { text: 'Aucune épreuve en cours.', cta: null, icon: '🌊' },
+    done:    { text: 'Glissez une carte ici pour atteindre Ithaque et gagner de l\'XP.', cta: null, icon: '�️' },
+    haunted: { text: 'Aucune épreuve en souffrance. Les dieux vous sourient.', cta: null, icon: '🦉' },
+    cursed:  { text: 'Aucune épreuve maudite.', cta: null, icon: '🦉' },
   };
   const m = msgs[status] ?? msgs.backlog;
   return (
@@ -64,9 +63,9 @@ export default function QuestBoard({
   onTimerPause,
   onTimerReset,
 }: QuestBoardProps) {
-  const filtered = universeFilter === 'all'
+  const filtered = (universeFilter === 'all' || !['backlog','active','done','haunted','cursed'].includes(universeFilter))
     ? quests
-    : quests.filter(q => q.universe === universeFilter);
+    : quests.filter(q => q.status === universeFilter || (universeFilter === 'haunted' && q.status === 'cursed'));
 
   function getColumnQuests(status: QuestStatus) {
     if (status === 'haunted') {
@@ -106,7 +105,7 @@ export default function QuestBoard({
               >
                 <div className="flex items-center gap-2">
                   <span>{col.icon}</span>
-                  <span className="font-display font-bold text-sm" style={{ color: 'var(--petrol)' }}>
+                  <span className="font-display font-bold text-sm" style={{ color: 'var(--gold)' }}>
                     {col.label}
                   </span>
                 </div>
@@ -159,7 +158,7 @@ export default function QuestBoard({
                                 ...provided.draggableProps.style,
                                 opacity: snapshot.isDragging ? 0.93 : 1,
                                 boxShadow: snapshot.isDragging
-                                  ? '0 16px 40px rgba(44,41,36,0.22)'
+                                  ? '0 16px 40px rgba(0,0,0,0.5)'
                                   : undefined,
                                 cursor: snapshot.isDragging ? 'grabbing' : 'grab',
                               }}
@@ -187,34 +186,6 @@ export default function QuestBoard({
           );
         })}
 
-        {/* Universe legend (visible when filtered) */}
-        {universeFilter !== 'all' && (
-          <div className="flex-shrink-0 w-64 self-start">
-            <div className="noctua-card p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xl">{UNIVERSE_CONFIG[universeFilter].icon}</span>
-                <div>
-                  <p className="font-display font-bold text-sm" style={{ color: 'var(--petrol)' }}>
-                    {UNIVERSE_CONFIG[universeFilter].name}
-                  </p>
-                  <p className="text-xs" style={{ color: 'var(--tweed)' }}>
-                    {UNIVERSE_CONFIG[universeFilter].missionName}
-                  </p>
-                </div>
-              </div>
-              <p className="text-xs leading-relaxed" style={{ color: 'var(--tweed)' }}>
-                {UNIVERSE_CONFIG[universeFilter].description}
-              </p>
-              <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--line)' }}>
-                <p className="text-xs font-medium" style={{ color: 'var(--ink)' }}>
-                  {filtered.filter(q => q.status === 'done').length} terminées
-                  {' · '}
-                  {filtered.filter(q => q.status !== 'done').length} actives
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </DragDropContext>
   );

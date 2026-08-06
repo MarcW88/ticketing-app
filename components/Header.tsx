@@ -25,24 +25,24 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
   const isMaxLevel = gameState.level >= 10;
 
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-md border-b" style={{ borderColor: 'var(--line)', background: 'rgba(247, 241, 231, 0.88)' }}>
+    <header className="sticky top-0 z-40 backdrop-blur-md border-b" style={{ borderColor: 'var(--line)', background: 'rgba(6, 9, 15, 0.92)' }}>
       <div className="max-w-7xl mx-auto px-4 py-3">
         {/* Top row */}
         <div className="flex items-center justify-between gap-4 mb-3">
           {/* Logo + title */}
           <div className="flex items-center gap-3 shrink-0">
-            <span className="text-2xl">📜</span>
+            <span className="text-2xl">⚔️</span>
             <div>
-              <h1 className="font-display text-xl font-bold leading-none" style={{ color: 'var(--petrol)' }}>
-                Codex des Mondes
+              <h1 className="font-display text-xl font-bold leading-none" style={{ color: 'var(--gold)' }}>
+                L&apos;Odyssée
               </h1>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--tweed)' }}>Quest Log</p>
+              <p className="text-xs mt-0.5 italic" style={{ color: 'var(--tweed)' }}>Naviguer · Combattre · Ithaque</p>
             </div>
           </div>
 
           {/* Level badge */}
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border"
-            style={{ background: 'rgba(255,248,234,0.8)', borderColor: 'var(--line)' }}>
+            style={{ background: 'rgba(11,18,32,0.85)', borderColor: 'var(--line)' }}>
             <span className="text-lg">{levelInfo.icon}</span>
             <div>
               <div className="text-xs font-bold leading-none" style={{ color: 'var(--petrol)' }}>
@@ -56,7 +56,7 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
 
           {/* Day mode selector */}
           <div className="hidden md:flex items-center gap-1 p-1 rounded-xl border"
-            style={{ background: 'rgba(238,228,211,0.5)', borderColor: 'var(--line)' }}>
+            style={{ background: 'rgba(11,18,32,0.7)', borderColor: 'var(--line)' }}>
             {(Object.entries(DAY_MODES) as [DayMode, typeof DAY_MODES[DayMode]][]).map(([mode, cfg]) => (
               <button
                 key={mode}
@@ -64,7 +64,7 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
                 className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
                 style={
                   gameState.dayMode === mode
-                    ? { background: 'var(--petrol)', color: 'var(--cream)', boxShadow: '0 2px 8px rgba(82,106,104,0.3)' }
+                    ? { background: 'var(--gold)', color: '#06090F', boxShadow: '0 2px 8px rgba(201,150,60,0.3)' }
                     : { color: 'var(--tweed)' }
                 }
                 title={`Boost XP ×${cfg.xpBoost}`}
@@ -94,7 +94,7 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.8, y: 4 }}
                     className="absolute right-0 top-10 w-56 p-3 rounded-xl text-xs shadow-lg border z-50"
-                    style={{ background: 'var(--cream)', borderColor: 'var(--line)', color: 'var(--ink)' }}
+                    style={{ background: 'rgba(11,18,32,0.97)', borderColor: 'var(--line)', color: 'var(--sand)' }}
                   >
                     <p className="font-bold mb-1" style={{ color: 'var(--petrol)' }}>{companion.name}</p>
                     <p style={{ color: 'var(--tweed)' }}>{companion.flavor}</p>
@@ -123,11 +123,11 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
               onClick={onNewQuest}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-all"
-              style={{ background: 'var(--petrol)', color: 'var(--cream)', boxShadow: '0 4px 16px rgba(82,106,104,0.3)' }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-all font-display"
+              style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', boxShadow: '0 4px 16px rgba(201,150,60,0.3)' }}
             >
               <span className="text-base">⚔️</span>
-              <span className="hidden sm:inline">Nouvelle Quête</span>
+              <span className="hidden sm:inline">Nouvelle Épreuve</span>
               <span className="sm:hidden">+</span>
             </motion.button>
           </div>
@@ -139,7 +139,7 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
             {gameState.xp.toLocaleString()} XP
           </span>
           <div className="flex-1 relative">
-            <div className="h-2.5 rounded-full overflow-hidden" style={{ background: 'rgba(139,122,100,0.18)' }}>
+            <div className="h-2.5 rounded-full overflow-hidden" style={{ background: 'rgba(201,150,60,0.12)' }}>
               <motion.div
                 className="h-full rounded-full xp-shimmer"
                 initial={false}

@@ -1,9 +1,9 @@
-export type UniverseId = 'mario' | 'assassins_creed' | 'spiderman' | 'crouch' | 'film_noir';
-export type MissionClass = 'platform' | 'infiltration' | 'urban' | 'temporal' | 'narration';
+export type UniverseId = 'odyssey' | 'mario' | 'assassins_creed' | 'spiderman' | 'crouch' | 'film_noir';
+export type MissionClass = 'odyssey' | 'platform' | 'infiltration' | 'urban' | 'temporal' | 'narration';
 export type QuestRisk = 'low' | 'medium' | 'high' | 'critical';
 export type QuestStatus = 'backlog' | 'active' | 'done' | 'haunted' | 'cursed';
-export type CompanionId = 'goomba' | 'raven' | 'anomaly';
-export type DayMode = 'normal' | 'lecture' | 'technique' | 'client';
+export type CompanionId = 'athena' | 'hermes' | 'mentor';
+export type DayMode = 'normal' | 'sirenes' | 'cyclope' | 'tempete';
 
 export interface Subtask {
   id: string;
