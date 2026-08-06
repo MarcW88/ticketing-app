@@ -175,7 +175,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
             exit={{ opacity: 0, scale: 0.94, y: 24 }}
             transition={{ type: 'spring', stiffness: 380, damping: 30 }}
             className="fixed inset-x-0 top-[5vh] bottom-[5vh] z-50 max-w-2xl mx-auto overflow-hidden rounded-2xl shadow-2xl flex flex-col"
-            style={{ background: 'var(--cream)', border: '1px solid var(--line)' }}
+            style={{ background: '#0D1525', border: '1px solid rgba(201,150,60,0.25)' }}
             onKeyDown={handleKeyDown}
           >
             {/* Universe accent strip */}
@@ -184,8 +184,8 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--line)' }}>
               <div className="flex items-center gap-2">
-                <span className="text-xl">{selectedUniverse.icon}</span>
-                <h2 className="font-display font-bold text-lg" style={{ color: 'var(--petrol)' }}>
+                <span className="text-xl">⚓</span>
+                <h2 className="font-display font-bold text-lg" style={{ color: 'var(--gold)' }}>
                   {isEditing ? 'Modifier la Quête' : 'Nouvelle Quête'}
                 </h2>
                 {isDetecting && (
@@ -197,8 +197,8 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors text-sm"
-                style={{ color: 'var(--tweed)' }}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-sm"
+                style={{ color: 'var(--sand)' }}
               >
                 ✕
               </button>
@@ -208,7 +208,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
               {/* Title */}
               <div>
-                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--tweed)' }}>
+                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--sand)' }}>
                   Titre de la mission *
                 </label>
                 <input
@@ -221,57 +221,12 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
                 />
               </div>
 
-              {/* Universe selector */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--tweed)' }}>
-                    Univers
-                  </label>
-                  {detectedUniverse && detectedUniverse === universe && (
-                    <motion.span
-                      initial={{ opacity: 0, x: 8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="text-xs px-2 py-0.5 rounded-full"
-                      style={{ background: `${selectedUniverse.color}18`, color: selectedUniverse.color }}
-                    >
-                      ✨ Détecté automatiquement
-                    </motion.span>
-                  )}
-                </div>
-                <div className="grid grid-cols-5 gap-2">
-                  {UNIVERSE_IDS.map(uid => {
-                    const ucfg = UNIVERSE_CONFIG[uid];
-                    const isSelected = universe === uid;
-                    return (
-                      <button
-                        key={uid}
-                        onClick={() => handlePickUniverse(uid)}
-                        className="flex flex-col items-center gap-1 py-3 px-2 rounded-xl border-2 transition-all duration-200"
-                        style={{
-                          borderColor: isSelected ? ucfg.color : 'var(--line)',
-                          background: isSelected ? `${ucfg.color}18` : 'rgba(255,248,234,0.6)',
-                          transform: isSelected ? 'scale(1.04)' : 'scale(1)',
-                        }}
-                        title={ucfg.description}
-                      >
-                        <span className="text-xl">{ucfg.icon}</span>
-                        <span className="text-xs font-medium text-center leading-tight"
-                          style={{ color: isSelected ? ucfg.color : 'var(--tweed)' }}>
-                          {ucfg.name.split(' ').slice(0, 2).join(' ')}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-xs mt-1.5 italic" style={{ color: 'var(--tweed)' }}>
-                  {selectedUniverse.missionName} — {selectedUniverse.description}
-                </p>
-              </div>
+              {/* Universe: always odyssey, hidden */}
 
               {/* Risk */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--tweed)' }}>
+                  <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sand)' }}>
                     Intensité
                   </label>
                   {detectedRisk && detectedRisk === risk && riskReason && (
@@ -297,9 +252,9 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
                         onClick={() => handlePickRisk(r)}
                         className="flex-1 py-2.5 rounded-xl border-2 transition-all duration-200 text-xs font-semibold relative"
                         style={{
-                          borderColor: isSelected ? rcfg.color : 'var(--line)',
-                          background: isSelected ? rcfg.bg : 'rgba(255,248,234,0.6)',
-                          color: isSelected ? rcfg.color : 'var(--tweed)',
+                          borderColor: isSelected ? rcfg.color : 'rgba(201,150,60,0.15)',
+                          background: isSelected ? rcfg.bg : 'rgba(255,255,255,0.04)',
+                          color: isSelected ? rcfg.color : 'var(--sand)',
                           transform: isSelected ? 'scale(1.04)' : 'scale(1)',
                         }}
                       >
@@ -325,7 +280,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
               {/* Due date + Client row */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--tweed)' }}>
+                  <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--sand)' }}>
                     Date limite
                   </label>
                   <input
@@ -336,7 +291,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--tweed)' }}>
+                  <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--sand)' }}>
                     Client / Projet
                   </label>
                   <input
@@ -370,7 +325,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
                   >
                     {/* Description */}
                     <div>
-                      <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--tweed)' }}>
+                      <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--sand)' }}>
                         Description
                       </label>
                       <textarea
@@ -384,7 +339,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
 
                     {/* Lore */}
                     <div>
-                      <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--tweed)' }}>
+                      <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--sand)' }}>
                         Lore <span className="normal-case font-normal">(contexte narratif)</span>
                       </label>
                       <input
@@ -398,7 +353,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
 
                     {/* Subtasks */}
                     <div>
-                      <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--tweed)' }}>
+                      <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--sand)' }}>
                         Sous-quêtes <span className="normal-case font-normal">(une par ligne)</span>
                       </label>
                       <textarea
@@ -416,16 +371,16 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
 
             {/* Footer */}
             <div className="px-6 py-4 border-t flex items-center justify-between gap-3"
-              style={{ borderColor: 'var(--line)', background: 'rgba(238,228,211,0.4)' }}>
-              <div className="text-xs" style={{ color: 'var(--tweed)' }}>
+              style={{ borderColor: 'rgba(201,150,60,0.2)', background: 'rgba(6,9,15,0.6)' }}>
+              <div className="text-xs" style={{ color: 'var(--sand)' }}>
                 <span className="font-bold" style={{ color: 'var(--copper)', fontSize: '15px' }}>+{previewXP}</span>
                 <span className="ml-1">XP à la complétion</span>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 rounded-full text-sm font-medium border transition-all hover:bg-black/5"
-                  style={{ borderColor: 'var(--line)', color: 'var(--tweed)' }}
+                  className="px-4 py-2 rounded-full text-sm font-medium border transition-all hover:bg-white/10"
+                  style={{ borderColor: 'rgba(201,150,60,0.3)', color: 'var(--sand)' }}
                 >
                   Annuler
                 </button>
@@ -435,7 +390,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
                   onClick={handleSave}
                   disabled={!title.trim()}
                   className="px-5 py-2 rounded-full text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ background: 'var(--petrol)', color: 'var(--cream)', boxShadow: '0 4px 14px rgba(82,106,104,0.3)' }}
+                  style={{ background: 'var(--gold)', color: '#06090F', boxShadow: '0 4px 14px rgba(201,150,60,0.4)' }}
                 >
                   {isEditing ? 'Sauvegarder' : '⚔️ Créer la Quête'}
                 </motion.button>

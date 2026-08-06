@@ -132,10 +132,10 @@ html, body {
 
 /* ── Inputs ── */
 .noctua-input {
-  background: rgba(11, 18, 32, 0.85);
-  border: 1px solid rgba(201, 150, 60, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(201, 150, 60, 0.28);
   border-radius: 7px;
-  color: var(--sand);
+  color: #F0E8D8;
   padding: 10px 14px;
   font-size: 15px;
   width: 100%;
@@ -145,9 +145,10 @@ html, body {
 }
 .noctua-input:focus {
   border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(201, 150, 60, 0.12);
+  box-shadow: 0 0 0 3px rgba(201, 150, 60, 0.15);
+  background: rgba(255, 255, 255, 0.09);
 }
-.noctua-input::placeholder { color: rgba(232, 220, 200, 0.3); }
+.noctua-input::placeholder { color: rgba(240, 232, 216, 0.42); }
 
 textarea.noctua-input { resize: vertical; min-height: 72px; }
 
