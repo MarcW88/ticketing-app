@@ -33,10 +33,10 @@ function formatDueDate(dueDate: string): string {
 
 function getDueDateColor(dueDate: string): string {
   const days = getDaysUntilDue(dueDate);
-  if (days < 0) return '#991b1b';
-  if (days <= 1) return '#c2410c';
-  if (days <= 3) return '#92400e';
-  return '#526a68';
+  if (days < 0) return '#f87171';
+  if (days <= 1) return '#fb923c';
+  if (days <= 3) return '#fbbf24';
+  return 'rgba(240,232,216,0.60)';
 }
 
 export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, onDelete, onTimerStart, onTimerPause, onTimerReset }: QuestCardProps) {
@@ -159,8 +159,8 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
 
       {/* Title */}
       <h3
-        className="font-semibold text-sm leading-snug mb-1"
-        style={{ color: isDone ? 'var(--tweed)' : 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none' }}
+        className="font-semibold text-base leading-snug mb-1"
+        style={{ color: isDone ? 'rgba(240,232,216,0.45)' : '#FFFFFF', textDecoration: isDone ? 'line-through' : 'none' }}
       >
         {quest.title}
       </h3>
@@ -198,7 +198,7 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
           {/* Client */}
           {quest.client && (
             <span className="text-xs px-2 py-0.5 rounded-full border"
-              style={{ borderColor: 'var(--line)', color: 'var(--tweed)', background: 'rgba(255,248,234,0.6)' }}>
+              style={{ borderColor: 'rgba(201,150,60,0.2)', color: 'rgba(240,232,216,0.80)', background: 'rgba(255,255,255,0.05)' }}>
               {quest.client}
             </span>
           )}
