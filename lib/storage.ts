@@ -27,6 +27,7 @@ function lsSet(key: string, value: unknown): void {
 export const Storage = {
   // Load quests: Supabase first, fallback to localStorage
   async getQuestsAsync(): Promise<Quest[]> {
+    if (!supabase) return lsGet<Quest[]>(KEYS.quests, []);
     try {
       const { data, error } = await supabase
         .from('quests')
@@ -43,6 +44,7 @@ export const Storage = {
   // Save quests: Supabase + localStorage mirror
   async saveQuestsAsync(quests: Quest[]): Promise<void> {
     lsSet(KEYS.quests, quests);
+    if (!supabase) return;
     try {
       if (quests.length === 0) return;
       const rows = quests.map(q => ({ id: q.id, data: q, updated_at: new Date().toISOString() }));
@@ -55,6 +57,7 @@ export const Storage = {
 
   // Delete a single quest from Supabase
   async deleteQuestAsync(id: string): Promise<void> {
+    if (!supabase) return;
     try {
       await supabase.from('quests').delete().eq('id', id);
     } catch (e) {
@@ -73,6 +76,7 @@ export const Storage = {
 
   // Sync localStorage quests to Supabase (one-time migration)
   async migrateLocalToSupabase(): Promise<boolean> {
+    if (!supabase) return false;
     const local = lsGet<Quest[]>(KEYS.quests, []);
     if (local.length === 0) return false;
     try {
