@@ -272,10 +272,10 @@ function SectionRisks() {
 
       <div className="grid grid-cols-2 gap-3">
         {[
-          { risk: 'Faible',   xp: 20,  color: '#7FAB70', desc: 'Petite correction, todo rapide.' },
-          { risk: 'Moyen',    xp: 50,  color: '#C9963C', desc: 'Tâche standard de la journée.' },
-          { risk: 'Élevé',    xp: 100, color: '#E08060', desc: 'Livrable important, délai serré.' },
-          { risk: 'Critique', xp: 200, color: '#E06060', desc: 'Impact direct sur le business.' },
+          { risk: 'Calypso',   xp: 10,  color: '#6AACCF', desc: 'Petite correction, todo rapide.' },
+          { risk: 'Scylla',    xp: 30,  color: '#C9963C', desc: 'Tâche standard de la journée.' },
+          { risk: 'Charybde',  xp: 75,  color: '#E08060', desc: 'Livrable important, délai serré.' },
+          { risk: 'Le Styx',   xp: 150, color: '#E06060', desc: 'Impact direct sur le business.' },
         ].map(r => (
           <div key={r.risk} className="p-3 rounded-xl"
             style={{ border: `1px solid ${r.color}30`, background: `${r.color}0A` }}>
@@ -304,13 +304,13 @@ function SectionXP() {
 
       <div className="space-y-1.5">
         {[
-          { n: 1,  title: 'Pèlerin',              xp: '0' },
-          { n: 2,  title: 'Matelot',              xp: '100' },
-          { n: 3,  title: 'Navigateur',           xp: '250' },
-          { n: 4,  title: 'Capitaine',            xp: '500' },
-          { n: 5,  title: 'Stratège',             xp: '700' },
-          { n: 7,  title: 'Héros d\'Ithaque',     xp: '1 500' },
-          { n: 10, title: 'Légendaire',           xp: '3 000+' },
+          { n: 1,  title: 'Naufragé',         xp: '0' },
+          { n: 2,  title: 'Marin',            xp: '200' },
+          { n: 3,  title: 'Navigateur',       xp: '600' },
+          { n: 4,  title: 'Guerrier',         xp: '1 400' },
+          { n: 5,  title: 'Hoplite',          xp: '3 000' },
+          { n: 7,  title: 'Héros',            xp: '11 000' },
+          { n: 10, title: 'Légende Vivante',  xp: '60 000' },
         ].map(l => (
           <div key={l.n} className="flex items-center justify-between text-xs py-1.5 border-b"
             style={{ borderColor: D.line }}>
