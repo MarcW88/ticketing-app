@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import type { Quest, UniverseId, QuestRisk, DayMode } from '@/lib/types';
-import { UNIVERSE_CONFIG, RISK_CONFIG, DAY_MODES, XP_BY_RISK } from '@/lib/constants';
+import { UNIVERSE_CONFIG, RISK_CONFIG, DAY_MODES, XP_BY_RISK, ORACLE_MESSAGES } from '@/lib/constants';
 import { autoDetectUniverse, autoDetectRisk } from '@/lib/universeDetector';
 
 interface NewQuestModalProps {
@@ -12,12 +12,23 @@ interface NewQuestModalProps {
   dayMode: DayMode;
   onClose: () => void;
   onSave: (data: Partial<Quest> & { id?: string }) => void;
+  isDebtLocked?: boolean;
+}
+
+function getOracleMessage(dueDate: string): { msg: string; color: string } {
+  const days = Math.ceil((new Date(dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  if (days < 0)  return { msg: ORACLE_MESSAGES.overdue,     color: '#f87171' };
+  if (days === 0) return { msg: ORACLE_MESSAGES.today,       color: '#fb923c' };
+  if (days === 1) return { msg: ORACLE_MESSAGES.tomorrow,    color: '#fb923c' };
+  if (days <= 5)  return { msg: ORACLE_MESSAGES.soonHaunted, color: '#c084fc' };
+  if (days <= 10) return { msg: ORACLE_MESSAGES.comfortable, color: 'rgba(240,232,216,0.55)' };
+  return { msg: ORACLE_MESSAGES.relaxed, color: '#7FAB70' };
 }
 
 const UNIVERSE_IDS = Object.keys(UNIVERSE_CONFIG) as UniverseId[];
 const RISK_OPTIONS: QuestRisk[] = ['low', 'medium', 'high', 'critical'];
 
-export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, onSave }: NewQuestModalProps) {
+export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, onSave, isDebtLocked }: NewQuestModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [universe, setUniverse] = useState<UniverseId>('odyssey');
@@ -302,6 +313,9 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
                     className="noctua-input"
                     style={!dueDate ? { borderColor: 'rgba(224,96,96,0.5)', boxShadow: '0 0 0 1px rgba(224,96,96,0.25)' } : {}}
                   />
+                  {dueDate && (() => { const o = getOracleMessage(dueDate); return (
+                    <p className="text-xs mt-1.5 italic josefin" style={{ color: o.color, letterSpacing: '0.03em' }}>{o.msg}</p>
+                  ); })()}
                 </div>
                 <div>
                   <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--sand)' }}>
@@ -432,7 +446,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={handleSave}
-                  disabled={!title.trim() || !dueDate}
+                  disabled={!title.trim() || !dueDate || !!isDebtLocked}
                   className="px-5 py-2 rounded-full text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{ background: 'var(--gold)', color: '#06090F', boxShadow: '0 4px 14px rgba(201,150,60,0.4)' }}
                 >

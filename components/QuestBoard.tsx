@@ -18,6 +18,9 @@ interface QuestBoardProps {
   hasChallenge?: boolean;
   onToggleChallengeTarget?: (id: string) => void;
   isBlocked?: boolean;
+  hasMaelstrom?: boolean;
+  isDebtLocked?: boolean;
+  onPenelopeWeave?: (id: string) => void;
 }
 
 const COLUMNS: { status: QuestStatus; label: string; accent: string; dropDisabled?: boolean }[] = [
@@ -67,6 +70,9 @@ export default function QuestBoard({
   hasChallenge,
   onToggleChallengeTarget,
   isBlocked,
+  hasMaelstrom,
+  isDebtLocked,
+  onPenelopeWeave,
 }: QuestBoardProps) {
   const visibleQuests = quests.filter(q => q.status !== 'archived');
   const filtered = (universeFilter === 'all' || !['backlog','active','done','haunted','cursed'].includes(universeFilter))
@@ -181,7 +187,9 @@ export default function QuestBoard({
                                 onTimerReset={onTimerReset}
                                 hasChallenge={hasChallenge}
                                 onToggleChallengeTarget={onToggleChallengeTarget}
-                                isBlocked={isBlocked && col.status === 'backlog'}
+                                isBlocked={(isBlocked && col.status === 'backlog') || (isDebtLocked && col.status === 'backlog')}
+                                hasMaelstrom={hasMaelstrom}
+                                onPenelopeWeave={onPenelopeWeave}
                               />
                             </div>
                           )}

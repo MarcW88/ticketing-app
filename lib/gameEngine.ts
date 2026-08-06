@@ -58,13 +58,13 @@ export function updateRiskByDeadline(quests: Quest[]): Quest[] {
 
 export function updateHauntedCursed(quests: Quest[]): Quest[] {
   const now = new Date();
-  return quests.map(q => {
+
+  // Step 1: time-based status escalation
+  let result = quests.map(q => {
     if (q.status === 'done' || q.status === 'archived') return q;
     if (!q.dueDate) return q;
-
     const due = new Date(q.dueDate);
     const diffDays = (now.getTime() - due.getTime()) / (1000 * 60 * 60 * 24);
-
     if (diffDays > 14 && q.status !== 'maelstrom') {
       return { ...q, status: 'maelstrom' as const, maelstromAt: q.maelstromAt ?? now.toISOString() };
     }
@@ -76,6 +76,33 @@ export function updateHauntedCursed(quests: Quest[]): Quest[] {
     }
     return q;
   });
+
+  // Step 2: CONTAGION — haunted quest ≥48h infects oldest backlog quest
+  const hasContagion = result.some(
+    q => q.status === 'haunted' && q.hauntedAt &&
+      (now.getTime() - new Date(q.hauntedAt).getTime()) >= 48 * 3600 * 1000
+  );
+  if (hasContagion) {
+    const backlog = result.filter(q => q.status === 'backlog');
+    if (backlog.length > 0) {
+      const oldest = [...backlog].sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0];
+      result = result.map(q =>
+        q.id === oldest.id
+          ? { ...q, status: 'haunted' as const, hauntedAt: q.hauntedAt ?? now.toISOString() }
+          : q
+      );
+    }
+  }
+
+  // Step 3: CIRCE TRAP — backlog quest untouched >21 days → 0 XP on completion
+  result = result.map(q => {
+    if (q.status !== 'backlog' || q.circeTrapped) return q;
+    const days = (now.getTime() - new Date(q.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+    if (days > 21) return { ...q, circeTrapped: true };
+    return q;
+  });
+
+  return result;
 }
 
 export function applyXPDrain(
@@ -83,6 +110,12 @@ export function applyXPDrain(
   quests: Quest[]
 ): { state: GameState; totalDrained: number } {
   const now = new Date();
+
+  // Athena's shield: drain blocked
+  if (state.drainShieldUntil && new Date(state.drainShieldUntil) > now) {
+    return { state: { ...state, lastDrainAt: state.lastDrainAt ?? now.toISOString() }, totalDrained: 0 };
+  }
+
   if (!state.lastDrainAt) {
     return { state: { ...state, lastDrainAt: now.toISOString() }, totalDrained: 0 };
   }
@@ -96,6 +129,8 @@ export function applyXPDrain(
   );
   let totalDrained = 0;
   for (const q of drainable) {
+    // Penelope's weave: drain frozen for this quest
+    if (q.penelopeWeavedUntil && new Date(q.penelopeWeavedUntil) > now) continue;
     const base = XP_PENALTY_DAILY[q.risk];
     const mult = q.status === 'maelstrom' ? 4 : q.status === 'cursed' ? 2 : 1;
     totalDrained += base * mult * daysSince;
@@ -157,10 +192,57 @@ export function completeQuestWithXP(
   quest: Quest,
   state: GameState,
   allQuests: Quest[]
-): { updatedState: GameState; newAchievements: string[]; xpEarned: number; leveledUp: boolean; newLevel: number } {
+): { updatedState: GameState; newAchievements: string[]; xpEarned: number; leveledUp: boolean; newLevel: number; bonusType?: string } {
+  const today = new Date().toDateString();
+  const isFirstToday = state.lastQuestCompletedDate !== today;
+  const dailyCount = isFirstToday ? 0 : (state.dailyQuestCount ?? 0);
+  const newDailyCount = dailyCount + 1;
+
+  // Athena's shield: 3+ quests in a day
+  const shieldActivated = newDailyCount >= 3;
+  const drainShieldUntil = shieldActivated
+    ? new Date(Date.now() + 24 * 3600 * 1000).toISOString()
+    : state.drainShieldUntil;
+
+  // CIRCE TRAP: quest gives 0 XP
+  if (quest.circeTrapped) {
+    const updatedState: GameState = {
+      ...state,
+      questsCompleted: state.questsCompleted + 1,
+      lastQuestCompletedDate: today,
+      dailyQuestCount: newDailyCount,
+      ...(drainShieldUntil ? { drainShieldUntil } : {}),
+    };
+    const updatedQuests = allQuests.map(q =>
+      q.id === quest.id ? { ...q, status: 'done' as const, completedAt: new Date().toISOString() } : q
+    );
+    const newAchievements = checkNewAchievements(updatedState, updatedQuests);
+    updatedState.unlockedAchievements = [...updatedState.unlockedAchievements, ...newAchievements];
+    return { updatedState, newAchievements, xpEarned: 0, leveledUp: false, newLevel: state.level, bonusType: 'circe' };
+  }
+
+  // Base XP with danger penalties
   let xpEarned = calculateQuestXP(quest.risk, state.dayMode);
   if (quest.status === 'maelstrom') xpEarned = Math.round(xpEarned * 0.5);
   else if (quest.status === 'cursed') xpEarned = Math.round(xpEarned * 0.75);
+
+  // PREMIER DU MATIN: first quest of the day → +50%
+  let bonusType: string | undefined;
+  if (isFirstToday) {
+    xpEarned = Math.round(xpEarned * 1.5);
+    bonusType = 'dawn';
+  } else {
+    // MOMENTUM: each subsequent quest same day multiplies XP
+    const mults = [1.0, 1.1, 1.2, 1.4];
+    const mult = mults[Math.min(dailyCount, mults.length - 1)];
+    if (mult > 1.0) {
+      xpEarned = Math.round(xpEarned * mult);
+      bonusType = 'momentum';
+    }
+  }
+
+  if (shieldActivated) bonusType = 'shield';
+
   const newXP = state.xp + xpEarned;
   const newXPTotal = state.xpTotal + xpEarned;
   const oldLevel = state.level;
@@ -173,6 +255,9 @@ export function completeQuestWithXP(
     xpTotal: newXPTotal,
     level: newLevel,
     questsCompleted: state.questsCompleted + 1,
+    lastQuestCompletedDate: today,
+    dailyQuestCount: newDailyCount,
+    ...(drainShieldUntil ? { drainShieldUntil } : {}),
   };
 
   const updatedQuests = allQuests.map(q =>
@@ -182,5 +267,5 @@ export function completeQuestWithXP(
   const newAchievements = checkNewAchievements(updatedState, updatedQuests);
   updatedState.unlockedAchievements = [...updatedState.unlockedAchievements, ...newAchievements];
 
-  return { updatedState, newAchievements, xpEarned, leveledUp, newLevel };
+  return { updatedState, newAchievements, xpEarned, leveledUp, newLevel, bonusType };
 }

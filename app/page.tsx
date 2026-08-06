@@ -141,7 +141,7 @@ export default function Page() {
       const quest = prev.find(q => q.id === id);
       if (!quest) return prev;
 
-      const { updatedState, newAchievements, xpEarned, leveledUp, newLevel } =
+      const { updatedState, newAchievements, xpEarned, leveledUp, newLevel, bonusType } =
         completeQuestWithXP(quest, gameState, prev);
 
       // Auto-stop timer if running and record the session
@@ -180,10 +180,14 @@ export default function Page() {
       setGameState(updatedState);
       saveAll(finalQuests, updatedState);
 
-      // XP float animation
+      // XP float animation with bonus labels
       setXPGain(xpEarned);
       if (xpGainTimer.current) clearTimeout(xpGainTimer.current);
       xpGainTimer.current = setTimeout(() => setXPGain(null), 1600);
+
+      if (bonusType === 'shield') {
+        setPendingAchievements(p => [...p, '__shield__']);
+      }
 
       // Level up
       if (leveledUp) {
@@ -255,6 +259,25 @@ export default function Page() {
     });
   }, []);
 
+  const handlePenelopeWeave = useCallback((id: string) => {
+    setGameState(gs => {
+      if (gs.xp < 50) return gs;
+      const updated = { ...gs, xp: gs.xp - 50 };
+      Storage.saveState(updated);
+      return updated;
+    });
+    setQuests(prev => {
+      const newQuests = prev.map(q =>
+        q.id === id
+          ? { ...q, penelopeWeavedUntil: new Date(Date.now() + 48 * 3600 * 1000).toISOString() }
+          : q
+      );
+      Storage.saveQuests(newQuests);
+      Storage.saveQuestsAsync(newQuests);
+      return newQuests;
+    });
+  }, []);
+
   const handleDismissAchievement = useCallback((id: string) => {
     setPendingAchievements(prev => prev.filter(a => a !== id));
   }, []);
@@ -314,6 +337,9 @@ export default function Page() {
   const unlockedCount = gameState.unlockedAchievements.length;
 
   const isBlocked = quests.some(q => q.status === 'haunted' || q.status === 'cursed' || q.status === 'maelstrom');
+  const hasMaelstrom = quests.some(q => q.status === 'maelstrom');
+  const isDebtLocked = gameState.xp < 0;
+  const isShielded = !!(gameState.drainShieldUntil && new Date(gameState.drainShieldUntil) > new Date());
 
   const challengeTargets = gameState.challenge ? {
     total: quests.filter(q => q.challengeTarget).length,
@@ -345,6 +371,9 @@ export default function Page() {
         onClearChallenge={handleClearChallenge}
         onResetXP={handleResetXP}
         challengeTargets={challengeTargets}
+        isShielded={isShielded}
+        isDebtLocked={isDebtLocked}
+        dailyMomentum={gameState.dailyQuestCount ?? 0}
       />
 
       <UniverseFilter
@@ -365,10 +394,11 @@ export default function Page() {
           </p>
           <button
             onClick={openNewQuest}
-            className="flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all font-display"
+            disabled={isDebtLocked}
+            className="flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all font-display disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', boxShadow: '0 6px 24px rgba(201,150,60,0.35)' }}
           >
-            ⚔️ Première Épreuve
+            {isDebtLocked ? '⛓️ Dette de l\'Erèbe' : '⚔️ Première Épreuve'}
           </button>
           <p className="text-xs mt-8 italic max-w-xs font-display" style={{ color: 'var(--gold)', opacity: 0.6 }}>
             &ldquo;{wisdom}&rdquo;
@@ -392,6 +422,9 @@ export default function Page() {
           hasChallenge={!!gameState.challenge}
           onToggleChallengeTarget={handleToggleChallengeTarget}
           isBlocked={isBlocked}
+          hasMaelstrom={hasMaelstrom}
+          isDebtLocked={isDebtLocked}
+          onPenelopeWeave={handlePenelopeWeave}
         />
       )}
 
@@ -552,6 +585,7 @@ export default function Page() {
         dayMode={gameState.dayMode}
         onClose={() => { setIsModalOpen(false); setEditingQuest(null); }}
         onSave={handleSaveQuest}
+        isDebtLocked={isDebtLocked}
       />
 
       <LevelUpOverlay

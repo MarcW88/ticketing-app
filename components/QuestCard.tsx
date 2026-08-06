@@ -18,6 +18,8 @@ interface QuestCardProps {
   hasChallenge?: boolean;
   onToggleChallengeTarget?: (id: string) => void;
   isBlocked?: boolean;
+  hasMaelstrom?: boolean;
+  onPenelopeWeave?: (id: string) => void;
 }
 
 function getDaysUntilDue(dueDate: string): number {
@@ -42,7 +44,7 @@ function getDueDateColor(dueDate: string): string {
   return 'rgba(240,232,216,0.60)';
 }
 
-export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, onDelete, onTimerStart, onTimerPause, onTimerReset, hasChallenge, onToggleChallengeTarget, isBlocked }: QuestCardProps) {
+export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, onDelete, onTimerStart, onTimerPause, onTimerReset, hasChallenge, onToggleChallengeTarget, isBlocked, hasMaelstrom, onPenelopeWeave }: QuestCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -276,6 +278,37 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
               Terminer {isMaelstrom ? '(−50% XP)' : isCursed ? '(−25% XP)' : ''}
             </button>
           )}
+        </div>
+      )}
+
+      {/* Penelope's weave button — maelstrom only */}
+      {isMaelstrom && onPenelopeWeave && (
+        <div className="mt-2" onClick={e => e.stopPropagation()}>
+          <button
+            onClick={() => onPenelopeWeave(quest.id)}
+            className="w-full text-xs py-1 rounded-lg border transition-all josefin"
+            style={{ borderColor: 'rgba(180,140,255,0.3)', color: 'rgba(180,140,255,0.8)', background: 'rgba(80,40,140,0.12)', letterSpacing: '0.06em' }}
+            title="Dépenser 50 XP pour geler le drain pendant 48h"
+          >
+            {quest.penelopeWeavedUntil && new Date(quest.penelopeWeavedUntil) > new Date()
+              ? '🧵 Tissu actif — drain gelé'
+              : '🧵 Pénélope — −50 XP, drain gelé 48h'
+            }
+          </button>
+        </div>
+      )}
+
+      {/* Circe trap warning */}
+      {quest.circeTrapped && !isDone && (
+        <div className="mt-2 text-xs px-2 py-1 rounded josefin" style={{ background: 'rgba(160,80,200,0.12)', color: 'rgba(180,120,255,0.85)', border: '1px solid rgba(160,80,200,0.25)' }}>
+          💎 Circé — 0 XP à la complétion
+        </div>
+      )}
+
+      {/* Ithaque sous siège badge */}
+      {isDone && hasMaelstrom && (
+        <div className="absolute top-2 right-2 text-xs px-1.5 py-0.5 rounded josefin" style={{ background: 'rgba(139,26,26,0.35)', color: '#FF8080', border: '1px solid rgba(180,20,20,0.4)', fontSize: '9px', letterSpacing: '0.05em' }}>
+          ⚠️ Menée
         </div>
       )}
 

@@ -121,6 +121,15 @@ export const NEMESIS_MESSAGES: Record<string, string[]> = {
   ],
 };
 
+export const ORACLE_MESSAGES = {
+  overdue:     "💀 La deadline est dépassée — les Sirènes vous cherchent déjà.",
+  today:       "⚠️ Aujourd'hui est le dernier jour. Terminez avant minuit.",
+  tomorrow:    "🌊 Dans 1 jour les Sirènes guettent. Priorité absolue.",
+  soonHaunted: "🌀 Dans 2-3 jours vous entrerez dans les Sirènes si ce n'est pas fini.",
+  comfortable: "⚓ Vous avez du temps — mais Poséidon peut changer les vents.",
+  relaxed:     "🌿 La mer est calme. Naviguez sereinement.",
+};
+
 export const TAVERN_WISDOM = [
   "Ulysse ne rentrait pas vite — il rentrait bien.",
   "Un plan sans action est un navire sans voile.",

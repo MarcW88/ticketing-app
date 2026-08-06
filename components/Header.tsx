@@ -16,9 +16,12 @@ interface HeaderProps {
   onClearChallenge: () => void;
   onResetXP: () => void;
   challengeTargets?: { total: number; done: number };
+  isShielded?: boolean;
+  isDebtLocked?: boolean;
+  dailyMomentum?: number;
 }
 
-export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest, onHelp, onSetChallenge, onClearChallenge, onResetXP, challengeTargets }: HeaderProps) {
+export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest, onHelp, onSetChallenge, onClearChallenge, onResetXP, challengeTargets, isShielded, isDebtLocked, dailyMomentum }: HeaderProps) {
   const levelInfo = getLevelInfo(gameState.level);
   const xpProgress = getXPProgress(gameState.xp, gameState.level);
   const xpForNext = getXPForNextLevel(gameState.level);
@@ -107,13 +110,36 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
             >
               ?
             </motion.button>
+            {isShielded && (
+              <div
+                title="Bouclier d'Athéna actif — drain XP bloqué 24h"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs josefin border"
+                style={{ background: 'rgba(111,170,100,0.12)', color: '#7FAB70', borderColor: 'rgba(127,171,112,0.35)', letterSpacing: '0.06em' }}
+              >
+                🛡️ Athéna
+              </div>
+            )}
+            {(dailyMomentum ?? 0) > 1 && (
+              <div
+                title={`Momentum ×${['1.0','1.1','1.2','1.4'][Math.min(dailyMomentum! - 1, 3)]} — ${dailyMomentum} quêtes aujourd'hui`}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs josefin border"
+                style={{ background: 'rgba(201,150,60,0.10)', color: 'var(--gold)', borderColor: 'rgba(201,150,60,0.28)', letterSpacing: '0.06em' }}
+              >
+                ⚡ ×{['1.0','1.1','1.2','1.4'][Math.min((dailyMomentum ?? 1) - 1, 3)]}
+              </div>
+            )}
             <motion.button
               whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
               onClick={onNewQuest}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all josefin"
-              style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', boxShadow: '0 4px 16px rgba(201,150,60,0.25)', letterSpacing: '0.05em' }}
+              disabled={!!isDebtLocked}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all josefin disabled:opacity-40 disabled:cursor-not-allowed"
+              style={isDebtLocked
+                ? { background: 'rgba(139,26,26,0.5)', color: '#FFD0D0', boxShadow: 'none', letterSpacing: '0.05em' }
+                : { background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', boxShadow: '0 4px 16px rgba(201,150,60,0.25)', letterSpacing: '0.05em' }
+              }
+              title={isDebtLocked ? 'XP négatif — remboursez la Dette de l\'Erèbe en résolvant des épreuves' : ''}
             >
-              Nouvelle mission
+              {isDebtLocked ? '⛓️ Dette' : 'Nouvelle mission'}
             </motion.button>
           </div>
         </div>

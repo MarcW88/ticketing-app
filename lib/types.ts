@@ -42,6 +42,8 @@ export interface Quest {
   timeSessions?: TimeSession[]; // history of individual work sessions
   imageUrl?: string;          // base64 or URL, optional card image
   challengeTarget?: boolean;  // flagged as objective for the current challenge
+  circeTrapped?: boolean;     // backlog untouched >21 days → 0 XP on completion
+  penelopeWeavedUntil?: string; // ISO — drain frozen until this date (costs 50 XP)
 }
 
 export interface XPChallenge {
@@ -63,6 +65,9 @@ export interface GameState {
   questsCompleted: number;
   challenge?: XPChallenge;
   lastDrainAt?: string;
+  drainShieldUntil?: string;      // ISO — Athena's shield active (after 3 quests/day)
+  lastQuestCompletedDate?: string; // 'YYYY-MM-DD' — for dawn bonus
+  dailyQuestCount?: number;        // quests completed today (for momentum)
 }
 
 export interface UniverseConfig {
