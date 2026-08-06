@@ -12,6 +12,7 @@ import NewQuestModal from '@/components/NewQuestModal';
 import AchievementToast from '@/components/AchievementToast';
 import LevelUpOverlay from '@/components/LevelUpOverlay';
 import HelpModal from '@/components/HelpModal';
+import EmberBackground from '@/components/EmberBackground';
 import TimesheetPanel from '@/components/TimesheetPanel';
 
 export default function Page() {
@@ -297,7 +298,8 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" style={{ position: 'relative' }}>
+      <EmberBackground />
       <Header
         gameState={gameState}
         xpGain={xpGain}

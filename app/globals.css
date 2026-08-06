@@ -40,31 +40,43 @@ html, body {
   text-rendering: optimizeLegibility;
 }
 
-/* ── Odyssey background ── */
+/* ── Odyssey background — inspired by Nolan poster atmosphere ── */
 .noctua-bg {
   background:
-    radial-gradient(ellipse at 20% 0%,   rgba(74, 122, 155, 0.12), transparent 45%),
-    radial-gradient(ellipse at 80% 5%,   rgba(201, 150, 60, 0.08), transparent 40%),
-    radial-gradient(ellipse at 10% 50%,  rgba(42, 92, 138, 0.06),  transparent 35%),
-    radial-gradient(ellipse at 90% 80%,  rgba(201, 150, 60, 0.05), transparent 40%),
-    radial-gradient(ellipse at 50% 100%, rgba(74, 122, 155, 0.07), transparent 50%),
+    /* Top-right: amber/fire glow like the sail light */
+    radial-gradient(ellipse at 82% 0%,   rgba(255, 140, 40, 0.24) 0%, rgba(180, 80, 20, 0.10) 30%, transparent 55%),
+    /* Top-center: warm haze bloom */
+    radial-gradient(ellipse at 55% 8%,   rgba(220, 120, 50, 0.14) 0%, transparent 38%),
+    /* Top-left: cool steel-blue atmospheric mist */
+    radial-gradient(ellipse at 8%  2%,   rgba(60, 110, 180, 0.20) 0%, transparent 42%),
+    /* Mid-left: cool depth */
+    radial-gradient(ellipse at 5%  55%,  rgba(40, 80, 150, 0.10) 0%,  transparent 40%),
+    /* Bottom: purple-blue fog/smoke like the poster */
+    radial-gradient(ellipse at 30% 100%, rgba(80, 45, 130, 0.28) 0%, rgba(50, 65, 145, 0.16) 30%, transparent 58%),
+    radial-gradient(ellipse at 70% 95%,  rgba(60, 40, 110, 0.20) 0%, rgba(40, 60, 130, 0.10) 25%, transparent 50%),
+    /* Bottom-right: dark warm ember residue */
+    radial-gradient(ellipse at 95% 75%,  rgba(140, 60, 20, 0.12) 0%, transparent 32%),
     var(--bg);
   min-height: 100vh;
 }
 
-/* ── Card ── */
+/* ── Card — glassmorphism ── */
 .noctua-card {
-  background: #132035;
+  background: rgba(10, 18, 40, 0.60);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(201, 150, 60, 0.18);
   border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 .noctua-card-deep {
-  background: #0F1A2E;
+  background: rgba(8, 14, 32, 0.72);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border: 1px solid rgba(201, 150, 60, 0.18);
   border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.40);
+  box-shadow: 0 6px 28px rgba(0,0,0,0.50), inset 0 1px 0 rgba(255,255,255,0.04);
 }
 
 /* ── Typography ── */
@@ -97,27 +109,34 @@ html, body {
   font-size: 0.75rem;
 }
 
-/* ── Universe card accent — all are Odyssey now ── */
+/* ── Universe card accent — glass panels ── */
 .universe-odyssey,
 .universe-mario,
 .universe-assassins_creed,
 .universe-spiderman,
 .universe-crouch,
 .universe-film_noir {
-  border-top: 2px solid rgba(201, 150, 60, 0.55) !important;
-  background: #132035 !important;
+  border-top: 2px solid rgba(201, 150, 60, 0.60) !important;
+  background: rgba(10, 18, 42, 0.58) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.04) !important;
 }
 
 /* ── Sirènes card (haunted) ── */
 .card-haunted {
   border-top: 2px solid rgba(120, 90, 200, 0.7) !important;
-  background: #1A1530 !important;
+  background: rgba(20, 12, 40, 0.62) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
 }
 
 /* ── Cyclope card (cursed) ── */
 .card-cursed {
   border-top: 2px solid rgba(200, 50, 50, 0.7) !important;
-  background: #200E0E !important;
+  background: rgba(22, 8, 8, 0.65) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
 }
 
 /* ── XP bar shimmer ── */
@@ -142,11 +161,13 @@ html, body {
   box-shadow: 0 8px 28px rgba(201, 150, 60, 0.12);
 }
 
-/* ── Kanban column ── */
+/* ── Kanban column — glass panel ── */
 .kanban-column {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(201, 150, 60, 0.12);
-  border-radius: 12px;
+  background: rgba(6, 12, 28, 0.38);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(201, 150, 60, 0.10);
+  border-radius: 16px;
   min-height: 200px;
 }
 
@@ -226,6 +247,24 @@ textarea.noctua-input { resize: vertical; min-height: 72px; }
 @keyframes shimmer {
   0%   { background-position: 200% center; }
   100% { background-position: -200% center; }
+}
+
+/* ── Ember particles ── */
+.ember-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #FFD080, #FF6020);
+  box-shadow: 0 0 4px #FF7030, 0 0 10px rgba(255, 120, 40, 0.55);
+  animation: emberRise linear infinite;
+  opacity: 0;
+}
+
+@keyframes emberRise {
+  0%   { transform: translate(0, 0) scale(1) rotate(0deg);   opacity: 0; }
+  6%   { opacity: 0.9; }
+  50%  { transform: translate(var(--dx, 30px), -45vh) scale(0.7) rotate(180deg); opacity: 0.6; }
+  90%  { opacity: 0.2; }
+  100% { transform: translate(var(--dx2, -20px), -88vh) scale(0.1) rotate(360deg); opacity: 0; }
 }
 
 @keyframes hauntedPulse {
