@@ -429,6 +429,42 @@ export default function Page() {
             </div>
           </div>
 
+          {/* Export / Import */}
+          <div className="border-t pt-3 flex gap-2" style={{ borderColor: 'var(--line)' }}>
+            <button
+              className="flex-1 text-xs py-1.5 rounded-lg border font-bold transition-all hover:opacity-80"
+              style={{ borderColor: 'var(--line)', color: 'var(--tweed)' }}
+              onClick={() => {
+                const data = localStorage.getItem('questlog_v1_quests') ?? '[]';
+                const blob = new Blob([data], { type: 'application/json' });
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+                a.download = 'odyssey-quests.json'; a.click();
+              }}
+            >
+              ⬇️ Exporter
+            </button>
+            <label
+              className="flex-1 text-xs py-1.5 rounded-lg border font-bold transition-all hover:opacity-80 cursor-pointer text-center"
+              style={{ borderColor: 'var(--gold)', color: 'var(--gold)' }}
+            >
+              ⬆️ Importer
+              <input type="file" accept=".json" className="hidden" onChange={e => {
+                const file = e.target.files?.[0]; if (!file) return;
+                const reader = new FileReader();
+                reader.onload = ev => {
+                  try {
+                    const parsed = JSON.parse(ev.target?.result as string);
+                    if (Array.isArray(parsed)) {
+                      localStorage.setItem('questlog_v1_quests', JSON.stringify(parsed));
+                      window.location.reload();
+                    } else alert('Fichier invalide');
+                  } catch { alert('Erreur de lecture'); }
+                };
+                reader.readAsText(file);
+              }} />
+            </label>
+          </div>
+
           {/* Wisdom */}
           <p className="text-xs italic leading-relaxed" style={{ color: 'var(--tweed)', opacity: 0.75 }}>
             &quot;{wisdom}&quot;

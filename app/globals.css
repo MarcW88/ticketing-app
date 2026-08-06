@@ -11,26 +11,27 @@
   --gold:         #C9963C;
   --gold-deep:    #8B6520;
   --gold-glow:    rgba(201, 150, 60, 0.18);
-  --sand:         #E8DCC8;
+  --sand:         #F0E8D8;
   --sea:          #2A5C8A;
   --ash:          rgba(232, 220, 200, 0.38);
   --line:         rgba(201, 150, 60, 0.16);
   --shadow:       rgba(0, 0, 0, 0.45);
   --petrol:       #C9963C;
   --petrol-deep:  #8B6520;
-  --tweed:        rgba(232, 220, 200, 0.45);
-  --tweed-deep:   rgba(232, 220, 200, 0.28);
+  --tweed:        rgba(240, 232, 216, 0.75);
+  --tweed-deep:   rgba(240, 232, 216, 0.50);
   --copper:       #C9963C;
-  --cream:        #E8DCC8;
-  --ink:          #E8DCC8;
+  --cream:        #F0E8D8;
+  --ink:          #F0E8D8;
   --wash-blue:    rgba(42, 92, 138, 0.18);
 }
 
 html, body {
   background-color: var(--bg);
-  color: var(--sand);
+  color: #F0E8D8;
   font-family: 'Crimson Pro', Georgia, serif;
   -webkit-font-smoothing: antialiased;
+  font-size: 16px;
 }
 
 /* ── Odyssey background ── */
