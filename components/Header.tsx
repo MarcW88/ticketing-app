@@ -55,10 +55,10 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
           {/* Logo */}
           <div className="flex items-center gap-3 shrink-0">
             <div>
-              <h1 className="font-display text-xl font-bold leading-none" style={{ color: 'var(--gold)' }}>
+              <h1 className="cinematic-title text-2xl" style={{ color: 'var(--gold)' }}>
                 L&apos;Odyssée
               </h1>
-              <p className="text-xs mt-0.5" style={{ color: 'rgba(240,232,216,0.45)' }}>Gestionnaire de missions</p>
+              <p className="cinematic-label mt-1.5" style={{ color: 'rgba(220,230,245,0.40)' }}>Gestionnaire de missions</p>
             </div>
           </div>
 

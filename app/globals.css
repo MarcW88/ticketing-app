@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,40 +6,48 @@
 
 :root {
   --bg:           #06090F;
-  --surface:      #0B1220;
-  --surface-2:    #111D30;
+  --surface:      #0A0F1E;
+  --surface-2:    #0F1A2E;
   --gold:         #C9963C;
   --gold-deep:    #8B6520;
   --gold-glow:    rgba(201, 150, 60, 0.18);
+  --steel:        #4A7A9B;
+  --steel-light:  rgba(100, 160, 200, 0.55);
+  --steel-glow:   rgba(74, 122, 155, 0.15);
   --sand:         #F0E8D8;
   --sea:          #2A5C8A;
-  --ash:          rgba(232, 220, 200, 0.38);
+  --ash:          rgba(220, 230, 245, 0.38);
   --line:         rgba(201, 150, 60, 0.16);
-  --shadow:       rgba(0, 0, 0, 0.45);
+  --line-steel:   rgba(74, 122, 155, 0.20);
+  --shadow:       rgba(0, 0, 0, 0.55);
   --petrol:       #C9963C;
   --petrol-deep:  #8B6520;
-  --tweed:        rgba(240, 232, 216, 0.75);
-  --tweed-deep:   rgba(240, 232, 216, 0.50);
+  --tweed:        rgba(220, 230, 245, 0.75);
+  --tweed-deep:   rgba(220, 230, 245, 0.50);
   --copper:       #C9963C;
   --cream:        #F0E8D8;
-  --ink:          #F0E8D8;
+  --ink:          #E8EEF4;
   --wash-blue:    rgba(42, 92, 138, 0.18);
 }
 
 html, body {
   background-color: var(--bg);
-  color: #F0E8D8;
+  color: #E8EEF4;
   font-family: 'Crimson Pro', Georgia, serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   font-size: 16px;
+  text-rendering: optimizeLegibility;
 }
 
 /* ── Odyssey background ── */
 .noctua-bg {
   background:
-    radial-gradient(circle at 15% 8%,  rgba(201, 150, 60, 0.07), transparent 35%),
-    radial-gradient(circle at 85% 18%, rgba(42, 92, 138, 0.06),  transparent 30%),
-    radial-gradient(circle at 50% 90%, rgba(201, 150, 60, 0.04), transparent 40%),
+    radial-gradient(ellipse at 20% 0%,   rgba(74, 122, 155, 0.12), transparent 45%),
+    radial-gradient(ellipse at 80% 5%,   rgba(201, 150, 60, 0.08), transparent 40%),
+    radial-gradient(ellipse at 10% 50%,  rgba(42, 92, 138, 0.06),  transparent 35%),
+    radial-gradient(ellipse at 90% 80%,  rgba(201, 150, 60, 0.05), transparent 40%),
+    radial-gradient(ellipse at 50% 100%, rgba(74, 122, 155, 0.07), transparent 50%),
     var(--bg);
   min-height: 100vh;
 }
@@ -62,6 +70,31 @@ html, body {
 /* ── Typography ── */
 .font-display {
   font-family: 'Cinzel', serif;
+  letter-spacing: 0.08em;
+}
+
+.cinematic-title {
+  font-family: 'Cinzel', serif;
+  font-weight: 900;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.cinematic-label {
+  font-family: 'Cinzel', serif;
+  font-weight: 400;
+  letter-spacing: 0.55em;
+  text-transform: uppercase;
+  font-size: 0.55rem;
+}
+
+.cinematic-column {
+  font-family: 'Cinzel', serif;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
 }
 
 /* ── Universe card accent — all are Odyssey now ── */

@@ -99,17 +99,17 @@ export default function QuestBoard({
             >
               {/* Column header */}
               <div
-                className="flex items-center justify-between px-4 py-3 rounded-t-2xl border-b"
-                style={{ borderColor: 'var(--line)', borderTopColor: col.accent, borderTopWidth: 3 }}
+                className="flex items-center justify-between px-4 py-3.5 rounded-t-2xl"
+                style={{ borderBottom: `1px solid ${col.accent}28`, borderTop: `2px solid ${col.accent}` }}
               >
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm tracking-wide" style={{ color: '#FFFFFF' }}>
+                <div className="flex items-center gap-2.5">
+                  <span className="cinematic-column" style={{ color: col.accent }}>
                     {col.label}
                   </span>
                 </div>
                 <span
-                  className="text-xs font-bold px-2 py-0.5 rounded-full"
-                  style={{ background: `${col.accent}18`, color: col.accent }}
+                  className="text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full"
+                  style={{ background: `${col.accent}18`, color: col.accent, fontSize: '11px' }}
                 >
                   {colQuests.length}
                 </span>
