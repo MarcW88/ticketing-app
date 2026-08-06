@@ -113,6 +113,7 @@ export default function Page() {
       }
 
       Storage.saveQuests(newQuests);
+      Storage.saveQuestsAsync(newQuests);
       return newQuests;
     });
 
