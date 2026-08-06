@@ -77,23 +77,20 @@ export function updateHauntedCursed(quests: Quest[]): Quest[] {
 
 export function checkNewAchievements(state: GameState, quests: Quest[]): string[] {
   const done = quests.filter(q => q.status === 'done');
-  const universesDone = new Set(done.map(q => q.universe));
   const newOnes: string[] = [];
 
   const checks: Record<string, () => boolean> = {
-    first_quest:    () => quests.length >= 1,
-    five_done:      () => done.length >= 5,
-    ten_done:       () => done.length >= 10,
-    streak_3:       () => state.streak >= 3,
-    streak_7:       () => state.streak >= 7,
-    all_universes:  () => universesDone.size >= 5,
-    level_5:        () => state.level >= 5,
-    level_10:       () => state.level >= 10,
-    noir_5:         () => done.filter(q => q.universe === 'film_noir').length >= 5,
-    infiltration_5: () => done.filter(q => q.universe === 'assassins_creed').length >= 5,
-    urban_5:        () => done.filter(q => q.universe === 'spiderman').length >= 5,
-    temporal_3:     () => done.filter(q => q.universe === 'crouch').length >= 3,
-    critical_done:  () => done.some(q => q.risk === 'critical'),
+    first_quest:   () => quests.length >= 1,
+    five_done:     () => done.length >= 5,
+    ten_done:      () => done.length >= 10,
+    twenty_done:   () => done.length >= 20,
+    fifty_done:    () => done.length >= 50,
+    streak_3:      () => state.streak >= 3,
+    streak_7:      () => state.streak >= 7,
+    level_5:       () => state.level >= 5,
+    level_10:      () => state.level >= 10,
+    critical_done: () => done.some(q => q.risk === 'critical'),
+    no_penalty:    () => done.filter(q => !q.hauntedAt).length >= 5,
   };
 
   const allIds = ACHIEVEMENTS.map(a => a.id);

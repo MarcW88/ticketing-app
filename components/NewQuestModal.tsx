@@ -20,7 +20,7 @@ const RISK_OPTIONS: QuestRisk[] = ['low', 'medium', 'high', 'critical'];
 export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, onSave }: NewQuestModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [universe, setUniverse] = useState<UniverseId>('mario');
+  const [universe, setUniverse] = useState<UniverseId>('odyssey');
   const [detectedUniverse, setDetectedUniverse] = useState<UniverseId | null>(null);
   const [userPickedUniverse, setUserPickedUniverse] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
@@ -58,7 +58,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
       const defaultUniverse = DAY_MODES[dayMode]?.defaultUniverse;
       setTitle('');
       setDescription('');
-      setUniverse(defaultUniverse ?? 'mario');
+      setUniverse(defaultUniverse ?? 'odyssey');
       setRisk('medium');
       setClient('');
       setLore('');
