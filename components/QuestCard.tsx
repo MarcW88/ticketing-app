@@ -15,6 +15,8 @@ interface QuestCardProps {
   onTimerStart: (id: string) => void;
   onTimerPause: (id: string) => void;
   onTimerReset: (id: string) => void;
+  hasChallenge?: boolean;
+  onToggleChallengeTarget?: (id: string) => void;
 }
 
 function getDaysUntilDue(dueDate: string): number {
@@ -39,7 +41,7 @@ function getDueDateColor(dueDate: string): string {
   return 'rgba(240,232,216,0.60)';
 }
 
-export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, onDelete, onTimerStart, onTimerPause, onTimerReset }: QuestCardProps) {
+export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, onDelete, onTimerStart, onTimerPause, onTimerReset, hasChallenge, onToggleChallengeTarget }: QuestCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -161,6 +163,19 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
             )}
           </div>
         </div>
+        {hasChallenge && (
+          <button
+            onClick={e => { e.stopPropagation(); onToggleChallengeTarget?.(quest.id); }}
+            title={quest.challengeTarget ? 'Retirer du défi' : 'Ajouter au défi'}
+            className="w-5 h-5 rounded-full flex items-center justify-center text-xs transition-all josefin"
+            style={quest.challengeTarget
+              ? { background: 'rgba(201,150,60,0.20)', color: 'var(--gold)', border: '1.5px solid var(--gold)', fontSize: '10px' }
+              : { background: 'transparent', color: 'rgba(240,232,216,0.22)', border: '1px solid rgba(240,232,216,0.14)', fontSize: '10px' }
+            }
+          >
+            ◎
+          </button>
+        )}
       </div>
 
       {/* Title */}

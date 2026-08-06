@@ -15,6 +15,8 @@ interface QuestBoardProps {
   onTimerStart: (id: string) => void;
   onTimerPause: (id: string) => void;
   onTimerReset: (id: string) => void;
+  hasChallenge?: boolean;
+  onToggleChallengeTarget?: (id: string) => void;
 }
 
 const COLUMNS: { status: QuestStatus; label: string; accent: string; dropDisabled?: boolean }[] = [
@@ -61,6 +63,8 @@ export default function QuestBoard({
   onTimerStart,
   onTimerPause,
   onTimerReset,
+  hasChallenge,
+  onToggleChallengeTarget,
 }: QuestBoardProps) {
   const visibleQuests = quests.filter(q => q.status !== 'archived');
   const filtered = (universeFilter === 'all' || !['backlog','active','done','haunted','cursed'].includes(universeFilter))
@@ -171,6 +175,8 @@ export default function QuestBoard({
                                 onTimerStart={onTimerStart}
                                 onTimerPause={onTimerPause}
                                 onTimerReset={onTimerReset}
+                                hasChallenge={hasChallenge}
+                                onToggleChallengeTarget={onToggleChallengeTarget}
                               />
                             </div>
                           )}

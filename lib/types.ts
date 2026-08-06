@@ -40,6 +40,7 @@ export interface Quest {
   timerStartedAt?: string;    // ISO string — present means timer is running
   timeSessions?: TimeSession[]; // history of individual work sessions
   imageUrl?: string;          // base64 or URL, optional card image
+  challengeTarget?: boolean;  // flagged as objective for the current challenge
 }
 
 export interface XPChallenge {

@@ -15,9 +15,10 @@ interface HeaderProps {
   onSetChallenge: (target: number, label: string) => void;
   onClearChallenge: () => void;
   onResetXP: () => void;
+  challengeTargets?: { total: number; done: number };
 }
 
-export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest, onHelp, onSetChallenge, onClearChallenge, onResetXP }: HeaderProps) {
+export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest, onHelp, onSetChallenge, onClearChallenge, onResetXP, challengeTargets }: HeaderProps) {
   const levelInfo = getLevelInfo(gameState.level);
   const xpProgress = getXPProgress(gameState.xp, gameState.level);
   const xpForNext = getXPForNextLevel(gameState.level);
@@ -195,6 +196,14 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
                           <span>{challengeEarned.toLocaleString()} XP gagnés</span>
                           <span>/{challenge.target.toLocaleString()} XP</span>
                         </div>
+                        {challengeTargets && challengeTargets.total > 0 && (
+                          <div className="flex justify-between text-xs mt-1 josefin" style={{ color: 'rgba(220,230,245,0.55)', letterSpacing: '0.04em' }}>
+                            <span>Objectifs</span>
+                            <span style={{ color: challengeTargets.done === challengeTargets.total ? '#7FAB70' : 'var(--gold)' }}>
+                              {challengeTargets.done}/{challengeTargets.total}
+                            </span>
+                          </div>
+                        )}
                         <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(201,150,60,0.12)' }}>
                           <motion.div
                             className="h-full rounded-full"

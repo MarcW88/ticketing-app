@@ -231,6 +231,16 @@ export default function Page() {
     });
   }, []);
 
+  const handleToggleChallengeTarget = useCallback((id: string) => {
+    setQuests(prev => {
+      const newQuests = prev.map(q =>
+        q.id === id ? { ...q, challengeTarget: !q.challengeTarget } : q
+      );
+      Storage.saveQuests(newQuests);
+      return newQuests;
+    });
+  }, []);
+
   const handleResetXP = useCallback(() => {
     setGameState(prev => {
       const updated = { ...prev, xp: 0, level: 1, challenge: undefined };
@@ -297,6 +307,12 @@ export default function Page() {
   const levelInfo = getLevelInfo(gameState.level);
   const unlockedCount = gameState.unlockedAchievements.length;
 
+  const challengeTargets = gameState.challenge ? {
+    total: quests.filter(q => q.challengeTarget).length,
+    done: quests.filter(q => q.challengeTarget && q.status === 'done'
+      && q.completedAt && gameState.challenge && q.completedAt >= gameState.challenge.createdAt).length,
+  } : undefined;
+
   if (!mounted) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -320,6 +336,7 @@ export default function Page() {
         onSetChallenge={handleSetChallenge}
         onClearChallenge={handleClearChallenge}
         onResetXP={handleResetXP}
+        challengeTargets={challengeTargets}
       />
 
       <UniverseFilter
@@ -364,6 +381,8 @@ export default function Page() {
           onTimerStart={handleTimerStart}
           onTimerPause={handleTimerPause}
           onTimerReset={handleTimerReset}
+          hasChallenge={!!gameState.challenge}
+          onToggleChallengeTarget={handleToggleChallengeTarget}
         />
       )}
 
