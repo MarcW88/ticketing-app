@@ -79,14 +79,8 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
       className={cardClass}
       onClick={() => onEdit(quest)}
     >
-      {/* Universe + Status badges */}
+      {/* Risk + Menu row */}
       <div className="flex items-center justify-between mb-2" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center gap-1.5">
-          <span className="text-base">{universe.icon}</span>
-          <span className="text-xs font-medium" style={{ color: universe.color }}>
-            {universe.name}
-          </span>
-        </div>
         <div className="flex items-center gap-1.5">
           {/* Risk */}
           <span
@@ -116,33 +110,33 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
                   <button className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors"
                     style={{ color: 'var(--sand)' }}
                     onClick={() => { onStatusChange(quest.id, 'active'); setShowMenu(false); }}>
-                    ⚔️ Appareiller
+                    Passer en cours
                   </button>
                 )}
                 {quest.status === 'active' && (
                   <button className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors"
                     style={{ color: 'var(--sand)' }}
                     onClick={() => { onStatusChange(quest.id, 'backlog'); setShowMenu(false); }}>
-                    ⚓ Retour au Port
+                    Retour au Port
                   </button>
                 )}
                 {(isHaunted || isCursed) && (
                   <button className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors"
                     style={{ color: 'var(--sand)' }}
                     onClick={() => { onStatusChange(quest.id, 'active'); setShowMenu(false); }}>
-                    ⚔️ Reprendre l&apos;Épreuve
+                    Reprendre
                   </button>
                 )}
                 <button className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors"
                   style={{ color: 'var(--sand)' }}
                   onClick={() => { onEdit(quest); setShowMenu(false); }}>
-                  ✏️ Modifier
+                  Modifier
                 </button>
                 {!confirmDelete ? (
                   <button className="w-full text-left px-3 py-2 text-sm hover:bg-red-900/20 transition-colors"
                     style={{ color: '#E06060' }}
                     onClick={() => setConfirmDelete(true)}>
-                    🗑️ Supprimer
+                    Supprimer
                   </button>
                 ) : (
                   <button className="w-full text-left px-3 py-2 text-sm font-bold bg-red-900/20 hover:bg-red-900/30 transition-colors"
@@ -235,16 +229,16 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
               className="flex-1 text-xs font-semibold py-1.5 rounded-lg border transition-all hover:shadow-sm"
               style={{ borderColor: 'var(--gold)', color: 'var(--gold)', background: 'transparent' }}
             >
-              ⚔️ Appareiller
+              Commencer
             </button>
           )}
           {(quest.status === 'active' || isHaunted || isCursed) && (
             <button
               onClick={() => onComplete(quest.id)}
-              className="flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all hover:shadow-sm font-display"
-              style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', boxShadow: '0 2px 8px rgba(201,150,60,0.25)' }}
+              className="flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all hover:shadow-sm"
+              style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F' }}
             >
-              🏛️ Ithaque ! {isCursed && '(−XP)'}
+              Terminer {isCursed && '(−XP)'}
             </button>
           )}
         </div>

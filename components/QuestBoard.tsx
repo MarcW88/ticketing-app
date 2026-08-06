@@ -17,26 +17,25 @@ interface QuestBoardProps {
   onTimerReset: (id: string) => void;
 }
 
-const COLUMNS: { status: QuestStatus; label: string; icon: string; accent: string; dropDisabled?: boolean }[] = [
-  { status: 'backlog', label: "Port d'Ithaque", icon: '⚓', accent: '#C9963C' },
-  { status: 'active',  label: 'En Mer',          icon: '⚔️', accent: '#6AACCF' },
-  { status: 'done',    label: 'Ithaque',          icon: '🏛️', accent: '#7FAB70' },
-  { status: 'haunted', label: 'Épreuves',         icon: '🌀', accent: '#9B7FE0', dropDisabled: true },
+const COLUMNS: { status: QuestStatus; label: string; accent: string; dropDisabled?: boolean }[] = [
+  { status: 'backlog', label: "Port d'Ithaque", accent: '#C9963C' },
+  { status: 'active',  label: 'En Mer',          accent: '#6AACCF' },
+  { status: 'done',    label: 'Ithaque',          accent: '#7FAB70' },
+  { status: 'haunted', label: 'Épreuves',         accent: '#9B7FE0', dropDisabled: true },
 ];
 
 function EmptyColumn({ status, onNewQuest, isDraggingOver }: { status: QuestStatus; onNewQuest: () => void; isDraggingOver: boolean }) {
   if (isDraggingOver) return null;
-  const msgs: Record<string, { text: string; cta: string | null; icon: string }> = {
-    backlog: { text: 'Aucune épreuve en attente.', cta: '+ Nouvelle épreuve', icon: '⚓' },
-    active:  { text: 'Aucune épreuve en cours.', cta: null, icon: '🌊' },
-    done:    { text: 'Glissez une carte ici pour atteindre Ithaque et gagner de l\'XP.', cta: null, icon: '�️' },
-    haunted: { text: 'Aucune épreuve en souffrance. Les dieux vous sourient.', cta: null, icon: '🦉' },
-    cursed:  { text: 'Aucune épreuve maudite.', cta: null, icon: '🦉' },
+  const msgs: Record<string, { text: string; cta: string | null }> = {
+    backlog: { text: 'Aucune mission en attente.', cta: 'Nouvelle mission' },
+    active:  { text: 'Aucune mission en cours.', cta: null },
+    done:    { text: 'Glissez une carte ici pour la terminer.', cta: null },
+    haunted: { text: 'Aucune mission bloquée.', cta: null },
+    cursed:  { text: 'Aucune mission maudite.', cta: null },
   };
   const m = msgs[status] ?? msgs.backlog;
   return (
     <div className="flex flex-col items-center justify-center py-10 px-4 text-center opacity-60">
-      <span className="text-3xl mb-2">{m.icon}</span>
       <p className="text-xs" style={{ color: 'var(--tweed)' }}>{m.text}</p>
       {m.cta && (
         <button
@@ -104,8 +103,7 @@ export default function QuestBoard({
                 style={{ borderColor: 'var(--line)', borderTopColor: col.accent, borderTopWidth: 3 }}
               >
                 <div className="flex items-center gap-2">
-                  <span>{col.icon}</span>
-                  <span className="font-display font-bold text-sm" style={{ color: 'var(--gold)' }}>
+                  <span className="font-semibold text-sm tracking-wide" style={{ color: '#FFFFFF' }}>
                     {col.label}
                   </span>
                 </div>

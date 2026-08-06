@@ -24,7 +24,6 @@ export default function UniverseFilter({ current, quests, onChange }: UniverseFi
       {/* All */}
       <StatusTab
         label="Toutes"
-        icon="⚔️"
         color="var(--gold)"
         count={totalActive}
         isActive={current === 'all'}
@@ -38,7 +37,6 @@ export default function UniverseFilter({ current, quests, onChange }: UniverseFi
           <StatusTab
             key={key}
             label={cfg.label}
-            icon={cfg.icon}
             color={key === 'cursed' ? '#E06060' : key === 'haunted' ? '#9B7FE0' : key === 'done' ? '#7FAB70' : key === 'active' ? '#6AACCF' : 'var(--gold)'}
             count={count}
             isActive={current === key}
@@ -50,8 +48,8 @@ export default function UniverseFilter({ current, quests, onChange }: UniverseFi
   );
 }
 
-function StatusTab({ label, icon, color, count, isActive, onClick }: {
-  label: string; icon: string; color: string;
+function StatusTab({ label, color, count, isActive, onClick }: {
+  label: string; color: string;
   count: number; isActive: boolean; onClick: () => void;
 }) {
   return (
@@ -61,11 +59,10 @@ function StatusTab({ label, icon, color, count, isActive, onClick }: {
       style={
         isActive
           ? { background: `rgba(201,150,60,0.12)`, color, border: `1.5px solid ${color}`, fontWeight: 700 }
-          : { color: 'var(--tweed)', border: '1.5px solid transparent' }
+          : { color: 'rgba(240,232,216,0.60)', border: '1.5px solid transparent' }
       }
     >
-      <span>{icon}</span>
-      <span className="hidden sm:inline">{label}</span>
+      <span>{label}</span>
       {count > 0 && (
         <span
           className="text-xs font-bold px-1.5 rounded-full min-w-[18px] text-center"
