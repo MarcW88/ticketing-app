@@ -1,53 +1,92 @@
 import type { GameState, Quest } from './types';
 import { DEFAULT_GAME_STATE } from './constants';
+import { supabase } from './supabase';
 
 const KEYS = {
   quests: 'questlog_v1_quests',
-  state: 'questlog_v1_state',
+  state:  'questlog_v1_state',
 } as const;
 
+// ── localStorage helpers (gameState stays local, quests go to Supabase) ────
+
+function lsGet<T>(key: string, fallback: T): T {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch { return fallback; }
+}
+
+function lsSet(key: string, value: unknown): void {
+  if (typeof window === 'undefined') return;
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+}
+
+// ── Supabase quest storage ───────────────────────────────────────────────────
+
 export const Storage = {
-  getQuests(): Quest[] {
-    if (typeof window === 'undefined') return [];
+  // Load quests: Supabase first, fallback to localStorage
+  async getQuestsAsync(): Promise<Quest[]> {
     try {
-      const raw = localStorage.getItem(KEYS.quests);
-      return raw ? (JSON.parse(raw) as Quest[]) : [];
-    } catch {
-      return [];
-    }
-  },
-
-  saveQuests(quests: Quest[]): void {
-    if (typeof window === 'undefined') return;
-    try {
-      localStorage.setItem(KEYS.quests, JSON.stringify(quests));
+      const { data, error } = await supabase
+        .from('quests')
+        .select('data')
+        .order('updated_at', { ascending: false });
+      if (error) throw error;
+      if (data && data.length > 0) return data.map((r: { data: Quest }) => r.data);
     } catch (e) {
-      console.warn('[QuestLog] Could not save quests:', e);
+      console.warn('[QuestLog] Supabase read failed, using localStorage:', e);
+    }
+    return lsGet<Quest[]>(KEYS.quests, []);
+  },
+
+  // Save quests: Supabase + localStorage mirror
+  async saveQuestsAsync(quests: Quest[]): Promise<void> {
+    lsSet(KEYS.quests, quests);
+    try {
+      if (quests.length === 0) return;
+      const rows = quests.map(q => ({ id: q.id, data: q, updated_at: new Date().toISOString() }));
+      const { error } = await supabase.from('quests').upsert(rows, { onConflict: 'id' });
+      if (error) throw error;
+    } catch (e) {
+      console.warn('[QuestLog] Supabase write failed:', e);
     }
   },
 
-  getState(): GameState {
-    if (typeof window === 'undefined') return { ...DEFAULT_GAME_STATE };
+  // Delete a single quest from Supabase
+  async deleteQuestAsync(id: string): Promise<void> {
     try {
-      const raw = localStorage.getItem(KEYS.state);
-      return raw ? { ...DEFAULT_GAME_STATE, ...(JSON.parse(raw) as Partial<GameState>) } : { ...DEFAULT_GAME_STATE };
-    } catch {
-      return { ...DEFAULT_GAME_STATE };
+      await supabase.from('quests').delete().eq('id', id);
+    } catch (e) {
+      console.warn('[QuestLog] Supabase delete failed:', e);
     }
+  },
+
+  // GameState stays in localStorage only
+  getState(): GameState {
+    return lsGet<GameState>(KEYS.state, { ...DEFAULT_GAME_STATE });
   },
 
   saveState(state: GameState): void {
-    if (typeof window === 'undefined') return;
+    lsSet(KEYS.state, state);
+  },
+
+  // Sync localStorage quests to Supabase (one-time migration)
+  async migrateLocalToSupabase(): Promise<boolean> {
+    const local = lsGet<Quest[]>(KEYS.quests, []);
+    if (local.length === 0) return false;
     try {
-      localStorage.setItem(KEYS.state, JSON.stringify(state));
+      const rows = local.map(q => ({ id: q.id, data: q, updated_at: new Date().toISOString() }));
+      const { error } = await supabase.from('quests').upsert(rows, { onConflict: 'id' });
+      if (error) throw error;
+      return true;
     } catch (e) {
-      console.warn('[QuestLog] Could not save state:', e);
+      console.warn('[QuestLog] Migration failed:', e);
+      return false;
     }
   },
 
-  clear(): void {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem(KEYS.quests);
-    localStorage.removeItem(KEYS.state);
-  },
+  // Sync quests deleted individually
+  getQuests(): Quest[] { return lsGet<Quest[]>(KEYS.quests, []); },
+  saveQuests(quests: Quest[]): void { lsSet(KEYS.quests, quests); },
 };

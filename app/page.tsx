@@ -29,32 +29,36 @@ export default function Page() {
   const [showTimesheet, setShowTimesheet] = useState(false);
   const xpGainTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load from localStorage on mount
+  // Load from Supabase (with localStorage fallback + one-time migration)
   useEffect(() => {
-    try {
-      const savedQuests = Storage.getQuests();
-      const savedState = Storage.getState();
-      const migratedQuests = savedQuests.map(q =>
-        q.universe !== 'odyssey' ? { ...q, universe: 'odyssey' as const, missionClass: 'odyssey' as const } : q
-      );
-      const updatedQuests = updateRiskByDeadline(updateHauntedCursed(migratedQuests));
-      const updatedState = updateStreak(savedState);
-      setQuests(updatedQuests);
-      setGameState(updatedState);
-      Storage.saveQuests(updatedQuests);
-      Storage.saveState(updatedState);
-      // Auto-open guide on first visit
-      const seen = localStorage.getItem('quest-log-guide-seen');
-      if (!seen) setShowHelp(true);
-    } catch (err) {
-      console.error('[QuestLog] Init error:', err);
-    } finally {
-      setMounted(true);
+    async function init() {
+      try {
+        // Migrate any existing localStorage quests to Supabase on first load
+        await Storage.migrateLocalToSupabase();
+        const savedQuests = await Storage.getQuestsAsync();
+        const savedState = Storage.getState();
+        const migratedQuests = savedQuests.map(q =>
+          q.universe !== 'odyssey' ? { ...q, universe: 'odyssey' as const, missionClass: 'odyssey' as const } : q
+        );
+        const updatedQuests = updateRiskByDeadline(updateHauntedCursed(migratedQuests));
+        const updatedState = updateStreak(savedState);
+        setQuests(updatedQuests);
+        setGameState(updatedState);
+        await Storage.saveQuestsAsync(updatedQuests);
+        Storage.saveState(updatedState);
+        const seen = localStorage.getItem('quest-log-guide-seen');
+        if (!seen) setShowHelp(true);
+      } catch (err) {
+        console.error('[QuestLog] Init error:', err);
+      } finally {
+        setMounted(true);
+      }
     }
+    init();
   }, []);
 
   const saveAll = useCallback((newQuests: Quest[], newState: GameState) => {
-    Storage.saveQuests(newQuests);
+    Storage.saveQuestsAsync(newQuests);
     Storage.saveState(newState);
   }, []);
 
