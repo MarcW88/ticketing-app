@@ -1,10 +1,9 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
 import type { GameState, DayMode } from '@/lib/types';
 import { getLevelInfo, getXPProgress, getXPForNextLevel, getXPForLevel } from '@/lib/gameEngine';
-import { COMPANION_CONFIG, DAY_MODES } from '@/lib/constants';
+import { DAY_MODES } from '@/lib/constants';
 
 interface HeaderProps {
   gameState: GameState;
@@ -15,12 +14,10 @@ interface HeaderProps {
 }
 
 export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest, onHelp }: HeaderProps) {
-  const [showCompanionTip, setShowCompanionTip] = useState(false);
   const levelInfo = getLevelInfo(gameState.level);
   const xpProgress = getXPProgress(gameState.xp, gameState.level);
   const xpForCurrent = getXPForLevel(gameState.level);
   const xpForNext = getXPForNextLevel(gameState.level);
-  const companion = COMPANION_CONFIG[gameState.companion];
 
   const isMaxLevel = gameState.level >= 10;
 
@@ -31,24 +28,22 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
         <div className="flex items-center justify-between gap-4 mb-3">
           {/* Logo + title */}
           <div className="flex items-center gap-3 shrink-0">
-            <span className="text-2xl">⚔️</span>
             <div>
               <h1 className="font-display text-xl font-bold leading-none" style={{ color: 'var(--gold)' }}>
                 L&apos;Odyssée
               </h1>
-              <p className="text-xs mt-0.5 italic" style={{ color: 'var(--tweed)' }}>Naviguer · Combattre · Ithaque</p>
+              <p className="text-xs mt-0.5" style={{ color: 'rgba(240,232,216,0.45)' }}>Gestionnaire de missions</p>
             </div>
           </div>
 
           {/* Level badge */}
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border"
             style={{ background: 'rgba(11,18,32,0.85)', borderColor: 'var(--line)' }}>
-            <span className="text-lg">{levelInfo.icon}</span>
             <div>
-              <div className="text-xs font-bold leading-none" style={{ color: 'var(--petrol)' }}>
+              <div className="text-xs font-bold leading-none" style={{ color: 'var(--gold)' }}>
                 Niv. {gameState.level}
               </div>
-              <div className="text-xs leading-none mt-0.5" style={{ color: 'var(--tweed)' }}>
+              <div className="text-xs leading-none mt-0.5" style={{ color: 'rgba(240,232,216,0.50)' }}>
                 {levelInfo.title}
               </div>
             </div>
@@ -65,55 +60,25 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
                 style={
                   gameState.dayMode === mode
                     ? { background: 'var(--gold)', color: '#06090F', boxShadow: '0 2px 8px rgba(201,150,60,0.3)' }
-                    : { color: 'var(--tweed)' }
+                    : { color: 'rgba(240,232,216,0.55)' }
                 }
                 title={`Boost XP ×${cfg.xpBoost}`}
               >
-                {cfg.icon} {cfg.label}
+                {cfg.label}
               </button>
             ))}
           </div>
 
           {/* Companion + New Quest */}
           <div className="flex items-center gap-2">
-            {/* Companion */}
-            <div className="relative">
-              <motion.button
-                animate={{ y: [0, -4, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                onClick={() => setShowCompanionTip(!showCompanionTip)}
-                className="text-2xl cursor-pointer"
-                title={companion.name}
-              >
-                {companion.emoji}
-              </motion.button>
-              <AnimatePresence>
-                {showCompanionTip && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8, y: 4 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.8, y: 4 }}
-                    className="absolute right-0 top-10 w-56 p-3 rounded-xl text-xs shadow-lg border z-50"
-                    style={{ background: 'rgba(11,18,32,0.97)', borderColor: 'var(--line)', color: 'var(--sand)' }}
-                  >
-                    <p className="font-bold mb-1" style={{ color: 'var(--petrol)' }}>{companion.name}</p>
-                    <p style={{ color: 'var(--tweed)' }}>{companion.flavor}</p>
-                    {gameState.streak > 1 && (
-                      <p className="mt-1.5 text-orange-600 font-medium">🔥 Série de {gameState.streak} jours</p>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
             {/* Help button */}
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onHelp}
-              title="Guide du Codex"
+              title="Guide"
               className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border transition-all"
-              style={{ borderColor: 'var(--line)', color: 'var(--tweed)', background: 'rgba(238,228,211,0.6)' }}
+              style={{ borderColor: 'var(--line)', color: 'rgba(240,232,216,0.60)', background: 'rgba(255,255,255,0.05)' }}
             >
               ?
             </motion.button>
@@ -123,12 +88,10 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
               onClick={onNewQuest}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-all font-display"
-              style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', boxShadow: '0 4px 16px rgba(201,150,60,0.3)' }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all"
+              style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', boxShadow: '0 4px 16px rgba(201,150,60,0.25)' }}
             >
-              <span className="text-base">⚔️</span>
-              <span className="hidden sm:inline">Nouvelle Épreuve</span>
-              <span className="sm:hidden">+</span>
+              Nouvelle mission
             </motion.button>
           </div>
         </div>
