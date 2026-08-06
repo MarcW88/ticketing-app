@@ -1,5 +1,5 @@
 import type { Quest, GameState, QuestRisk } from './types';
-import { LEVELS, XP_BY_RISK, ACHIEVEMENTS, DAY_MODES } from './constants';
+import { LEVELS, XP_BY_RISK, XP_PENALTY_DAILY, ACHIEVEMENTS, DAY_MODES } from './constants';
 
 export function getLevelFromXP(xp: number): number {
   let level = 1;
@@ -59,20 +59,55 @@ export function updateRiskByDeadline(quests: Quest[]): Quest[] {
 export function updateHauntedCursed(quests: Quest[]): Quest[] {
   const now = new Date();
   return quests.map(q => {
-    if (q.status === 'done') return q;
+    if (q.status === 'done' || q.status === 'archived') return q;
     if (!q.dueDate) return q;
 
     const due = new Date(q.dueDate);
     const diffDays = (now.getTime() - due.getTime()) / (1000 * 60 * 60 * 24);
 
-    if (diffDays > 7 && q.status !== 'cursed') {
+    if (diffDays > 14 && q.status !== 'maelstrom') {
+      return { ...q, status: 'maelstrom' as const, maelstromAt: q.maelstromAt ?? now.toISOString() };
+    }
+    if (diffDays > 7 && q.status !== 'cursed' && q.status !== 'maelstrom') {
       return { ...q, status: 'cursed' as const, cursedAt: q.cursedAt ?? now.toISOString() };
     }
-    if (diffDays > 2 && q.status !== 'cursed' && q.status !== 'haunted') {
+    if (diffDays > 2 && q.status !== 'cursed' && q.status !== 'haunted' && q.status !== 'maelstrom') {
       return { ...q, status: 'haunted' as const, hauntedAt: q.hauntedAt ?? now.toISOString() };
     }
     return q;
   });
+}
+
+export function applyXPDrain(
+  state: GameState,
+  quests: Quest[]
+): { state: GameState; totalDrained: number } {
+  const now = new Date();
+  if (!state.lastDrainAt) {
+    return { state: { ...state, lastDrainAt: now.toISOString() }, totalDrained: 0 };
+  }
+  const daysSince = Math.floor(
+    (now.getTime() - new Date(state.lastDrainAt).getTime()) / (1000 * 60 * 60 * 24)
+  );
+  if (daysSince < 1) return { state, totalDrained: 0 };
+
+  const drainable = quests.filter(
+    q => q.status === 'haunted' || q.status === 'cursed' || q.status === 'maelstrom'
+  );
+  let totalDrained = 0;
+  for (const q of drainable) {
+    const base = XP_PENALTY_DAILY[q.risk];
+    const mult = q.status === 'maelstrom' ? 4 : q.status === 'cursed' ? 2 : 1;
+    totalDrained += base * mult * daysSince;
+  }
+  if (totalDrained === 0) return { state: { ...state, lastDrainAt: now.toISOString() }, totalDrained: 0 };
+
+  const newXP = state.xp - totalDrained;
+  const newLevel = getLevelFromXP(Math.max(0, newXP));
+  return {
+    state: { ...state, xp: newXP, level: newLevel, lastDrainAt: now.toISOString() },
+    totalDrained,
+  };
 }
 
 export function checkNewAchievements(state: GameState, quests: Quest[]): string[] {
@@ -123,7 +158,9 @@ export function completeQuestWithXP(
   state: GameState,
   allQuests: Quest[]
 ): { updatedState: GameState; newAchievements: string[]; xpEarned: number; leveledUp: boolean; newLevel: number } {
-  const xpEarned = calculateQuestXP(quest.risk, state.dayMode);
+  let xpEarned = calculateQuestXP(quest.risk, state.dayMode);
+  if (quest.status === 'maelstrom') xpEarned = Math.round(xpEarned * 0.5);
+  else if (quest.status === 'cursed') xpEarned = Math.round(xpEarned * 0.75);
   const newXP = state.xp + xpEarned;
   const newXPTotal = state.xpTotal + xpEarned;
   const oldLevel = state.level;

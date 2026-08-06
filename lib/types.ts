@@ -1,7 +1,7 @@
 export type UniverseId = 'odyssey' | 'mario' | 'assassins_creed' | 'spiderman' | 'crouch' | 'film_noir';
 export type MissionClass = 'odyssey' | 'platform' | 'infiltration' | 'urban' | 'temporal' | 'narration';
 export type QuestRisk = 'low' | 'medium' | 'high' | 'critical';
-export type QuestStatus = 'backlog' | 'active' | 'done' | 'haunted' | 'cursed' | 'archived';
+export type QuestStatus = 'backlog' | 'active' | 'done' | 'haunted' | 'cursed' | 'archived' | 'maelstrom';
 export type CompanionId = 'athena' | 'hermes' | 'mentor';
 export type DayMode = 'normal' | 'sirenes' | 'cyclope' | 'tempete';
 
@@ -33,6 +33,7 @@ export interface Quest {
   completedAt?: string;
   hauntedAt?: string;
   cursedAt?: string;
+  maelstromAt?: string;
   xpReward: number;
   subtasks: Subtask[];
   tags: string[];
@@ -61,6 +62,7 @@ export interface GameState {
   dayMode: DayMode;
   questsCompleted: number;
   challenge?: XPChallenge;
+  lastDrainAt?: string;
 }
 
 export interface UniverseConfig {

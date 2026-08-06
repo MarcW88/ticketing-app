@@ -12,9 +12,14 @@ interface UniverseFilterProps {
 type StatusKey = keyof typeof STATUS_CONFIG;
 
 const STATUS_KEYS: StatusKey[] = ['backlog', 'active', 'haunted', 'cursed', 'done'];
+const DANGER_STATUSES = ['haunted', 'cursed', 'maelstrom'];
 
 export default function UniverseFilter({ current, quests, onChange }: UniverseFilterProps) {
   const totalActive = quests.filter(q => q.status !== 'done' && q.status !== 'archived').length;
+  const getCount = (key: StatusKey) => {
+    if (key === 'haunted') return quests.filter(q => DANGER_STATUSES.includes(q.status)).length;
+    return quests.filter(q => q.status === key).length;
+  };
 
   return (
     <div
@@ -32,7 +37,7 @@ export default function UniverseFilter({ current, quests, onChange }: UniverseFi
       <div className="w-px h-4 mx-1 shrink-0" style={{ background: 'var(--line)' }} />
       {STATUS_KEYS.map(key => {
         const cfg = STATUS_CONFIG[key];
-        const count = quests.filter(q => q.status === key).length;
+        const count = getCount(key);
         return (
           <StatusTab
             key={key}

@@ -293,13 +293,14 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--sand)' }}>
-                    Date limite
+                    Date limite <span style={{ color: '#E06060' }}>*</span>
                   </label>
                   <input
                     type="date"
                     value={dueDate}
                     onChange={e => { setDueDate(e.target.value); setUserPickedRisk(false); }}
                     className="noctua-input"
+                    style={!dueDate ? { borderColor: 'rgba(224,96,96,0.5)', boxShadow: '0 0 0 1px rgba(224,96,96,0.25)' } : {}}
                   />
                 </div>
                 <div>
@@ -431,7 +432,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={handleSave}
-                  disabled={!title.trim()}
+                  disabled={!title.trim() || !dueDate}
                   className="px-5 py-2 rounded-full text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{ background: 'var(--gold)', color: '#06090F', boxShadow: '0 4px 14px rgba(201,150,60,0.4)' }}
                 >

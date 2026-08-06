@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Quest, GameState, QuestStatus, DayMode, XPChallenge } from '@/lib/types';
 import { Storage } from '@/lib/storage';
-import { updateHauntedCursed, updateRiskByDeadline, completeQuestWithXP, updateStreak, getLevelInfo } from '@/lib/gameEngine';
+import { updateHauntedCursed, updateRiskByDeadline, completeQuestWithXP, applyXPDrain, updateStreak, getLevelInfo } from '@/lib/gameEngine';
 import { TAVERN_WISDOM, DEFAULT_GAME_STATE, ACHIEVEMENTS } from '@/lib/constants';
 import Header from '@/components/Header';
 import UniverseFilter from '@/components/UniverseFilter';
@@ -43,10 +43,15 @@ export default function Page() {
         );
         const updatedQuests = updateRiskByDeadline(updateHauntedCursed(migratedQuests));
         const updatedState = updateStreak(savedState);
+        const { state: drainedState, totalDrained } = applyXPDrain(updatedState, updatedQuests);
         setQuests(updatedQuests);
-        setGameState(updatedState);
+        setGameState(drainedState);
+        if (totalDrained > 0) {
+          setXPGain(-totalDrained);
+          setTimeout(() => setXPGain(null), 2500);
+        }
         await Storage.saveQuestsAsync(updatedQuests);
-        Storage.saveState(updatedState);
+        Storage.saveState(drainedState);
         const seen = localStorage.getItem('quest-log-guide-seen');
         if (!seen) setShowHelp(true);
       } catch (err) {
@@ -308,6 +313,8 @@ export default function Page() {
   const levelInfo = getLevelInfo(gameState.level);
   const unlockedCount = gameState.unlockedAchievements.length;
 
+  const isBlocked = quests.some(q => q.status === 'haunted' || q.status === 'cursed' || q.status === 'maelstrom');
+
   const challengeTargets = gameState.challenge ? {
     total: quests.filter(q => q.challengeTarget).length,
     done: quests.filter(q => q.challengeTarget && q.status === 'done'
@@ -384,6 +391,7 @@ export default function Page() {
           onTimerReset={handleTimerReset}
           hasChallenge={!!gameState.challenge}
           onToggleChallengeTarget={handleToggleChallengeTarget}
+          isBlocked={isBlocked}
         />
       )}
 

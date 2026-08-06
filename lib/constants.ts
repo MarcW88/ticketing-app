@@ -78,8 +78,9 @@ export const STATUS_CONFIG = {
   backlog: { label: 'Port d\'Ithaque',  icon: '⚓', colorClass: 'text-amber-600',   bgClass: 'bg-amber-900/20'  },
   active:  { label: 'En Mer',           icon: '⚔️', colorClass: 'text-blue-400',    bgClass: 'bg-blue-900/20'   },
   done:    { label: 'Ithaque',          icon: '🏛️', colorClass: 'text-emerald-400', bgClass: 'bg-emerald-900/20'},
-  haunted: { label: 'Chant des Sirènes',icon: '🌀', colorClass: 'text-purple-400',  bgClass: 'bg-purple-900/20' },
-  cursed:  { label: "Antre du Cyclope", icon: '💀', colorClass: 'text-red-400',     bgClass: 'bg-red-900/20'    },
+  haunted:    { label: 'Chant des Sirènes', icon: '🌀', colorClass: 'text-purple-400',  bgClass: 'bg-purple-900/20'  },
+  cursed:     { label: "Antre du Cyclope",  icon: '💀', colorClass: 'text-red-400',     bgClass: 'bg-red-900/20'     },
+  maelstrom:  { label: 'Maelstrom',          icon: '🌪️', colorClass: 'text-red-700',     bgClass: 'bg-red-950/40'     },
 } as const;
 
 export const RISK_CONFIG: Record<QuestRisk, { label: string; color: string; bg: string; xp: number }> = {
@@ -96,7 +97,7 @@ export const DAY_MODES: Record<DayMode, { label: string; icon: string; defaultUn
   tempete:  { label: 'Tempête',           icon: '⛈️', defaultUniverse: 'odyssey', xpBoost: 1.3 },
 };
 
-export const NEMESIS_MESSAGES = {
+export const NEMESIS_MESSAGES: Record<string, string[]> = {
   haunted: [
     "Les Sirènes chantent. Résistez, Héros...",
     "Chaque heure d'inaction est une rame perdue.",
@@ -110,6 +111,13 @@ export const NEMESIS_MESSAGES = {
     "Vous êtes dans l'Antre depuis trop longtemps.",
     "Circé a transformé votre volonté en pierre.",
     "Cette épreuve corrode votre légende. Brisez-la.",
+  ],
+  maelstrom: [
+    "Le Maelstrom vous engloutit. Votre XP s'évapore.",
+    "Les prétendants pillent votre palais. Réagissez.",
+    "Ithaque vacille. Votre légende disparaît dans les eaux noires.",
+    "Même les dieux ont détourné le regard. Dernière chance.",
+    "Chaque heure ici vous coûte tout ce que vous avez bâti.",
   ],
 };
 

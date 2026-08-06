@@ -17,6 +17,7 @@ interface QuestBoardProps {
   onTimerReset: (id: string) => void;
   hasChallenge?: boolean;
   onToggleChallengeTarget?: (id: string) => void;
+  isBlocked?: boolean;
 }
 
 const COLUMNS: { status: QuestStatus; label: string; accent: string; dropDisabled?: boolean }[] = [
@@ -65,15 +66,16 @@ export default function QuestBoard({
   onTimerReset,
   hasChallenge,
   onToggleChallengeTarget,
+  isBlocked,
 }: QuestBoardProps) {
   const visibleQuests = quests.filter(q => q.status !== 'archived');
   const filtered = (universeFilter === 'all' || !['backlog','active','done','haunted','cursed'].includes(universeFilter))
     ? visibleQuests
-    : visibleQuests.filter(q => q.status === universeFilter || (universeFilter === 'haunted' && q.status === 'cursed'));
+    : visibleQuests.filter(q => q.status === universeFilter || (universeFilter === 'haunted' && (q.status === 'cursed' || q.status === 'maelstrom')));
 
   function getColumnQuests(status: QuestStatus) {
     if (status === 'haunted') {
-      return filtered.filter(q => q.status === 'haunted' || q.status === 'cursed');
+      return filtered.filter(q => q.status === 'haunted' || q.status === 'cursed' || q.status === 'maelstrom');
     }
     return filtered.filter(q => q.status === status);
   }
@@ -86,6 +88,8 @@ export default function QuestBoard({
 
     if (newStatus === 'done') {
       onComplete(draggableId);
+    } else if (newStatus === 'active' && isBlocked) {
+      return; // blocked: resolve haunted/cursed/maelstrom first
     } else {
       onStatusChange(draggableId, newStatus);
     }
@@ -177,6 +181,7 @@ export default function QuestBoard({
                                 onTimerReset={onTimerReset}
                                 hasChallenge={hasChallenge}
                                 onToggleChallengeTarget={onToggleChallengeTarget}
+                                isBlocked={isBlocked && col.status === 'backlog'}
                               />
                             </div>
                           )}

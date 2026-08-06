@@ -17,6 +17,7 @@ interface QuestCardProps {
   onTimerReset: (id: string) => void;
   hasChallenge?: boolean;
   onToggleChallengeTarget?: (id: string) => void;
+  isBlocked?: boolean;
 }
 
 function getDaysUntilDue(dueDate: string): number {
@@ -41,7 +42,7 @@ function getDueDateColor(dueDate: string): string {
   return 'rgba(240,232,216,0.60)';
 }
 
-export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, onDelete, onTimerStart, onTimerPause, onTimerReset, hasChallenge, onToggleChallengeTarget }: QuestCardProps) {
+export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, onDelete, onTimerStart, onTimerPause, onTimerReset, hasChallenge, onToggleChallengeTarget, isBlocked }: QuestCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -51,22 +52,24 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
 
   const isHaunted = quest.status === 'haunted';
   const isCursed = quest.status === 'cursed';
+  const isMaelstrom = quest.status === 'maelstrom';
   const isDone = quest.status === 'done';
   const isNoir = quest.universe === 'film_noir';
+  const isInDanger = isHaunted || isCursed || isMaelstrom;
 
   const cardClass = [
     'noctua-card quest-card-hover relative overflow-hidden p-4 cursor-pointer',
     isHaunted ? 'card-haunted' : '',
     isCursed ? 'card-cursed' : '',
-    !isHaunted && !isCursed ? `universe-${quest.universe}` : '',
-    isNoir && !isHaunted && !isCursed ? 'noir-filter' : '',
+    isMaelstrom ? 'card-maelstrom' : '',
+    !isInDanger ? `universe-${quest.universe}` : '',
+    isNoir && !isInDanger ? 'noir-filter' : '',
     isNoir ? 'scanlines' : '',
   ].filter(Boolean).join(' ');
 
-  const nemesisMsg = (isHaunted || isCursed)
-    ? NEMESIS_MESSAGES[isCursed ? 'cursed' : 'haunted'][
-        Math.floor(Math.random() * NEMESIS_MESSAGES[isCursed ? 'cursed' : 'haunted'].length)
-      ]
+  const nemesisKey = isMaelstrom ? 'maelstrom' : isCursed ? 'cursed' : isHaunted ? 'haunted' : null;
+  const nemesisMsg = nemesisKey
+    ? NEMESIS_MESSAGES[nemesisKey][Math.floor(Math.random() * NEMESIS_MESSAGES[nemesisKey].length)]
     : null;
 
   const subtasksDone = quest.subtasks.filter(s => s.done).length;
@@ -134,7 +137,7 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
                     Retour au Port
                   </button>
                 )}
-                {(isHaunted || isCursed) && (
+                {isInDanger && (
                   <button className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors josefin"
                     style={{ color: 'var(--sand)', letterSpacing: '0.04em' }}
                     onClick={() => { onStatusChange(quest.id, 'active'); setShowMenu(false); }}>
@@ -236,8 +239,8 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
         </span>
       </div>
 
-      {/* Timer — shown on active / haunted / cursed cards */}
-      {(quest.status === 'active' || isHaunted || isCursed) && (
+      {/* Timer — shown on active / haunted / cursed / maelstrom cards */}
+      {(quest.status === 'active' || isInDanger) && (
         <QuestTimer
           timeSpent={quest.timeSpent ?? 0}
           timerStartedAt={quest.timerStartedAt}
@@ -252,20 +255,25 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
         <div className="mt-3 flex gap-2" onClick={e => e.stopPropagation()}>
           {quest.status === 'backlog' && (
             <button
-              onClick={() => onStatusChange(quest.id, 'active')}
-              className="flex-1 text-xs font-semibold py-1.5 rounded-lg border transition-all hover:shadow-sm josefin"
-              style={{ borderColor: 'var(--gold)', color: 'var(--gold)', background: 'transparent', letterSpacing: '0.08em' }}
+              onClick={() => { if (!isBlocked) onStatusChange(quest.id, 'active'); }}
+              disabled={!!isBlocked}
+              className="flex-1 text-xs font-semibold py-1.5 rounded-lg border transition-all josefin"
+              style={isBlocked
+                ? { borderColor: 'rgba(240,232,216,0.12)', color: 'rgba(240,232,216,0.25)', background: 'transparent', letterSpacing: '0.08em', cursor: 'not-allowed' }
+                : { borderColor: 'var(--gold)', color: 'var(--gold)', background: 'transparent', letterSpacing: '0.08em' }
+              }
+              title={isBlocked ? 'Épreuves actives — résolvez-les avant de commencer' : ''}
             >
-              Commencer
+              {isBlocked ? '🔒 Bloqué' : 'Commencer'}
             </button>
           )}
-          {(quest.status === 'active' || isHaunted || isCursed) && (
+          {(quest.status === 'active' || isInDanger) && (
             <button
               onClick={() => onComplete(quest.id)}
               className="flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all hover:shadow-sm josefin"
-              style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', letterSpacing: '0.08em' }}
+              style={{ background: isMaelstrom ? 'linear-gradient(135deg,#6B0000,#B22222)' : 'linear-gradient(135deg,#8B6520,#C9963C)', color: isMaelstrom ? '#FFD0D0' : '#06090F', letterSpacing: '0.08em' }}
             >
-              Terminer {isCursed && '(−XP)'}
+              Terminer {isMaelstrom ? '(−50% XP)' : isCursed ? '(−25% XP)' : ''}
             </button>
           )}
         </div>
