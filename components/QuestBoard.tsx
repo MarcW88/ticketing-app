@@ -88,14 +88,14 @@ export default function QuestBoard({
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 overflow-x-auto pb-6 px-4 pt-4" style={{ minHeight: 'calc(100vh - 200px)' }}>
+      <div className="flex gap-3 pb-6 px-4 pt-4 w-full" style={{ minHeight: 'calc(100vh - 200px)' }}>
         {COLUMNS.map(col => {
           const colQuests = getColumnQuests(col.status);
           return (
             <div
               key={col.status}
-              className="kanban-column flex-shrink-0 flex flex-col"
-              style={{ width: '300px', minWidth: '280px' }}
+              className="kanban-column flex-1 flex flex-col min-w-0"
+              style={{ minWidth: '200px' }}
             >
               {/* Column header */}
               <div

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,700&family=Josefin+Sans:wght@100;300;400;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -33,10 +33,10 @@
 html, body {
   background-color: var(--bg);
   color: #E8EEF4;
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: 'Cormorant Garamond', Georgia, serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 16px;
+  font-size: 17px;
   text-rendering: optimizeLegibility;
 }
 
@@ -81,32 +81,40 @@ html, body {
 
 /* ── Typography ── */
 .font-display {
-  font-family: 'Cinzel', serif;
-  letter-spacing: 0.08em;
+  font-family: 'Cormorant Garamond', serif;
+  letter-spacing: 0.06em;
 }
 
+/* Main title — Cormorant italic bold, very cinematic */
 .cinematic-title {
-  font-family: 'Cinzel', serif;
-  font-weight: 900;
-  letter-spacing: 0.35em;
-  text-transform: uppercase;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.18em;
   line-height: 1;
 }
 
+/* UI labels — Josefin Sans ultra-thin, ultra-spaced */
 .cinematic-label {
-  font-family: 'Cinzel', serif;
-  font-weight: 400;
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 100;
   letter-spacing: 0.55em;
   text-transform: uppercase;
-  font-size: 0.55rem;
+  font-size: 0.52rem;
 }
 
+/* Column headers — Josefin Sans light, tracked */
 .cinematic-column {
-  font-family: 'Cinzel', serif;
-  font-weight: 600;
-  letter-spacing: 0.25em;
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 300;
+  letter-spacing: 0.30em;
   text-transform: uppercase;
-  font-size: 0.75rem;
+  font-size: 0.70rem;
+}
+
+/* Generic UI text — Josefin Sans */
+.josefin {
+  font-family: 'Josefin Sans', sans-serif;
 }
 
 /* ── Universe card accent — glass panels ── */
