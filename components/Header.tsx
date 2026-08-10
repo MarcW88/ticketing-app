@@ -19,9 +19,10 @@ interface HeaderProps {
   isShielded?: boolean;
   isDebtLocked?: boolean;
   dailyMomentum?: number;
+  challengeTargetXPSum?: number;
 }
 
-export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest, onHelp, onSetChallenge, onClearChallenge, onResetXP, challengeTargets, isShielded, isDebtLocked, dailyMomentum }: HeaderProps) {
+export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest, onHelp, onSetChallenge, onClearChallenge, onResetXP, challengeTargets, isShielded, isDebtLocked, dailyMomentum, challengeTargetXPSum }: HeaderProps) {
   const levelInfo = getLevelInfo(gameState.level);
   const xpProgress = getXPProgress(gameState.xp, gameState.level);
   const xpForNext = getXPForNextLevel(gameState.level);
@@ -35,8 +36,16 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
 
   // Panel state
   const [showPanel, setShowPanel] = useState(false);
-  const [formTarget, setFormTarget] = useState('500');
+  const [formTarget, setFormTarget] = useState(() =>
+    challengeTargetXPSum && challengeTargetXPSum > 0 ? String(challengeTargetXPSum) : '500'
+  );
   const [formLabel, setFormLabel] = useState('');
+
+  useEffect(() => {
+    if (challengeTargetXPSum && challengeTargetXPSum > 0) {
+      setFormTarget(String(challengeTargetXPSum));
+    }
+  }, [challengeTargetXPSum]);
   const [confirmReset, setConfirmReset] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -295,8 +304,13 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
                           />
                         </div>
                         <div>
-                          <label className="text-xs mb-1 block" style={{ color: 'rgba(220,230,245,0.55)' }}>
-                            Objectif XP
+                          <label className="text-xs mb-1 flex items-center justify-between" style={{ color: 'rgba(220,230,245,0.55)' }}>
+                            <span>Objectif XP</span>
+                            {challengeTargetXPSum && challengeTargetXPSum > 0 && (
+                              <span style={{ color: 'var(--gold)', fontSize: '10px' }}>
+                                ⚡ {challengeTargetXPSum} XP depuis vos cibles
+                              </span>
+                            )}
                           </label>
                           <input
                             type="number"

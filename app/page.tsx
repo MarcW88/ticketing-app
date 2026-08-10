@@ -204,9 +204,11 @@ export default function Page() {
   }, [gameState, saveAll]);
 
   const handleDelete = useCallback((id: string) => {
+    Storage.deleteQuestAsync(id);
     setQuests(prev => {
       const newQuests = prev.filter(q => q.id !== id);
       Storage.saveQuests(newQuests);
+      Storage.saveQuestsAsync(newQuests);
       return newQuests;
     });
   }, []);
@@ -347,6 +349,10 @@ export default function Page() {
       && q.completedAt && gameState.challenge && q.completedAt >= gameState.challenge.createdAt).length,
   } : undefined;
 
+  const challengeTargetXPSum = quests
+    .filter(q => q.challengeTarget && q.status !== 'done')
+    .reduce((sum, q) => sum + (q.xpReward ?? 0), 0);
+
   if (!mounted) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -374,6 +380,7 @@ export default function Page() {
         isShielded={isShielded}
         isDebtLocked={isDebtLocked}
         dailyMomentum={gameState.dailyQuestCount ?? 0}
+        challengeTargetXPSum={challengeTargetXPSum}
       />
 
       <UniverseFilter

@@ -111,10 +111,8 @@ export function applyXPDrain(
 ): { state: GameState; totalDrained: number } {
   const now = new Date();
 
-  // Athena's shield: drain blocked
-  if (state.drainShieldUntil && new Date(state.drainShieldUntil) > now) {
-    return { state: { ...state, lastDrainAt: state.lastDrainAt ?? now.toISOString() }, totalDrained: 0 };
-  }
+  // Athena's shield: 50% drain reduction (not full block)
+  const shieldActive = !!(state.drainShieldUntil && new Date(state.drainShieldUntil) > now);
 
   if (!state.lastDrainAt) {
     return { state: { ...state, lastDrainAt: now.toISOString() }, totalDrained: 0 };
@@ -133,7 +131,8 @@ export function applyXPDrain(
     if (q.penelopeWeavedUntil && new Date(q.penelopeWeavedUntil) > now) continue;
     const base = XP_PENALTY_DAILY[q.risk];
     const mult = q.status === 'maelstrom' ? 4 : q.status === 'cursed' ? 2 : 1;
-    totalDrained += base * mult * daysSince;
+    const raw = base * mult * daysSince;
+    totalDrained += shieldActive ? Math.round(raw * 0.5) : raw;
   }
   if (totalDrained === 0) return { state: { ...state, lastDrainAt: now.toISOString() }, totalDrained: 0 };
 
@@ -198,10 +197,10 @@ export function completeQuestWithXP(
   const dailyCount = isFirstToday ? 0 : (state.dailyQuestCount ?? 0);
   const newDailyCount = dailyCount + 1;
 
-  // Athena's shield: 3+ quests in a day
-  const shieldActivated = newDailyCount >= 3;
+  // Athena's shield: 4+ quests in a day → 50% drain reduction for 12h
+  const shieldActivated = newDailyCount >= 4;
   const drainShieldUntil = shieldActivated
-    ? new Date(Date.now() + 24 * 3600 * 1000).toISOString()
+    ? new Date(Date.now() + 12 * 3600 * 1000).toISOString()
     : state.drainShieldUntil;
 
   // CIRCE TRAP: quest gives 0 XP
