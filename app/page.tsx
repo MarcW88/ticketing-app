@@ -37,7 +37,7 @@ export default function Page() {
         // Migrate any existing localStorage quests to Supabase on first load
         await Storage.migrateLocalToSupabase();
         const savedQuests = await Storage.getQuestsAsync();
-        const savedState = Storage.getState();
+        const savedState = await Storage.getStateAsync();
         const migratedQuests = savedQuests.map(q =>
           q.universe !== 'odyssey' ? { ...q, universe: 'odyssey' as const, missionClass: 'odyssey' as const } : q
         );
@@ -51,7 +51,7 @@ export default function Page() {
           setTimeout(() => setXPGain(null), 2500);
         }
         await Storage.saveQuestsAsync(updatedQuests);
-        Storage.saveState(drainedState);
+        await Storage.saveStateAsync(drainedState);
         const seen = localStorage.getItem('quest-log-guide-seen');
         if (!seen) setShowHelp(true);
       } catch (err) {
@@ -65,7 +65,7 @@ export default function Page() {
 
   const saveAll = useCallback((newQuests: Quest[], newState: GameState) => {
     Storage.saveQuestsAsync(newQuests);
-    Storage.saveState(newState);
+    Storage.saveStateAsync(newState);
   }, []);
 
   // ── Quest CRUD ──────────────────────────────────────────────────────

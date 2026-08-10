@@ -65,13 +65,43 @@ export const Storage = {
     }
   },
 
-  // GameState stays in localStorage only
+  // GameState: localStorage + Supabase
   getState(): GameState {
     return lsGet<GameState>(KEYS.state, { ...DEFAULT_GAME_STATE });
   },
 
   saveState(state: GameState): void {
     lsSet(KEYS.state, state);
+  },
+
+  async saveStateAsync(state: GameState): Promise<void> {
+    lsSet(KEYS.state, state);
+    if (!supabase) return;
+    try {
+      await supabase.from('game_state').upsert(
+        { id: 'singleton', data: state, updated_at: new Date().toISOString() },
+        { onConflict: 'id' }
+      );
+    } catch (e) {
+      console.warn('[QuestLog] Supabase state write failed:', e);
+    }
+  },
+
+  async getStateAsync(): Promise<GameState> {
+    if (!supabase) return lsGet<GameState>(KEYS.state, { ...DEFAULT_GAME_STATE });
+    try {
+      const { data, error } = await supabase
+        .from('game_state')
+        .select('data')
+        .eq('id', 'singleton')
+        .single();
+      if (!error && data?.data) {
+        const remote = data.data as GameState;
+        lsSet(KEYS.state, remote);
+        return remote;
+      }
+    } catch {}
+    return lsGet<GameState>(KEYS.state, { ...DEFAULT_GAME_STATE });
   },
 
   // Sync localStorage quests to Supabase (one-time migration)
