@@ -71,7 +71,9 @@ export function updateHauntedCursed(quests: Quest[]): Quest[] {
     if (diffDays > 7 && q.status !== 'cursed' && q.status !== 'maelstrom') {
       return { ...q, status: 'cursed' as const, cursedAt: q.cursedAt ?? now.toISOString() };
     }
-    if (diffDays > 2 && q.status !== 'cursed' && q.status !== 'haunted' && q.status !== 'maelstrom') {
+    // Backlog cards: haunted as soon as past due; active cards: 2-day grace period
+    const hauntedThreshold = q.status === 'backlog' ? 0 : 2;
+    if (diffDays > hauntedThreshold && q.status !== 'cursed' && q.status !== 'haunted' && q.status !== 'maelstrom') {
       return { ...q, status: 'haunted' as const, hauntedAt: q.hauntedAt ?? now.toISOString() };
     }
     return q;
