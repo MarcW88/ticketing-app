@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Quest, GameState, QuestStatus, DayMode, XPChallenge } from '@/lib/types';
 import { Storage } from '@/lib/storage';
 import { updateHauntedCursed, updateRiskByDeadline, completeQuestWithXP, applyXPDrain, checkAndApplyRelock, updateStreak, getLevelInfo } from '@/lib/gameEngine';
-import { TAVERN_WISDOM, DEFAULT_GAME_STATE, ACHIEVEMENTS, FORCE_RELOCK_PENALTY } from '@/lib/constants';
+import { TAVERN_WISDOM, DEFAULT_GAME_STATE, ACHIEVEMENTS, FORCE_RELOCK_PENALTY, FORCE_UNLOCK_IMMEDIATE_COST } from '@/lib/constants';
 import Header from '@/components/Header';
 import UniverseFilter from '@/components/UniverseFilter';
 import QuestBoard from '@/components/QuestBoard';
@@ -266,6 +266,14 @@ export default function Page() {
     setQuests(prev => {
       const quest = prev.find(q => q.id === id);
       if (!quest || quest.cannotForceUnlock) return prev;
+      const cost = FORCE_UNLOCK_IMMEDIATE_COST[quest.risk] ?? 50;
+      setGameState(gs => {
+        const updated = { ...gs, xp: gs.xp - cost, level: gs.level };
+        Storage.saveStateAsync(updated);
+        setXPGain(-cost);
+        setTimeout(() => setXPGain(null), 2000);
+        return updated;
+      });
       const updated = prev.map(q => q.id === id ? {
         ...q,
         status: 'active' as QuestStatus,

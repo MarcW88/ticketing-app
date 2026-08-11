@@ -1,5 +1,5 @@
 import type { Quest, GameState, QuestRisk, QuestStatus } from './types';
-import { LEVELS, XP_BY_RISK, XP_PENALTY_DAILY, ACHIEVEMENTS, DAY_MODES, XP_FORCE_UNLOCK_HOURLY, FORCE_RELOCK_XP_THRESHOLD, FORCE_RELOCK_PENALTY, FORCE_RELOCK_HOURS } from './constants';
+import { LEVELS, XP_BY_RISK, XP_PENALTY_DAILY, ACHIEVEMENTS, DAY_MODES, XP_FORCE_UNLOCK_HOURLY, FORCE_UNLOCK_IMMEDIATE_COST, FORCE_RELOCK_XP_THRESHOLD, FORCE_RELOCK_PENALTY, FORCE_RELOCK_HOURS } from './constants';
 
 export function getLevelFromXP(xp: number): number {
   let level = 1;
@@ -132,12 +132,15 @@ export function applyXPDrain(
     }
   }
 
-  // Hourly drain: force-unlocked active cards (very aggressive)
-  for (const q of quests.filter(q => q.forceUnlocked && q.forceUnlockedAt && q.status === 'active')) {
-    const hoursSinceUnlock = (now.getTime() - new Date(q.forceUnlockedAt!).getTime()) / (1000 * 60 * 60);
-    const hoursToCharge = Math.min(hoursSince, hoursSinceUnlock);
-    if (hoursToCharge < 0.5) continue;
-    totalDrained += Math.floor(hoursToCharge * XP_FORCE_UNLOCK_HOURLY[q.risk]);
+  // Hourly drain on danger cards while any force-unlocked active card exists
+  const hasForceUnlocked = quests.some(q => q.forceUnlocked && q.status === 'active');
+  if (hasForceUnlocked && hoursSince >= 0.5) {
+    const dangerCards = quests.filter(q => q.status === 'haunted' || q.status === 'cursed' || q.status === 'maelstrom');
+    for (const q of dangerCards) {
+      if (q.penelopeWeavedUntil && new Date(q.penelopeWeavedUntil) > now) continue;
+      const rate = XP_FORCE_UNLOCK_HOURLY[q.status] ?? 2;
+      totalDrained += Math.floor(hoursSince * rate);
+    }
   }
 
   if (totalDrained === 0) {

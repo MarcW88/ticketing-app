@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import type { Quest, QuestStatus } from '@/lib/types';
-import { UNIVERSE_CONFIG, RISK_CONFIG, STATUS_CONFIG, NEMESIS_MESSAGES } from '@/lib/constants';
+import { UNIVERSE_CONFIG, RISK_CONFIG, STATUS_CONFIG, NEMESIS_MESSAGES, FORCE_UNLOCK_IMMEDIATE_COST } from '@/lib/constants';
 import QuestTimer from './QuestTimer';
 
 interface QuestCardProps {
@@ -308,7 +308,7 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
             style={{ borderColor: 'rgba(251,146,60,0.4)', color: '#fb923c', background: 'rgba(120,50,10,0.12)', letterSpacing: '0.06em' }}
             title="Libérer au prix d'un drain horaire agressif. Risque de re-verrouillage permanent en 12h ou si XP < -300."
           >
-            ⚡ Libérer — drain /h · risque escalade
+            ⚡ Libérer (−{FORCE_UNLOCK_IMMEDIATE_COST[quest.risk]} XP) — drain /h · risque escalade
           </button>
         </div>
       )}
@@ -316,7 +316,7 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
       {/* Force-unlock active drain warning */}
       {quest.forceUnlocked && quest.status === 'active' && (
         <div className="mt-2 text-xs px-2 py-1 rounded josefin" style={{ background: 'rgba(251,146,60,0.10)', color: '#fb923c', border: '1px solid rgba(251,146,60,0.25)' }}>
-          ⚡ Libération forcée — drain actif chaque heure
+          ⚡ Libération forcée — drain /h sur chaque carte Épreuve active
         </div>
       )}
 

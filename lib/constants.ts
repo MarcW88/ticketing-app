@@ -130,11 +130,18 @@ export const ORACLE_MESSAGES = {
   relaxed:     "🌿 La mer est calme. Naviguez sereinement.",
 };
 
+// Immediate XP cost when force-unlocking a backlog card
+export const FORCE_UNLOCK_IMMEDIATE_COST: Record<string, number> = {
+  low: 20,
+  medium: 50,
+  high: 100,
+  critical: 150,
+};
+// Hourly drain per danger card while force-unlocked cards are active
 export const XP_FORCE_UNLOCK_HOURLY: Record<string, number> = {
-  low: 3,
-  medium: 8,
-  high: 20,
-  critical: 40,
+  haunted: 2,
+  cursed: 5,
+  maelstrom: 12,
 };
 export const FORCE_RELOCK_XP_THRESHOLD = -300;
 export const FORCE_RELOCK_PENALTY = 75;
