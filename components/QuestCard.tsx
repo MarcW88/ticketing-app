@@ -299,8 +299,8 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
         </div>
       )}
 
-      {/* Force-unlock button — haunted/cursed/maelstrom, not permanently locked */}
-      {isInDanger && !quest.cannotForceUnlock && onForceUnlock && (
+      {/* Force-unlock button — blocked backlog cards only */}
+      {quest.status === 'backlog' && isBlocked && !quest.cannotForceUnlock && onForceUnlock && (
         <div className="mt-2" onClick={e => e.stopPropagation()}>
           <button
             onClick={() => onForceUnlock(quest.id)}
