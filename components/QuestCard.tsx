@@ -20,6 +20,7 @@ interface QuestCardProps {
   isBlocked?: boolean;
   hasMaelstrom?: boolean;
   onPenelopeWeave?: (id: string) => void;
+  onForceUnlock?: (id: string) => void;
 }
 
 function getDaysUntilDue(dueDate: string): number {
@@ -44,7 +45,7 @@ function getDueDateColor(dueDate: string): string {
   return 'rgba(240,232,216,0.60)';
 }
 
-export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, onDelete, onTimerStart, onTimerPause, onTimerReset, hasChallenge, onToggleChallengeTarget, isBlocked, hasMaelstrom, onPenelopeWeave }: QuestCardProps) {
+export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, onDelete, onTimerStart, onTimerPause, onTimerReset, hasChallenge, onToggleChallengeTarget, isBlocked, hasMaelstrom, onPenelopeWeave, onForceUnlock }: QuestCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -295,6 +296,34 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
               : '🧵 Pénélope — −50 XP, drain gelé 48h'
             }
           </button>
+        </div>
+      )}
+
+      {/* Force-unlock button — haunted/cursed/maelstrom, not permanently locked */}
+      {isInDanger && !quest.cannotForceUnlock && onForceUnlock && (
+        <div className="mt-2" onClick={e => e.stopPropagation()}>
+          <button
+            onClick={() => onForceUnlock(quest.id)}
+            className="w-full text-xs py-1 rounded-lg border transition-all josefin"
+            style={{ borderColor: 'rgba(251,146,60,0.4)', color: '#fb923c', background: 'rgba(120,50,10,0.12)', letterSpacing: '0.06em' }}
+            title="Libérer au prix d'un drain horaire agressif. Risque de re-verrouillage permanent en 12h ou si XP < -300."
+          >
+            ⚡ Libérer — drain /h · risque escalade
+          </button>
+        </div>
+      )}
+
+      {/* Force-unlock active drain warning */}
+      {quest.forceUnlocked && quest.status === 'active' && (
+        <div className="mt-2 text-xs px-2 py-1 rounded josefin" style={{ background: 'rgba(251,146,60,0.10)', color: '#fb923c', border: '1px solid rgba(251,146,60,0.25)' }}>
+          ⚡ Libération forcée — drain actif chaque heure
+        </div>
+      )}
+
+      {/* Permanently locked badge */}
+      {quest.cannotForceUnlock && !isDone && (
+        <div className="mt-2 text-xs px-2 py-1 rounded josefin" style={{ background: 'rgba(80,80,80,0.15)', color: 'rgba(200,200,200,0.45)', border: '1px solid rgba(120,120,120,0.2)' }}>
+          🔒 Verrouillé définitivement
         </div>
       )}
 

@@ -130,6 +130,16 @@ export const ORACLE_MESSAGES = {
   relaxed:     "🌿 La mer est calme. Naviguez sereinement.",
 };
 
+export const XP_FORCE_UNLOCK_HOURLY: Record<string, number> = {
+  low: 3,
+  medium: 8,
+  high: 20,
+  critical: 40,
+};
+export const FORCE_RELOCK_XP_THRESHOLD = -300;
+export const FORCE_RELOCK_PENALTY = 75;
+export const FORCE_RELOCK_HOURS = 12;
+
 export const TAVERN_WISDOM = [
   "Ulysse ne rentrait pas vite — il rentrait bien.",
   "Un plan sans action est un navire sans voile.",

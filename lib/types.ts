@@ -44,6 +44,10 @@ export interface Quest {
   challengeTarget?: boolean;  // flagged as objective for the current challenge
   circeTrapped?: boolean;     // backlog untouched >21 days → 0 XP on completion
   penelopeWeavedUntil?: string; // ISO — drain frozen until this date (costs 50 XP)
+  forceUnlocked?: boolean;        // manually unlocked from danger status
+  forceUnlockedAt?: string;       // ISO — when force-unlock was initiated (immutable)
+  forceUnlockOrigin?: QuestStatus; // status at time of force-unlock (for escalation)
+  cannotForceUnlock?: boolean;    // permanent after auto-relock — never unlockable again
 }
 
 export interface XPChallenge {

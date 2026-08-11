@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Quest, GameState, QuestStatus, DayMode, XPChallenge } from '@/lib/types';
 import { Storage } from '@/lib/storage';
-import { updateHauntedCursed, updateRiskByDeadline, completeQuestWithXP, applyXPDrain, updateStreak, getLevelInfo } from '@/lib/gameEngine';
-import { TAVERN_WISDOM, DEFAULT_GAME_STATE, ACHIEVEMENTS } from '@/lib/constants';
+import { updateHauntedCursed, updateRiskByDeadline, completeQuestWithXP, applyXPDrain, checkAndApplyRelock, updateStreak, getLevelInfo } from '@/lib/gameEngine';
+import { TAVERN_WISDOM, DEFAULT_GAME_STATE, ACHIEVEMENTS, FORCE_RELOCK_PENALTY } from '@/lib/constants';
 import Header from '@/components/Header';
 import UniverseFilter from '@/components/UniverseFilter';
 import QuestBoard from '@/components/QuestBoard';
@@ -43,15 +43,16 @@ export default function Page() {
         );
         const updatedQuests = updateRiskByDeadline(updateHauntedCursed(migratedQuests));
         const updatedState = updateStreak(savedState);
-        const { state: drainedState, totalDrained } = applyXPDrain(updatedState, updatedQuests);
-        setQuests(updatedQuests);
-        setGameState(drainedState);
-        if (totalDrained > 0) {
-          setXPGain(-totalDrained);
+        const { state: drainedState, totalDrained, updatedQuests: drainedQuests } = applyXPDrain(updatedState, updatedQuests);
+        const { state: finalState, quests: finalQuests, relockedCount } = checkAndApplyRelock(drainedState, drainedQuests);
+        setQuests(finalQuests);
+        setGameState(finalState);
+        if (totalDrained > 0 || relockedCount > 0) {
+          setXPGain(-(totalDrained + relockedCount * FORCE_RELOCK_PENALTY));
           setTimeout(() => setXPGain(null), 2500);
         }
-        await Storage.saveQuestsAsync(updatedQuests);
-        await Storage.saveStateAsync(drainedState);
+        await Storage.saveQuestsAsync(finalQuests);
+        await Storage.saveStateAsync(finalState);
         const seen = localStorage.getItem('quest-log-guide-seen');
         if (!seen) setShowHelp(true);
       } catch (err) {
@@ -261,6 +262,23 @@ export default function Page() {
     });
   }, []);
 
+  const handleForceUnlock = useCallback((id: string) => {
+    setQuests(prev => {
+      const quest = prev.find(q => q.id === id);
+      if (!quest || quest.cannotForceUnlock) return prev;
+      const updated = prev.map(q => q.id === id ? {
+        ...q,
+        status: 'active' as QuestStatus,
+        forceUnlocked: true,
+        forceUnlockedAt: new Date().toISOString(),
+        forceUnlockOrigin: q.status,
+        updatedAt: new Date().toISOString(),
+      } : q);
+      Storage.saveQuestsAsync(updated);
+      return updated;
+    });
+  }, []);
+
   const handlePenelopeWeave = useCallback((id: string) => {
     setGameState(gs => {
       if (gs.xp < 50) return gs;
@@ -432,6 +450,7 @@ export default function Page() {
           hasMaelstrom={hasMaelstrom}
           isDebtLocked={isDebtLocked}
           onPenelopeWeave={handlePenelopeWeave}
+          onForceUnlock={handleForceUnlock}
         />
       )}
 

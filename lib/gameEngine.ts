@@ -1,5 +1,5 @@
-import type { Quest, GameState, QuestRisk } from './types';
-import { LEVELS, XP_BY_RISK, XP_PENALTY_DAILY, ACHIEVEMENTS, DAY_MODES } from './constants';
+import type { Quest, GameState, QuestRisk, QuestStatus } from './types';
+import { LEVELS, XP_BY_RISK, XP_PENALTY_DAILY, ACHIEVEMENTS, DAY_MODES, XP_FORCE_UNLOCK_HOURLY, FORCE_RELOCK_XP_THRESHOLD, FORCE_RELOCK_PENALTY, FORCE_RELOCK_HOURS } from './constants';
 
 export function getLevelFromXP(xp: number): number {
   let level = 1;
@@ -108,39 +108,92 @@ export function updateHauntedCursed(quests: Quest[]): Quest[] {
 export function applyXPDrain(
   state: GameState,
   quests: Quest[]
-): { state: GameState; totalDrained: number } {
+): { state: GameState; totalDrained: number; updatedQuests: Quest[] } {
   const now = new Date();
-
-  // Athena's shield: 50% drain reduction (not full block)
   const shieldActive = !!(state.drainShieldUntil && new Date(state.drainShieldUntil) > now);
 
   if (!state.lastDrainAt) {
-    return { state: { ...state, lastDrainAt: now.toISOString() }, totalDrained: 0 };
+    return { state: { ...state, lastDrainAt: now.toISOString() }, totalDrained: 0, updatedQuests: quests };
   }
-  const daysSince = Math.floor(
-    (now.getTime() - new Date(state.lastDrainAt).getTime()) / (1000 * 60 * 60 * 24)
-  );
-  if (daysSince < 1) return { state, totalDrained: 0 };
 
-  const drainable = quests.filter(
-    q => q.status === 'haunted' || q.status === 'cursed' || q.status === 'maelstrom'
-  );
+  const hoursSince = (now.getTime() - new Date(state.lastDrainAt).getTime()) / (1000 * 60 * 60);
+  const daysSince = Math.floor(hoursSince / 24);
   let totalDrained = 0;
-  for (const q of drainable) {
-    // Penelope's weave: drain frozen for this quest
-    if (q.penelopeWeavedUntil && new Date(q.penelopeWeavedUntil) > now) continue;
-    const base = XP_PENALTY_DAILY[q.risk];
-    const mult = q.status === 'maelstrom' ? 4 : q.status === 'cursed' ? 2 : 1;
-    const raw = base * mult * daysSince;
-    totalDrained += shieldActive ? Math.round(raw * 0.5) : raw;
+
+  // Daily drain: haunted/cursed/maelstrom
+  if (daysSince >= 1) {
+    const drainable = quests.filter(q => q.status === 'haunted' || q.status === 'cursed' || q.status === 'maelstrom');
+    for (const q of drainable) {
+      if (q.penelopeWeavedUntil && new Date(q.penelopeWeavedUntil) > now) continue;
+      const base = XP_PENALTY_DAILY[q.risk];
+      const mult = q.status === 'maelstrom' ? 4 : q.status === 'cursed' ? 2 : 1;
+      const raw = base * mult * daysSince;
+      totalDrained += shieldActive ? Math.round(raw * 0.5) : raw;
+    }
   }
-  if (totalDrained === 0) return { state: { ...state, lastDrainAt: now.toISOString() }, totalDrained: 0 };
+
+  // Hourly drain: force-unlocked active cards (very aggressive)
+  for (const q of quests.filter(q => q.forceUnlocked && q.forceUnlockedAt && q.status === 'active')) {
+    const hoursSinceUnlock = (now.getTime() - new Date(q.forceUnlockedAt!).getTime()) / (1000 * 60 * 60);
+    const hoursToCharge = Math.min(hoursSince, hoursSinceUnlock);
+    if (hoursToCharge < 0.5) continue;
+    totalDrained += Math.floor(hoursToCharge * XP_FORCE_UNLOCK_HOURLY[q.risk]);
+  }
+
+  if (totalDrained === 0) {
+    const shouldUpdate = daysSince >= 1 || quests.some(q => q.forceUnlocked);
+    return { state: shouldUpdate ? { ...state, lastDrainAt: now.toISOString() } : state, totalDrained: 0, updatedQuests: quests };
+  }
 
   const newXP = state.xp - totalDrained;
   const newLevel = getLevelFromXP(Math.max(0, newXP));
   return {
     state: { ...state, xp: newXP, level: newLevel, lastDrainAt: now.toISOString() },
     totalDrained,
+    updatedQuests: quests,
+  };
+}
+
+export function checkAndApplyRelock(
+  state: GameState,
+  quests: Quest[]
+): { state: GameState; quests: Quest[]; relockedCount: number } {
+  const now = new Date();
+  const xpTriggered = state.xp < FORCE_RELOCK_XP_THRESHOLD;
+
+  let relockedCount = 0;
+  let penalty = 0;
+
+  const updatedQuests = quests.map(q => {
+    if (!q.forceUnlocked || q.status !== 'active' || !q.forceUnlockedAt) return q;
+    const hoursSinceUnlock = (now.getTime() - new Date(q.forceUnlockedAt).getTime()) / (1000 * 60 * 60);
+    const timeTriggered = hoursSinceUnlock > FORCE_RELOCK_HOURS;
+    if (!xpTriggered && !timeTriggered) return q;
+
+    relockedCount++;
+    penalty += FORCE_RELOCK_PENALTY;
+    const escalated: QuestStatus =
+      q.forceUnlockOrigin === 'maelstrom' ? 'maelstrom' :
+      q.forceUnlockOrigin === 'cursed' ? 'maelstrom' : 'cursed';
+    return {
+      ...q,
+      status: escalated,
+      forceUnlocked: false,
+      cannotForceUnlock: true,
+      forceUnlockedAt: undefined,
+      forceUnlockOrigin: undefined,
+      updatedAt: now.toISOString(),
+      ...(escalated === 'cursed' ? { cursedAt: now.toISOString() } : { maelstromAt: now.toISOString() }),
+    };
+  });
+
+  if (relockedCount === 0) return { state, quests, relockedCount: 0 };
+
+  const newXP = state.xp - penalty;
+  return {
+    state: { ...state, xp: newXP, level: getLevelFromXP(Math.max(0, newXP)) },
+    quests: updatedQuests,
+    relockedCount,
   };
 }
 
