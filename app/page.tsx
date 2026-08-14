@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Quest, GameState, QuestStatus, DayMode, XPChallenge } from '@/lib/types';
 import { Storage } from '@/lib/storage';
-import { updateHauntedCursed, updateRiskByDeadline, completeQuestWithXP, applyXPDrain, checkAndApplyRelock, updateStreak, getLevelInfo } from '@/lib/gameEngine';
-import { TAVERN_WISDOM, DEFAULT_GAME_STATE, ACHIEVEMENTS, FORCE_RELOCK_PENALTY, FORCE_UNLOCK_IMMEDIATE_COST } from '@/lib/constants';
+import { updateHauntedCursed, updateRiskByDeadline, completeQuestWithXP, applyXPDrain, checkAndApplyRelock, updateStreak, getLevelInfo, calculateCoinsEarned, calculateCoinsLost } from '@/lib/gameEngine';
+import { TAVERN_WISDOM, DEFAULT_GAME_STATE, ACHIEVEMENTS, FORCE_RELOCK_PENALTY, FORCE_UNLOCK_IMMEDIATE_COST, REWARDS } from '@/lib/constants';
+import type { ActiveReward } from '@/lib/types';
 import Header from '@/components/Header';
 import UniverseFilter from '@/components/UniverseFilter';
 import QuestBoard from '@/components/QuestBoard';
@@ -14,6 +15,7 @@ import LevelUpOverlay from '@/components/LevelUpOverlay';
 import HelpModal from '@/components/HelpModal';
 import EmberBackground from '@/components/EmberBackground';
 import TimesheetPanel from '@/components/TimesheetPanel';
+import TreasurePanel from '@/components/TreasurePanel';
 
 export default function Page() {
   const [quests, setQuests] = useState<Quest[]>([]);
@@ -29,6 +31,7 @@ export default function Page() {
   const [showHelp, setShowHelp] = useState(false);
   const [showTimesheet, setShowTimesheet] = useState(false);
   const [showPortFull, setShowPortFull] = useState(false);
+  const [showTreasure, setShowTreasure] = useState(false);
   const xpGainTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load from Supabase (with localStorage fallback + one-time migration)
@@ -44,7 +47,20 @@ export default function Page() {
         );
         const updatedQuests = updateRiskByDeadline(updateHauntedCursed(migratedQuests));
         const updatedState = updateStreak(savedState);
-        const { state: drainedState, totalDrained, updatedQuests: drainedQuests } = applyXPDrain(updatedState, updatedQuests);
+        let { state: drainedState, totalDrained, updatedQuests: drainedQuests } = applyXPDrain(updatedState, updatedQuests);
+        if (totalDrained > 0) {
+          const coinsLost = calculateCoinsLost(totalDrained);
+          const curC = drainedState.coins ?? 0;
+          const curV = drainedState.vaultCoins ?? 0;
+          const fromC = Math.min(coinsLost, curC);
+          const fromV = Math.min(coinsLost - fromC, curV);
+          const mon = new Date().toISOString().slice(0, 7);
+          const hist = [...(drainedState.monthlyHistory ?? [])];
+          const hi = hist.findIndex(m => m.month === mon);
+          if (hi >= 0) hist[hi] = { ...hist[hi], xpLost: hist[hi].xpLost + totalDrained };
+          else hist.push({ month: mon, questsDone: 0, xpGained: 0, xpLost: totalDrained });
+          drainedState = { ...drainedState, coins: Math.max(0, curC - fromC), vaultCoins: Math.max(0, curV - fromV), monthlyHistory: hist };
+        }
         const { state: finalState, quests: finalQuests, relockedCount } = checkAndApplyRelock(drainedState, drainedQuests);
         setQuests(finalQuests);
         setGameState(finalState);
@@ -179,8 +195,27 @@ export default function Page() {
         finalQuests = newQuests.map(q => toArchive.has(q.id) ? { ...q, status: 'archived' as const } : q);
       }
 
-      setGameState(updatedState);
-      saveAll(finalQuests, updatedState);
+      // Earn Drachmes + track fragments
+      const { spendable: earnedCoins, vault: earnedVault } = calculateCoinsEarned(xpEarned);
+      const isBoss = quest.risk === 'critical';
+      const mon = new Date().toISOString().slice(0, 7);
+      const hist = [...(updatedState.monthlyHistory ?? [])];
+      const hi = hist.findIndex(m => m.month === mon);
+      if (hi >= 0) hist[hi] = { ...hist[hi], questsDone: hist[hi].questsDone + 1, xpGained: hist[hi].xpGained + xpEarned };
+      else hist.push({ month: mon, questsDone: 1, xpGained: xpEarned, xpLost: 0 });
+      hist.sort((a, b) => b.month.localeCompare(a.month));
+      const stateWithCoins: GameState = {
+        ...updatedState,
+        coins:               (updatedState.coins ?? 0) + earnedCoins,
+        vaultCoins:          (updatedState.vaultCoins ?? 0) + earnedVault,
+        bossQuestsCompleted: (updatedState.bossQuestsCompleted ?? 0) + (isBoss ? 1 : 0),
+        italyFragments:      (updatedState.italyFragments ?? 0) + (isBoss ? 3 : 0),
+        seaFragments:        (updatedState.seaFragments ?? 0) + (updatedState.questsCompleted % 5 === 0 ? 1 : 0),
+        franceFragments:     (updatedState.franceFragments ?? 0) + (updatedState.questsCompleted % 10 === 0 ? 1 : 0),
+        monthlyHistory:      hist.slice(0, 12),
+      };
+      setGameState(stateWithCoins);
+      saveAll(finalQuests, stateWithCoins);
 
       // XP float animation with bonus labels
       setXPGain(xpEarned);
@@ -259,6 +294,37 @@ export default function Page() {
     setGameState(prev => {
       const updated = { ...prev, xp: 0, level: 1, challenge: undefined };
       Storage.saveState(updated);
+      return updated;
+    });
+  }, []);
+
+  const handlePurchaseReward = useCallback((rewardId: string) => {
+    const reward = REWARDS.find(r => r.id === rewardId);
+    if (!reward) return;
+    setGameState(prev => {
+      if (reward.coinCost > 0 && (prev.coins ?? 0) < reward.coinCost) return prev;
+      if (reward.vaultCost > 0 && (prev.vaultCoins ?? 0) < reward.vaultCost) return prev;
+      const expiresAt = reward.durationDays
+        ? new Date(Date.now() + reward.durationDays * 86400000).toISOString()
+        : undefined;
+      const newAR: ActiveReward = { id: crypto.randomUUID(), rewardId: reward.id, name: reward.name, purchasedAt: new Date().toISOString(), expiresAt, coinCost: reward.coinCost, vaultCost: reward.vaultCost };
+      const updated = { ...prev, coins: Math.max(0, (prev.coins ?? 0) - reward.coinCost), vaultCoins: Math.max(0, (prev.vaultCoins ?? 0) - reward.vaultCost), activeRewards: [...(prev.activeRewards ?? []), newAR] };
+      Storage.saveStateAsync(updated);
+      return updated;
+    });
+  }, []);
+
+  const handleRenewReward = useCallback((activeRewardId: string) => {
+    setGameState(prev => {
+      const ar = (prev.activeRewards ?? []).find(r => r.id === activeRewardId);
+      if (!ar) return prev;
+      const def = REWARDS.find(r => r.id === ar.rewardId);
+      if (!def?.renewable || !def.renewalCost) return prev;
+      if ((prev.coins ?? 0) < def.renewalCost) return prev;
+      const base = ar.expiresAt ? new Date(ar.expiresAt) : new Date();
+      const newExpiry = new Date(Math.max(base.getTime(), Date.now()) + (def.durationDays ?? 30) * 86400000).toISOString();
+      const updated = { ...prev, coins: Math.max(0, (prev.coins ?? 0) - def.renewalCost), activeRewards: (prev.activeRewards ?? []).map(r => r.id === activeRewardId ? { ...r, expiresAt: newExpiry } : r) };
+      Storage.saveStateAsync(updated);
       return updated;
     });
   }, []);
@@ -417,6 +483,8 @@ export default function Page() {
         isDebtLocked={isDebtLocked}
         dailyMomentum={gameState.dailyQuestCount ?? 0}
         challengeTargetXPSum={challengeTargetXPSum}
+        onTreasure={() => setShowTreasure(true)}
+        coins={gameState.coins ?? 0}
       />
 
       <UniverseFilter
@@ -675,6 +743,15 @@ export default function Page() {
           setShowHelp(false);
           try { localStorage.setItem('quest-log-guide-seen', '1'); } catch {}
         }}
+      />
+
+      <TreasurePanel
+        isOpen={showTreasure}
+        onClose={() => setShowTreasure(false)}
+        gameState={gameState}
+        quests={quests}
+        onPurchase={handlePurchaseReward}
+        onRenew={handleRenewReward}
       />
 
       <TimesheetPanel

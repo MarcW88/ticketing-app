@@ -20,9 +20,11 @@ interface HeaderProps {
   isDebtLocked?: boolean;
   dailyMomentum?: number;
   challengeTargetXPSum?: number;
+  onTreasure?: () => void;
+  coins?: number;
 }
 
-export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest, onHelp, onSetChallenge, onClearChallenge, onResetXP, challengeTargets, isShielded, isDebtLocked, dailyMomentum, challengeTargetXPSum }: HeaderProps) {
+export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest, onHelp, onSetChallenge, onClearChallenge, onResetXP, challengeTargets, isShielded, isDebtLocked, dailyMomentum, challengeTargetXPSum, onTreasure, coins }: HeaderProps) {
   const levelInfo = getLevelInfo(gameState.level);
   const xpProgress = getXPProgress(gameState.xp, gameState.level);
   const xpForNext = getXPForNextLevel(gameState.level);
@@ -136,6 +138,17 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
               >
                 ⚡ ×{['1.0','1.1','1.2','1.4'][Math.min((dailyMomentum ?? 1) - 1, 3)]}
               </div>
+            )}
+            {onTreasure && (
+              <motion.button
+                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                onClick={onTreasure}
+                title="Trésor d'Ithaque — Drachmes & Rewards"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs josefin border transition-all"
+                style={{ borderColor: 'rgba(201,150,60,0.3)', color: 'var(--gold)', background: 'rgba(201,150,60,0.08)', letterSpacing: '0.05em' }}
+              >
+                ⚱️ {(coins ?? 0).toLocaleString('fr-FR')}
+              </motion.button>
             )}
             <motion.button
               whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}

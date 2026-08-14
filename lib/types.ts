@@ -50,6 +50,23 @@ export interface Quest {
   cannotForceUnlock?: boolean;    // permanent after auto-relock — never unlockable again
 }
 
+export interface ActiveReward {
+  id: string;
+  rewardId: string;
+  name: string;
+  purchasedAt: string;
+  expiresAt?: string;
+  coinCost: number;
+  vaultCost: number;
+}
+
+export interface MonthRecord {
+  month: string;       // 'YYYY-MM'
+  questsDone: number;
+  xpGained: number;
+  xpLost: number;
+}
+
 export interface XPChallenge {
   target: number;
   startXP: number;
@@ -72,6 +89,14 @@ export interface GameState {
   drainShieldUntil?: string;      // ISO — Athena's shield active (after 3 quests/day)
   lastQuestCompletedDate?: string; // 'YYYY-MM-DD' — for dawn bonus
   dailyQuestCount?: number;        // quests completed today (for momentum)
+  coins?: number;                  // Drachmes spendables (tier 1-5)
+  vaultCoins?: number;             // Trésor du Retour (tier 6-10 & voyages)
+  italyFragments?: number;
+  seaFragments?: number;
+  franceFragments?: number;
+  bossQuestsCompleted?: number;    // critical quests completed
+  activeRewards?: ActiveReward[];
+  monthlyHistory?: MonthRecord[];  // last 12 months
 }
 
 export interface UniverseConfig {

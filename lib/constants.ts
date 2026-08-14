@@ -1,5 +1,35 @@
 import type { UniverseId, MissionClass, QuestRisk, CompanionId, DayMode, LevelInfo, AchievementDef, UniverseConfig } from './types';
 
+export const DRACHMES_PER_XP = 3;
+export const VAULT_RATIO = 0.20;
+
+export interface RewardDef {
+  id: string;
+  tier: number;
+  name: string;
+  description: string;
+  icon: string;
+  coinCost: number;
+  vaultCost: number;
+  durationDays?: number;
+  renewable?: boolean;
+  renewalCost?: number;
+  conditions?: string[];
+  legendary?: boolean;
+}
+
+export const REWARDS: RewardDef[] = [
+  { id: 'livre',      tier: 1, name: 'Parchemin du Savoir',   description: "Achat d'un livre",                         icon: '📚', coinCost: 500,   vaultCost: 0 },
+  { id: 'cours',      tier: 2, name: 'École du Centaure',      description: 'Petit cours en ligne',                     icon: '🏛️', coinCost: 1500,  vaultCost: 0 },
+  { id: 'abonnement', tier: 3, name: "Faveur d'un Dieu",      description: 'Abonnement 1 mois (Claude, Perplexity…)',  icon: '⚡', coinCost: 2000,  vaultCost: 0, durationDays: 30, renewable: true, renewalCost: 2500 },
+  { id: 'formation',  tier: 5, name: "Révélation d'Athéna",   description: 'Formation premium / cours avancé',          icon: '🦉', coinCost: 5000,  vaultCost: 0 },
+  { id: 'tech_petit', tier: 6, name: "Forge d'Héphaïstos",    description: 'Petit achat tech (8 000–10 000)',            icon: '🔧', coinCost: 0,     vaultCost: 8000 },
+  { id: 'tech_grand', tier: 7, name: "Arsenal d'Achille",     description: 'Achat tech important (15 000–25 000)',      icon: '⚔️', coinCost: 0,     vaultCost: 15000 },
+  { id: 'mer',        tier: 8, name: 'Escale des Cyclades',   description: 'Vacances à la mer',                         icon: '🌊', coinCost: 0,     vaultCost: 30000,  conditions: ['sea_10',    'streak_1m'] },
+  { id: 'france',     tier: 9, name: 'Odyssée de Gaule',      description: 'Vacances en France',                       icon: '🇫🇷', coinCost: 0,     vaultCost: 45000,  conditions: ['france_20', 'streak_3m', 'no_catastrophic_2m'] },
+  { id: 'italie',     tier: 10, name: 'Le Grand Retour',      description: "L'Italie — Destination Légendaire",        icon: '🇮🇹', coinCost: 0,     vaultCost: 100000, conditions: ['italy_60',  'streak_6m', 'boss_4', 'no_catastrophic_3m'], legendary: true },
+];
+
 export const LEVELS: LevelInfo[] = [
   { level: 1,  xpRequired: 0,     title: 'Naufragé',          icon: '☠️'  },
   { level: 2,  xpRequired: 200,   title: 'Marin',             icon: '⚓'  },
@@ -168,4 +198,12 @@ export const DEFAULT_GAME_STATE = {
   companion: 'athena' as CompanionId,
   dayMode: 'normal' as DayMode,
   questsCompleted: 0,
+  coins: 0,
+  vaultCoins: 0,
+  italyFragments: 0,
+  seaFragments: 0,
+  franceFragments: 0,
+  bossQuestsCompleted: 0,
+  activeRewards: [] as import('./types').ActiveReward[],
+  monthlyHistory: [] as import('./types').MonthRecord[],
 };
