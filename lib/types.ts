@@ -50,14 +50,23 @@ export interface Quest {
   cannotForceUnlock?: boolean;    // permanent after auto-relock — never unlockable again
 }
 
-export interface ActiveReward {
+export type ObjectiveConditionType = 'streak_days' | 'boss_quests' | 'active_months';
+
+export interface ObjectiveCondition {
+  type: ObjectiveConditionType;
+  value: number;
+}
+
+export interface Objective {
   id: string;
-  rewardId: string;
   name: string;
-  purchasedAt: string;
-  expiresAt?: string;
-  coinCost: number;
-  vaultCost: number;
+  description?: string;
+  icon: string;
+  xpRequired: number;       // minimum xpTotal (cumulative) required
+  coinCost: number;         // Drachmes to spend
+  conditions?: ObjectiveCondition[];
+  unlockedAt?: string;      // ISO — set when unlocked
+  createdAt: string;
 }
 
 export interface MonthRecord {
@@ -89,14 +98,10 @@ export interface GameState {
   drainShieldUntil?: string;      // ISO — Athena's shield active (after 3 quests/day)
   lastQuestCompletedDate?: string; // 'YYYY-MM-DD' — for dawn bonus
   dailyQuestCount?: number;        // quests completed today (for momentum)
-  coins?: number;                  // Drachmes spendables (tier 1-5)
-  vaultCoins?: number;             // Trésor du Retour (tier 6-10 & voyages)
-  italyFragments?: number;
-  seaFragments?: number;
-  franceFragments?: number;
+  coins?: number;                  // Drachmes — earned only through milestones
   bossQuestsCompleted?: number;    // critical quests completed
-  activeRewards?: ActiveReward[];
   monthlyHistory?: MonthRecord[];  // last 12 months
+  objectives?: Objective[];        // user-defined objectives
 }
 
 export interface UniverseConfig {

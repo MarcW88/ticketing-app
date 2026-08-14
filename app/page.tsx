@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Quest, GameState, QuestStatus, DayMode, XPChallenge } from '@/lib/types';
 import { Storage } from '@/lib/storage';
-import { updateHauntedCursed, updateRiskByDeadline, completeQuestWithXP, applyXPDrain, checkAndApplyRelock, updateStreak, getLevelInfo, calculateCoinsEarned, calculateCoinsLost } from '@/lib/gameEngine';
-import { TAVERN_WISDOM, DEFAULT_GAME_STATE, ACHIEVEMENTS, FORCE_RELOCK_PENALTY, FORCE_UNLOCK_IMMEDIATE_COST, REWARDS } from '@/lib/constants';
-import type { ActiveReward } from '@/lib/types';
+import { updateHauntedCursed, updateRiskByDeadline, completeQuestWithXP, applyXPDrain, checkAndApplyRelock, updateStreak, getLevelInfo, calculateStreakMilestoneCoins } from '@/lib/gameEngine';
+import { TAVERN_WISDOM, DEFAULT_GAME_STATE, ACHIEVEMENTS, FORCE_RELOCK_PENALTY, FORCE_UNLOCK_IMMEDIATE_COST, COIN_REWARDS, STREAK_COIN_MILESTONES } from '@/lib/constants';
+import type { Objective } from '@/lib/types';
 import Header from '@/components/Header';
 import UniverseFilter from '@/components/UniverseFilter';
 import QuestBoard from '@/components/QuestBoard';
@@ -47,21 +47,13 @@ export default function Page() {
         );
         const updatedQuests = updateRiskByDeadline(updateHauntedCursed(migratedQuests));
         const updatedState = updateStreak(savedState);
-        let { state: drainedState, totalDrained, updatedQuests: drainedQuests } = applyXPDrain(updatedState, updatedQuests);
-        if (totalDrained > 0) {
-          const coinsLost = calculateCoinsLost(totalDrained);
-          const curC = drainedState.coins ?? 0;
-          const curV = drainedState.vaultCoins ?? 0;
-          const fromC = Math.min(coinsLost, curC);
-          const fromV = Math.min(coinsLost - fromC, curV);
-          const mon = new Date().toISOString().slice(0, 7);
-          const hist = [...(drainedState.monthlyHistory ?? [])];
-          const hi = hist.findIndex(m => m.month === mon);
-          if (hi >= 0) hist[hi] = { ...hist[hi], xpLost: hist[hi].xpLost + totalDrained };
-          else hist.push({ month: mon, questsDone: 0, xpGained: 0, xpLost: totalDrained });
-          drainedState = { ...drainedState, coins: Math.max(0, curC - fromC), vaultCoins: Math.max(0, curV - fromV), monthlyHistory: hist };
-        }
-        const { state: finalState, quests: finalQuests, relockedCount } = checkAndApplyRelock(drainedState, drainedQuests);
+        const { state: drainedState, totalDrained, updatedQuests: drainedQuests } = applyXPDrain(updatedState, updatedQuests);
+        // Streak milestone coins (awarded when streak crosses a milestone)
+        const streakCoins = calculateStreakMilestoneCoins(savedState.streak ?? 0, updatedState.streak ?? 0);
+        const stateAfterStreak = streakCoins > 0
+          ? { ...drainedState, coins: (drainedState.coins ?? 0) + streakCoins }
+          : drainedState;
+        const { state: finalState, quests: finalQuests, relockedCount } = checkAndApplyRelock(stateAfterStreak, drainedQuests);
         setQuests(finalQuests);
         setGameState(finalState);
         if (totalDrained > 0 || relockedCount > 0) {
@@ -195,9 +187,11 @@ export default function Page() {
         finalQuests = newQuests.map(q => toArchive.has(q.id) ? { ...q, status: 'archived' as const } : q);
       }
 
-      // Earn Drachmes + track fragments
-      const { spendable: earnedCoins, vault: earnedVault } = calculateCoinsEarned(xpEarned);
+      // Milestone Drachmes: level-up + boss quest
       const isBoss = quest.risk === 'critical';
+      let earnedCoins = isBoss ? COIN_REWARDS.BOSS_QUEST : 0;
+      if (leveledUp) earnedCoins += newLevel * COIN_REWARDS.LEVEL_UP_PER_LEVEL;
+      // Monthly history
       const mon = new Date().toISOString().slice(0, 7);
       const hist = [...(updatedState.monthlyHistory ?? [])];
       const hi = hist.findIndex(m => m.month === mon);
@@ -207,11 +201,7 @@ export default function Page() {
       const stateWithCoins: GameState = {
         ...updatedState,
         coins:               (updatedState.coins ?? 0) + earnedCoins,
-        vaultCoins:          (updatedState.vaultCoins ?? 0) + earnedVault,
         bossQuestsCompleted: (updatedState.bossQuestsCompleted ?? 0) + (isBoss ? 1 : 0),
-        italyFragments:      (updatedState.italyFragments ?? 0) + (isBoss ? 3 : 0),
-        seaFragments:        (updatedState.seaFragments ?? 0) + (updatedState.questsCompleted % 5 === 0 ? 1 : 0),
-        franceFragments:     (updatedState.franceFragments ?? 0) + (updatedState.questsCompleted % 10 === 0 ? 1 : 0),
         monthlyHistory:      hist.slice(0, 12),
       };
       setGameState(stateWithCoins);
@@ -298,32 +288,41 @@ export default function Page() {
     });
   }, []);
 
-  const handlePurchaseReward = useCallback((rewardId: string) => {
-    const reward = REWARDS.find(r => r.id === rewardId);
-    if (!reward) return;
+  const handleAddObjective = useCallback((data: Omit<Objective, 'id' | 'createdAt'>) => {
     setGameState(prev => {
-      if (reward.coinCost > 0 && (prev.coins ?? 0) < reward.coinCost) return prev;
-      if (reward.vaultCost > 0 && (prev.vaultCoins ?? 0) < reward.vaultCost) return prev;
-      const expiresAt = reward.durationDays
-        ? new Date(Date.now() + reward.durationDays * 86400000).toISOString()
-        : undefined;
-      const newAR: ActiveReward = { id: crypto.randomUUID(), rewardId: reward.id, name: reward.name, purchasedAt: new Date().toISOString(), expiresAt, coinCost: reward.coinCost, vaultCost: reward.vaultCost };
-      const updated = { ...prev, coins: Math.max(0, (prev.coins ?? 0) - reward.coinCost), vaultCoins: Math.max(0, (prev.vaultCoins ?? 0) - reward.vaultCost), activeRewards: [...(prev.activeRewards ?? []), newAR] };
+      const obj: Objective = { ...data, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
+      const updated = { ...prev, objectives: [...(prev.objectives ?? []), obj] };
       Storage.saveStateAsync(updated);
       return updated;
     });
   }, []);
 
-  const handleRenewReward = useCallback((activeRewardId: string) => {
+  const handleEditObjective = useCallback((id: string, data: Omit<Objective, 'id' | 'createdAt'>) => {
     setGameState(prev => {
-      const ar = (prev.activeRewards ?? []).find(r => r.id === activeRewardId);
-      if (!ar) return prev;
-      const def = REWARDS.find(r => r.id === ar.rewardId);
-      if (!def?.renewable || !def.renewalCost) return prev;
-      if ((prev.coins ?? 0) < def.renewalCost) return prev;
-      const base = ar.expiresAt ? new Date(ar.expiresAt) : new Date();
-      const newExpiry = new Date(Math.max(base.getTime(), Date.now()) + (def.durationDays ?? 30) * 86400000).toISOString();
-      const updated = { ...prev, coins: Math.max(0, (prev.coins ?? 0) - def.renewalCost), activeRewards: (prev.activeRewards ?? []).map(r => r.id === activeRewardId ? { ...r, expiresAt: newExpiry } : r) };
+      const updated = { ...prev, objectives: (prev.objectives ?? []).map(o => o.id === id ? { ...o, ...data } : o) };
+      Storage.saveStateAsync(updated);
+      return updated;
+    });
+  }, []);
+
+  const handleDeleteObjective = useCallback((id: string) => {
+    setGameState(prev => {
+      const updated = { ...prev, objectives: (prev.objectives ?? []).filter(o => o.id !== id) };
+      Storage.saveStateAsync(updated);
+      return updated;
+    });
+  }, []);
+
+  const handleUnlockObjective = useCallback((id: string) => {
+    setGameState(prev => {
+      const obj = (prev.objectives ?? []).find(o => o.id === id);
+      if (!obj || obj.unlockedAt) return prev;
+      if ((prev.coins ?? 0) < obj.coinCost) return prev;
+      const updated = {
+        ...prev,
+        coins: Math.max(0, (prev.coins ?? 0) - obj.coinCost),
+        objectives: (prev.objectives ?? []).map(o => o.id === id ? { ...o, unlockedAt: new Date().toISOString() } : o),
+      };
       Storage.saveStateAsync(updated);
       return updated;
     });
@@ -749,9 +748,10 @@ export default function Page() {
         isOpen={showTreasure}
         onClose={() => setShowTreasure(false)}
         gameState={gameState}
-        quests={quests}
-        onPurchase={handlePurchaseReward}
-        onRenew={handleRenewReward}
+        onAddObjective={handleAddObjective}
+        onEditObjective={handleEditObjective}
+        onDeleteObjective={handleDeleteObjective}
+        onUnlockObjective={handleUnlockObjective}
       />
 
       <TimesheetPanel

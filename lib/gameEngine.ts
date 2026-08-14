@@ -1,16 +1,12 @@
 import type { Quest, GameState, QuestRisk, QuestStatus } from './types';
-import { LEVELS, XP_BY_RISK, XP_PENALTY_DAILY, ACHIEVEMENTS, DAY_MODES, XP_FORCE_UNLOCK_HOURLY, FORCE_UNLOCK_IMMEDIATE_COST, FORCE_RELOCK_XP_THRESHOLD, FORCE_RELOCK_PENALTY, FORCE_RELOCK_HOURS, DRACHMES_PER_XP, VAULT_RATIO } from './constants';
+import { LEVELS, XP_BY_RISK, XP_PENALTY_DAILY, ACHIEVEMENTS, DAY_MODES, XP_FORCE_UNLOCK_HOURLY, FORCE_UNLOCK_IMMEDIATE_COST, FORCE_RELOCK_XP_THRESHOLD, FORCE_RELOCK_PENALTY, FORCE_RELOCK_HOURS, COIN_REWARDS, STREAK_COIN_MILESTONES } from './constants';
 
-export function calculateCoinsEarned(xp: number): { spendable: number; vault: number } {
-  const total = Math.floor(xp * DRACHMES_PER_XP);
-  const vault = Math.floor(total * VAULT_RATIO);
-  return { spendable: total - vault, vault };
-}
-
-export function calculateCoinsLost(xpLost: number): number {
-  if (xpLost <= 0) return 0;
-  const multiplier = xpLost <= 20 ? 1 : xpLost <= 50 ? 1.5 : xpLost <= 100 ? 2 : 3;
-  return Math.floor(xpLost * DRACHMES_PER_XP * multiplier);
+export function calculateStreakMilestoneCoins(oldStreak: number, newStreak: number): number {
+  let coins = 0;
+  for (const [milestone, award] of STREAK_COIN_MILESTONES) {
+    if (oldStreak < milestone && newStreak >= milestone) coins += award;
+  }
+  return coins;
 }
 
 export function getLevelFromXP(xp: number): number {
