@@ -28,6 +28,7 @@ export default function Page() {
   const [showStats, setShowStats] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showTimesheet, setShowTimesheet] = useState(false);
+  const [showPortFull, setShowPortFull] = useState(false);
   const xpGainTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load from Supabase (with localStorage fallback + one-time migration)
@@ -310,9 +311,18 @@ export default function Page() {
     setPendingAchievements(prev => prev.filter(a => a !== id));
   }, []);
 
+  const BACKLOG_CAP = 10;
   const openNewQuest = useCallback(() => {
-    setEditingQuest(null);
-    setIsModalOpen(true);
+    setQuests(prev => {
+      const backlogCount = prev.filter(q => q.status === 'backlog').length;
+      if (backlogCount >= BACKLOG_CAP) {
+        setShowPortFull(true);
+        return prev;
+      }
+      setEditingQuest(null);
+      setIsModalOpen(true);
+      return prev;
+    });
   }, []);
 
   const handleTimerStart = useCallback((id: string) => {
@@ -626,6 +636,38 @@ export default function Page() {
         newLevel={levelUp}
         onDone={() => setLevelUp(null)}
       />
+
+      {/* Port d'Ithaque plein */}
+      {showPortFull && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(6,9,15,0.85)', backdropFilter: 'blur(6px)' }}
+          onClick={() => setShowPortFull(false)}
+        >
+          <div
+            className="relative max-w-sm w-full rounded-2xl p-6 text-center"
+            style={{ background: 'rgba(18,22,30,0.98)', border: '1px solid rgba(139,26,26,0.45)', boxShadow: '0 0 40px rgba(139,26,26,0.2)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="text-5xl mb-4">⚓</div>
+            <h2 className="font-display text-xl font-bold mb-2" style={{ color: '#E06060' }}>Port saturé</h2>
+            <p className="text-sm mb-4 josefin" style={{ color: 'var(--tweed)', lineHeight: '1.6' }}>
+              Le Port d&apos;Ithaque ne peut accueillir que <strong style={{ color: 'var(--gold)' }}>10 missions</strong> en attente.
+              Terminez ou résolvez des quêtes existantes avant d&apos;en ajouter de nouvelles.
+            </p>
+            <p className="text-xs italic mb-5 josefin" style={{ color: 'rgba(240,232,216,0.45)' }}>
+              « Ulysse ne surchargeait pas ses navires — la discipline précède la victoire. »
+            </p>
+            <button
+              onClick={() => setShowPortFull(false)}
+              className="px-6 py-2 rounded-full text-sm font-bold josefin transition-all"
+              style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F' }}
+            >
+              Compris
+            </button>
+          </div>
+        </div>
+      )}
 
       <HelpModal
         isOpen={showHelp}
