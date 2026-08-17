@@ -11,7 +11,7 @@ interface UniverseFilterProps {
 
 type StatusKey = keyof typeof STATUS_CONFIG;
 
-const STATUS_KEYS: StatusKey[] = ['backlog', 'active', 'haunted', 'cursed', 'done'];
+const STATUS_KEYS: StatusKey[] = ['backlog', 'active', 'paused', 'haunted', 'cursed', 'done'];
 const DANGER_STATUSES = ['haunted', 'cursed', 'maelstrom'];
 
 export default function UniverseFilter({ current, quests, onChange }: UniverseFilterProps) {
@@ -38,11 +38,18 @@ export default function UniverseFilter({ current, quests, onChange }: UniverseFi
       {STATUS_KEYS.map(key => {
         const cfg = STATUS_CONFIG[key];
         const count = getCount(key);
+        const color =
+          key === 'cursed'  ? '#E06060' :
+          key === 'haunted' ? '#9B7FE0' :
+          key === 'done'    ? '#7FAB70' :
+          key === 'active'  ? '#6AACCF' :
+          key === 'paused'  ? '#4FA8A8' :
+          'var(--gold)';
         return (
           <StatusTab
             key={key}
             label={cfg.label}
-            color={key === 'cursed' ? '#E06060' : key === 'haunted' ? '#9B7FE0' : key === 'done' ? '#7FAB70' : key === 'active' ? '#6AACCF' : 'var(--gold)'}
+            color={color}
             count={count}
             isActive={current === key}
             onClick={() => onChange(key)}
@@ -54,8 +61,7 @@ export default function UniverseFilter({ current, quests, onChange }: UniverseFi
 }
 
 function StatusTab({ label, color, count, isActive, onClick }: {
-  label: string; color: string;
-  count: number; isActive: boolean; onClick: () => void;
+  label: string; color: string; count: number; isActive: boolean; onClick: () => void;
 }) {
   return (
     <button

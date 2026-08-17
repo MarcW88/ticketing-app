@@ -153,15 +153,10 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
             <motion.button
               whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
               onClick={onNewQuest}
-              disabled={!!isDebtLocked}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all josefin disabled:opacity-40 disabled:cursor-not-allowed"
-              style={isDebtLocked
-                ? { background: 'rgba(139,26,26,0.5)', color: '#FFD0D0', boxShadow: 'none', letterSpacing: '0.05em' }
-                : { background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', boxShadow: '0 4px 16px rgba(201,150,60,0.25)', letterSpacing: '0.05em' }
-              }
-              title={isDebtLocked ? 'XP négatif — remboursez la Dette de l\'Erèbe en résolvant des épreuves' : ''}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all josefin"
+              style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', boxShadow: '0 4px 16px rgba(201,150,60,0.25)', letterSpacing: '0.05em' }}
             >
-              {isDebtLocked ? '⛓️ Dette' : 'Nouvelle mission'}
+              Nouvelle mission
             </motion.button>
           </div>
         </div>

@@ -69,7 +69,7 @@ export function updateHauntedCursed(quests: Quest[]): Quest[] {
 
   // Step 1: time-based status escalation
   let result = quests.map(q => {
-    if (q.status === 'done' || q.status === 'archived') return q;
+    if (q.status === 'done' || q.status === 'archived' || q.status === 'paused') return q;
     if (!q.dueDate) return q;
     const due = new Date(q.dueDate);
     const diffDays = (now.getTime() - due.getTime()) / (1000 * 60 * 60 * 24);

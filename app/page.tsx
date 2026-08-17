@@ -376,7 +376,7 @@ export default function Page() {
     setPendingAchievements(prev => prev.filter(a => a !== id));
   }, []);
 
-  const BACKLOG_CAP = 10;
+  const BACKLOG_CAP = 50;
   const openNewQuest = useCallback(() => {
     setQuests(prev => {
       const backlogCount = prev.filter(q => q.status === 'backlog').length;

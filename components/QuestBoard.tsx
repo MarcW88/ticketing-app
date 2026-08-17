@@ -27,6 +27,7 @@ interface QuestBoardProps {
 const COLUMNS: { status: QuestStatus; label: string; accent: string; dropDisabled?: boolean }[] = [
   { status: 'backlog', label: "Port d'Ithaque", accent: '#C9963C' },
   { status: 'active',  label: 'En Mer',          accent: '#6AACCF' },
+  { status: 'paused',  label: 'Escale',           accent: '#4FA8A8' },
   { status: 'done',    label: 'Ithaque',          accent: '#7FAB70' },
   { status: 'haunted', label: 'Épreuves',         accent: '#9B7FE0', dropDisabled: true },
 ];
@@ -77,7 +78,7 @@ export default function QuestBoard({
   onForceUnlock,
 }: QuestBoardProps) {
   const visibleQuests = quests.filter(q => q.status !== 'archived');
-  const filtered = (universeFilter === 'all' || !['backlog','active','done','haunted','cursed'].includes(universeFilter))
+  const filtered = (universeFilter === 'all' || !['backlog','active','paused','done','haunted','cursed'].includes(universeFilter))
     ? visibleQuests
     : visibleQuests.filter(q => q.status === universeFilter || (universeFilter === 'haunted' && (q.status === 'cursed' || q.status === 'maelstrom')));
 

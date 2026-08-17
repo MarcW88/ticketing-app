@@ -91,6 +91,7 @@ export const STATUS_CONFIG = {
   backlog: { label: 'Port d\'Ithaque',  icon: '⚓', colorClass: 'text-amber-600',   bgClass: 'bg-amber-900/20'  },
   active:  { label: 'En Mer',           icon: '⚔️', colorClass: 'text-blue-400',    bgClass: 'bg-blue-900/20'   },
   done:    { label: 'Ithaque',          icon: '🏛️', colorClass: 'text-emerald-400', bgClass: 'bg-emerald-900/20'},
+  paused:     { label: 'Escale',             icon: '⚓', colorClass: 'text-teal-400',   bgClass: 'bg-teal-900/20'    },
   haunted:    { label: 'Chant des Sirènes', icon: '🌀', colorClass: 'text-purple-400',  bgClass: 'bg-purple-900/20'  },
   cursed:     { label: "Antre du Cyclope",  icon: '💀', colorClass: 'text-red-400',     bgClass: 'bg-red-900/20'     },
   maelstrom:  { label: 'Maelstrom',          icon: '🌪️', colorClass: 'text-red-700',     bgClass: 'bg-red-950/40'     },

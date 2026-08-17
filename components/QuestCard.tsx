@@ -270,7 +270,44 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
               {isBlocked ? '🔒 Bloqué' : 'Commencer'}
             </button>
           )}
-          {(quest.status === 'active' || isInDanger) && (
+          {quest.status === 'active' && (
+            <>
+              <button
+                onClick={() => onComplete(quest.id)}
+                className="flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all hover:shadow-sm josefin"
+                style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', letterSpacing: '0.08em' }}
+              >
+                Terminer
+              </button>
+              <button
+                onClick={() => onStatusChange(quest.id, 'paused')}
+                className="text-xs font-semibold py-1.5 px-3 rounded-lg border transition-all josefin"
+                style={{ borderColor: '#4FA8A8', color: '#4FA8A8', background: 'transparent', letterSpacing: '0.06em' }}
+                title="Mettre en Escale — en attente de confirmation client"
+              >
+                ⚓
+              </button>
+            </>
+          )}
+          {quest.status === 'paused' && (
+            <>
+              <button
+                onClick={() => onStatusChange(quest.id, 'backlog')}
+                className="flex-1 text-xs font-semibold py-1.5 rounded-lg border transition-all josefin"
+                style={{ borderColor: '#4FA8A8', color: '#4FA8A8', background: 'transparent', letterSpacing: '0.08em' }}
+              >
+                ↩ Reprendre
+              </button>
+              <button
+                onClick={() => onComplete(quest.id)}
+                className="flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all hover:shadow-sm josefin"
+                style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', letterSpacing: '0.08em' }}
+              >
+                Terminer
+              </button>
+            </>
+          )}
+          {isInDanger && (
             <button
               onClick={() => onComplete(quest.id)}
               className="flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all hover:shadow-sm josefin"
