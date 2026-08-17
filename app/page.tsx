@@ -492,6 +492,15 @@ export default function Page() {
         onChange={setUniverseFilter}
       />
 
+      {/* Debt banner */}
+      {isDebtLocked && (
+        <div className="flex items-center gap-2 px-5 py-2.5 text-xs josefin" style={{ background: 'rgba(139,26,26,0.22)', borderBottom: '1px solid rgba(224,96,96,0.28)', color: '#f87171', letterSpacing: '0.05em' }}>
+          <span>⛓️</span>
+          <span>Dette de l&apos;Erèbe — XP négatif. Vous pouvez créer des quêtes dans le Port d&apos;Ithaque, mais vous ne pouvez pas déplacer de cartes vers les autres colonnes tant que votre XP est négatif.</span>
+          <span className="ml-auto font-bold" style={{ color: '#f87171' }}>{gameState.xp.toLocaleString()} XP</span>
+        </div>
+      )}
+
       {/* Empty state */}
       {quests.length === 0 && (
         <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
@@ -504,11 +513,10 @@ export default function Page() {
           </p>
           <button
             onClick={openNewQuest}
-            disabled={isDebtLocked}
-            className="flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all font-display disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all font-display"
             style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', boxShadow: '0 6px 24px rgba(201,150,60,0.35)' }}
           >
-            {isDebtLocked ? '⛓️ Dette de l\'Erèbe' : '⚔️ Première Épreuve'}
+            ⚔️ Première Épreuve
           </button>
           <p className="text-xs mt-8 italic max-w-xs font-display" style={{ color: 'var(--gold)', opacity: 0.6 }}>
             &ldquo;{wisdom}&rdquo;

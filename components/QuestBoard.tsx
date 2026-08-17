@@ -93,9 +93,12 @@ export default function QuestBoard({
     const { destination, draggableId } = result;
     if (!destination) return;
     const newStatus = destination.droppableId as QuestStatus;
-    if (newStatus === result.source.droppableId && result.destination?.index === result.source.index) return;
+    const sourceStatus = result.source.droppableId as QuestStatus;
+    if (newStatus === sourceStatus && result.destination?.index === result.source.index) return;
 
-    if (newStatus === 'done') {
+    if (sourceStatus === 'backlog' && newStatus !== 'backlog' && isDebtLocked) {
+      return; // debt: cannot move out of Port d'Ithaque
+    } else if (newStatus === 'done') {
       onComplete(draggableId);
     } else if (newStatus === 'active' && isBlocked) {
       return; // blocked: resolve haunted/cursed/maelstrom first

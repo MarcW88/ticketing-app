@@ -227,6 +227,14 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
               </button>
             </div>
 
+            {/* Debt warning */}
+            {isDebtLocked && (
+              <div className="mx-6 mt-4 px-4 py-2.5 rounded-xl flex items-center gap-2 text-xs josefin"
+                style={{ background: 'rgba(139,26,26,0.25)', border: '1px solid rgba(224,96,96,0.35)', color: '#f87171', letterSpacing: '0.04em' }}>
+                ⛓️ Dette de l&apos;Erèbe active — la quête sera créée dans le Port d&apos;Ithaque, mais vous ne pourrez pas la déplacer tant que l&apos;XP est négatif.
+              </div>
+            )}
+
             {/* Scrollable form body */}
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
               {/* Title */}
@@ -304,14 +312,14 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--sand)' }}>
-                    Date limite <span style={{ color: '#E06060' }}>*</span>
+                    Date limite <span className="normal-case font-normal" style={{ color: 'var(--tweed)' }}>(optionnelle)</span>
                   </label>
                   <input
                     type="date"
                     value={dueDate}
                     onChange={e => { setDueDate(e.target.value); setUserPickedRisk(false); }}
                     className="noctua-input"
-                    style={!dueDate ? { borderColor: 'rgba(224,96,96,0.5)', boxShadow: '0 0 0 1px rgba(224,96,96,0.25)' } : {}}
+                    style={{}}
                   />
                   {dueDate && (() => { const o = getOracleMessage(dueDate); return (
                     <p className="text-xs mt-1.5 italic josefin" style={{ color: o.color, letterSpacing: '0.03em' }}>{o.msg}</p>
@@ -446,7 +454,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={handleSave}
-                  disabled={!title.trim() || !dueDate || !!isDebtLocked}
+                  disabled={!title.trim()}
                   className="px-5 py-2 rounded-full text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{ background: 'var(--gold)', color: '#06090F', boxShadow: '0 4px 14px rgba(201,150,60,0.4)' }}
                 >
