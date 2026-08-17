@@ -293,10 +293,18 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
             <>
               <button
                 onClick={() => onStatusChange(quest.id, 'backlog')}
-                className="flex-1 text-xs font-semibold py-1.5 rounded-lg border transition-all josefin"
-                style={{ borderColor: '#4FA8A8', color: '#4FA8A8', background: 'transparent', letterSpacing: '0.08em' }}
+                className="text-xs font-semibold py-1.5 px-2.5 rounded-lg border transition-all josefin"
+                style={{ borderColor: 'rgba(79,168,168,0.45)', color: 'rgba(79,168,168,0.7)', background: 'transparent', letterSpacing: '0.04em' }}
+                title="Remettre dans le Port d'Ithaque"
               >
-                ↩ Reprendre
+                ⚓
+              </button>
+              <button
+                onClick={() => onStatusChange(quest.id, 'active')}
+                className="flex-1 text-xs font-semibold py-1.5 rounded-lg border transition-all josefin"
+                style={{ borderColor: '#4FA8A8', color: '#4FA8A8', background: 'transparent', letterSpacing: '0.07em' }}
+              >
+                ⚔️ Reprendre
               </button>
               <button
                 onClick={() => onComplete(quest.id)}
