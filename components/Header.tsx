@@ -42,6 +42,8 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
     challengeTargetXPSum && challengeTargetXPSum > 0 ? String(challengeTargetXPSum) : '500'
   );
   const [formLabel, setFormLabel] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiReason, setAiReason] = useState('');
 
   useEffect(() => {
     if (challengeTargetXPSum && challengeTargetXPSum > 0) {
@@ -302,14 +304,34 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
                           <label className="text-xs mb-1 block" style={{ color: 'rgba(220,230,245,0.55)' }}>
                             Label (optionnel)
                           </label>
-                          <input
-                            type="text"
-                            value={formLabel}
-                            onChange={e => setFormLabel(e.target.value)}
-                            placeholder="Sprint S32, Semaine intense…"
-                            className="w-full text-xs px-3 py-2 rounded-lg outline-none"
-                            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(100,140,180,0.20)', color: '#E8EEF4' }}
-                          />
+                          <div className="flex gap-1.5">
+                            <input
+                              type="text"
+                              value={formLabel}
+                              onChange={e => { setFormLabel(e.target.value); setAiReason(''); }}
+                              placeholder="Sprint S32, Semaine intense…"
+                              className="flex-1 text-xs px-3 py-2 rounded-lg outline-none"
+                              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(100,140,180,0.20)', color: '#E8EEF4' }}
+                            />
+                            <button
+                              disabled={!formLabel.trim() || aiLoading}
+                              onClick={async () => {
+                                if (!formLabel.trim()) return;
+                                setAiLoading(true);
+                                try {
+                                  const r = await fetch('/api/challenge-xp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ label: formLabel }) });
+                                  const d = await r.json();
+                                  if (d.xp) { setFormTarget(String(d.xp)); setAiReason(d.reason ?? ''); }
+                                } catch {} finally { setAiLoading(false); }
+                              }}
+                              className="shrink-0 text-xs px-2 py-1.5 rounded-lg transition-all disabled:opacity-40"
+                              style={{ background: 'rgba(79,168,168,0.15)', color: '#4FA8A8', border: '1px solid rgba(79,168,168,0.3)' }}
+                              title="Laisser l'IA estimer l'objectif XP"
+                            >
+                              {aiLoading ? '...' : '✨ IA'}
+                            </button>
+                          </div>
+                          {aiReason && <p className="text-xs mt-1 josefin" style={{ color: '#4FA8A8', opacity: 0.8 }}>{aiReason}</p>}
                         </div>
                         <div>
                           <label className="text-xs mb-1 flex items-center justify-between" style={{ color: 'rgba(220,230,245,0.55)' }}>

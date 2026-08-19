@@ -257,7 +257,7 @@ export default function Page() {
     setGameState(prev => {
       const challenge: XPChallenge = { target, label, startXP: prev.xpTotal, createdAt: new Date().toISOString() };
       const updated = { ...prev, challenge };
-      Storage.saveState(updated);
+      Storage.saveStateAsync(updated);
       return updated;
     });
   }, []);
@@ -265,7 +265,7 @@ export default function Page() {
   const handleClearChallenge = useCallback(() => {
     setGameState(prev => {
       const updated = { ...prev, challenge: undefined };
-      Storage.saveState(updated);
+      Storage.saveStateAsync(updated);
       return updated;
     });
   }, []);
@@ -374,6 +374,22 @@ export default function Page() {
 
   const handleDismissAchievement = useCallback((id: string) => {
     setPendingAchievements(prev => prev.filter(a => a !== id));
+  }, []);
+
+  const handleBuyXP = useCallback((coinCost: number, xpGain: number) => {
+    setGameState(prev => {
+      if ((prev.coins ?? 0) < coinCost) return prev;
+      const updated = {
+        ...prev,
+        coins: (prev.coins ?? 0) - coinCost,
+        xp: prev.xp + xpGain,
+        xpTotal: (prev.xpTotal ?? 0) + xpGain,
+      };
+      Storage.saveStateAsync(updated);
+      setXPGain(xpGain);
+      setTimeout(() => setXPGain(null), 1600);
+      return updated;
+    });
   }, []);
 
   const BACKLOG_CAP = 50;
@@ -760,6 +776,7 @@ export default function Page() {
         onEditObjective={handleEditObjective}
         onDeleteObjective={handleDeleteObjective}
         onUnlockObjective={handleUnlockObjective}
+        onBuyXP={handleBuyXP}
       />
 
       <TimesheetPanel

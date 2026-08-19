@@ -67,8 +67,19 @@ export function updateRiskByDeadline(quests: Quest[]): Quest[] {
 export function updateHauntedCursed(quests: Quest[]): Quest[] {
   const now = new Date();
 
-  // Step 1: time-based status escalation
+  // Step 0: Recovery — if deadline moved back to the future, restore épreuves cards to active
   let result = quests.map(q => {
+    if (q.status !== 'haunted' && q.status !== 'cursed' && q.status !== 'maelstrom') return q;
+    if (!q.dueDate) return q;
+    const diffDays = (now.getTime() - new Date(q.dueDate).getTime()) / (1000 * 60 * 60 * 24);
+    if (diffDays < 0) {
+      return { ...q, status: 'active' as const, hauntedAt: undefined, cursedAt: undefined, maelstromAt: undefined };
+    }
+    return q;
+  });
+
+  // Step 1: time-based status escalation
+  result = result.map(q => {
     if (q.status === 'done' || q.status === 'archived' || q.status === 'paused') return q;
     if (!q.dueDate) return q;
     const due = new Date(q.dueDate);
@@ -86,6 +97,7 @@ export function updateHauntedCursed(quests: Quest[]): Quest[] {
     }
     return q;
   });
+  // end step 1
 
   // Step 2: CONTAGION — haunted quest ≥48h infects oldest backlog quest
   const hasContagion = result.some(
