@@ -72,7 +72,7 @@ export function updateHauntedCursed(quests: Quest[]): Quest[] {
     if (q.status !== 'haunted' && q.status !== 'cursed' && q.status !== 'maelstrom') return q;
     if (!q.dueDate) return q;
     const diffDays = (now.getTime() - new Date(q.dueDate).getTime()) / (1000 * 60 * 60 * 24);
-    if (diffDays < 0) {
+    if (diffDays < 1) {
       return { ...q, status: 'active' as const, hauntedAt: undefined, cursedAt: undefined, maelstromAt: undefined };
     }
     return q;
@@ -90,8 +90,8 @@ export function updateHauntedCursed(quests: Quest[]): Quest[] {
     if (diffDays > 7 && q.status !== 'cursed' && q.status !== 'maelstrom') {
       return { ...q, status: 'cursed' as const, cursedAt: q.cursedAt ?? now.toISOString() };
     }
-    // Backlog cards: haunted as soon as past due; active cards: 2-day grace period
-    const hauntedThreshold = q.status === 'backlog' ? 0 : 2;
+    // Backlog cards: 1-day grace (covers timezone drift on due date); active cards: 2-day grace period
+    const hauntedThreshold = q.status === 'backlog' ? 1 : 2;
     if (diffDays > hauntedThreshold && q.status !== 'cursed' && q.status !== 'haunted' && q.status !== 'maelstrom') {
       return { ...q, status: 'haunted' as const, hauntedAt: q.hauntedAt ?? now.toISOString() };
     }
@@ -99,13 +99,13 @@ export function updateHauntedCursed(quests: Quest[]): Quest[] {
   });
   // end step 1
 
-  // Step 2: CONTAGION — haunted quest ≥48h infects oldest backlog quest
+  // Step 2: CONTAGION — haunted quest ≥48h infects oldest OVERDUE backlog quest only
   const hasContagion = result.some(
     q => q.status === 'haunted' && q.hauntedAt &&
       (now.getTime() - new Date(q.hauntedAt).getTime()) >= 48 * 3600 * 1000
   );
   if (hasContagion) {
-    const backlog = result.filter(q => q.status === 'backlog');
+    const backlog = result.filter(q => q.status === 'backlog' && q.dueDate && (now.getTime() - new Date(q.dueDate).getTime()) / (1000 * 60 * 60 * 24) > 1);
     if (backlog.length > 0) {
       const oldest = [...backlog].sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0];
       result = result.map(q =>
