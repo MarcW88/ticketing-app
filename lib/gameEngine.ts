@@ -132,7 +132,12 @@ export function applyXPDrain(
   quests: Quest[]
 ): { state: GameState; totalDrained: number; updatedQuests: Quest[] } {
   const now = new Date();
-  const shieldActive = !!(state.drainShieldUntil && new Date(state.drainShieldUntil) > now);
+  const fullShieldActive = !!(state.fullDrainShieldUntil && new Date(state.fullDrainShieldUntil) > now);
+  const shieldActive = fullShieldActive || !!(state.drainShieldUntil && new Date(state.drainShieldUntil) > now);
+
+  if (fullShieldActive) {
+    return { state: { ...state, lastDrainAt: now.toISOString() }, totalDrained: 0, updatedQuests: quests };
+  }
 
   if (!state.lastDrainAt) {
     return { state: { ...state, lastDrainAt: now.toISOString() }, totalDrained: 0, updatedQuests: quests };

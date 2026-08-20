@@ -28,7 +28,6 @@ const COLUMNS: { status: QuestStatus; label: string; accent: string; dropDisable
   { status: 'backlog', label: "Port d'Ithaque", accent: '#C9963C' },
   { status: 'active',  label: 'En Mer',          accent: '#6AACCF' },
   { status: 'paused',  label: 'Escale',           accent: '#4FA8A8' },
-  { status: 'done',    label: 'Ithaque',          accent: '#7FAB70' },
   { status: 'haunted', label: 'Épreuves',         accent: '#9B7FE0', dropDisabled: true },
 ];
 

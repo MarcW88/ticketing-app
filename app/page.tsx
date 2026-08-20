@@ -334,6 +334,8 @@ export default function Page() {
       if (!quest || quest.cannotForceUnlock) return prev;
       const cost = FORCE_UNLOCK_IMMEDIATE_COST[quest.risk] ?? 50;
       setGameState(gs => {
+        const fullShield = !!(gs.fullDrainShieldUntil && new Date(gs.fullDrainShieldUntil) > new Date());
+        if (fullShield) return gs; // shield active: force-unlock is free
         const updated = { ...gs, xp: gs.xp - cost, level: gs.level };
         Storage.saveStateAsync(updated);
         setXPGain(-cost);
@@ -374,6 +376,20 @@ export default function Page() {
 
   const handleDismissAchievement = useCallback((id: string) => {
     setPendingAchievements(prev => prev.filter(a => a !== id));
+  }, []);
+
+  const handleBuyShield = useCallback((hours: number, coinCost: number) => {
+    setGameState(prev => {
+      if ((prev.coins ?? 0) < coinCost) return prev;
+      const until = new Date(Date.now() + hours * 3600 * 1000).toISOString();
+      const updated = {
+        ...prev,
+        coins: (prev.coins ?? 0) - coinCost,
+        fullDrainShieldUntil: until,
+      };
+      Storage.saveStateAsync(updated);
+      return updated;
+    });
   }, []);
 
   const handleBuyXP = useCallback((coinCost: number, xpGain: number) => {
@@ -777,6 +793,8 @@ export default function Page() {
         onDeleteObjective={handleDeleteObjective}
         onUnlockObjective={handleUnlockObjective}
         onBuyXP={handleBuyXP}
+        onBuyShield={handleBuyShield}
+        quests={quests}
       />
 
       <TimesheetPanel

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { GameState, Objective, ObjectiveCondition, MonthRecord } from '@/lib/types';
+import type { GameState, Objective, ObjectiveCondition, MonthRecord, Quest } from '@/lib/types';
 import ObjectiveModal from './ObjectiveModal';
 
 interface TreasurePanelProps {
@@ -14,7 +14,16 @@ interface TreasurePanelProps {
   onDeleteObjective: (id: string) => void;
   onUnlockObjective: (id: string) => void;
   onBuyXP: (coinCost: number, xpGain: number) => void;
+  onBuyShield: (hours: number, coinCost: number) => void;
+  quests: Quest[];
 }
+
+const SHIELD_SHOP = [
+  { id: '4h',  label: 'Égide courte',   hours: 4,  coins: 200,  icon: '🛡️' },
+  { id: '8h',  label: 'Égide longue',   hours: 8,  coins: 350,  icon: '⚔️' },
+  { id: '24h', label: 'Égide journée',  hours: 24, coins: 700,  icon: '☀️' },
+  { id: '48h', label: 'Égide marathon', hours: 48, coins: 1200, icon: '🌑' },
+];
 
 const XP_SHOP = [
   { id: 'small',  label: 'Petite offrande',  coins: 100, xp: 40,  icon: '🪙' },
@@ -56,12 +65,13 @@ function canUnlock(obj: Objective, gs: GameState, activeMonths: number): boolean
   return true;
 }
 
-export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjective, onEditObjective, onDeleteObjective, onUnlockObjective, onBuyXP }: TreasurePanelProps) {
-  const [confirmId,    setConfirmId]    = useState<string | null>(null);
-  const [modalOpen,    setModalOpen]    = useState(false);
-  const [editing,      setEditing]      = useState<Objective | null>(null);
-  const [deleteId,     setDeleteId]     = useState<string | null>(null);
-  const [shopConfirm,  setShopConfirm]  = useState<string | null>(null);
+export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjective, onEditObjective, onDeleteObjective, onUnlockObjective, onBuyXP, onBuyShield, quests }: TreasurePanelProps) {
+  const [confirmId,      setConfirmId]      = useState<string | null>(null);
+  const [modalOpen,      setModalOpen]      = useState(false);
+  const [editing,        setEditing]        = useState<Objective | null>(null);
+  const [deleteId,       setDeleteId]       = useState<string | null>(null);
+  const [shopConfirm,    setShopConfirm]    = useState<string | null>(null);
+  const [shieldConfirm,  setShieldConfirm]  = useState<string | null>(null);
 
   const coins       = gameState.coins ?? 0;
   const xpTotal     = gameState.xpTotal ?? 0;
@@ -275,7 +285,57 @@ export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjecti
               {/* Content */}
               <div className="flex-1 overflow-y-auto px-5 py-4">
 
-                {/* XP Shop */}
+                {/* Shield Shop */}
+                {(() => {
+                  const fullShieldUntil = gameState.fullDrainShieldUntil ? new Date(gameState.fullDrainShieldUntil) : null;
+                  const shieldActive = fullShieldUntil && fullShieldUntil > new Date();
+                  const shieldRemaining = shieldActive ? Math.ceil((fullShieldUntil!.getTime() - Date.now()) / (1000 * 60 * 60)) : 0;
+                  return (
+                    <>
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs josefin" style={{ color: 'rgba(240,232,216,0.5)', letterSpacing: '0.1em' }}>— ÉGIDE (BOUCLIER XP) —</p>
+                        {shieldActive && (
+                          <span className="text-xs josefin px-2 py-0.5 rounded-full" style={{ background: 'rgba(79,168,168,0.18)', color: '#4FA8A8', border: '1px solid rgba(79,168,168,0.35)' }}>
+                            🛡️ Actif {shieldRemaining}h
+                          </span>
+                        )}
+                      </div>
+                      <div className="space-y-2 mb-5">
+                        {SHIELD_SHOP.map(item => {
+                          const canAfford = coins >= item.coins;
+                          const isConfirmS = shieldConfirm === item.id;
+                          return (
+                            <div key={item.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: 'rgba(79,168,168,0.04)', border: `1px solid ${canAfford ? 'rgba(79,168,168,0.22)' : 'rgba(255,255,255,0.05)'}` }}>
+                              <span className="text-lg">{item.icon}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold josefin" style={{ color: canAfford ? '#4FA8A8' : 'rgba(240,232,216,0.3)' }}>{item.label}</p>
+                                <p className="text-xs josefin" style={{ color: 'rgba(240,232,216,0.38)' }}>{fmt(item.coins)} 🪙 → drain bloqué {item.hours}h</p>
+                              </div>
+                              <button
+                                disabled={!canAfford}
+                                onClick={() => {
+                                  if (isConfirmS) { onBuyShield(item.hours, item.coins); setShieldConfirm(null); }
+                                  else setShieldConfirm(item.id);
+                                }}
+                                className="shrink-0 text-xs px-3 py-1.5 rounded-lg font-bold josefin transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                style={isConfirmS
+                                  ? { background: 'rgba(79,168,168,0.3)', color: '#4FA8A8', border: '1px solid rgba(79,168,168,0.5)' }
+                                  : canAfford
+                                    ? { background: 'rgba(79,168,168,0.12)', color: '#4FA8A8', border: '1px solid rgba(79,168,168,0.3)' }
+                                    : { background: 'transparent', color: 'rgba(240,232,216,0.25)', border: '1px solid rgba(255,255,255,0.07)' }
+                                }
+                              >
+                                {isConfirmS ? 'Confirmer ?' : 'Acheter'}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  );
+                })()}
+
+              {/* XP Shop */}
                 <p className="text-xs josefin mb-3" style={{ color: 'rgba(240,232,216,0.5)', letterSpacing: '0.1em' }}>— CONVERTIR DRACHMES → XP —</p>
                 <div className="space-y-2 mb-6">
                   {XP_SHOP.map(item => {
@@ -309,6 +369,31 @@ export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjecti
                   })}
                   <p className="text-xs italic josefin pt-1" style={{ color: 'rgba(240,232,216,0.2)' }}>⚠️ Le rachat XP est coûteux — la vraie récupération passe par les quêtes.</p>
                 </div>
+
+                {/* Client stats */}
+                {(() => {
+                  const done = quests.filter(q => q.status === 'done' || q.status === 'archived');
+                  const byClient: Record<string, number> = {};
+                  for (const q of done) {
+                    const c = q.client?.trim() || 'Sans client';
+                    byClient[c] = (byClient[c] ?? 0) + 1;
+                  }
+                  const sorted = Object.entries(byClient).sort((a, b) => b[1] - a[1]);
+                  if (sorted.length === 0) return null;
+                  return (
+                    <>
+                      <p className="text-xs josefin mb-3" style={{ color: 'rgba(240,232,216,0.5)', letterSpacing: '0.1em' }}>— COMPLÉTÉES PAR CLIENT ({done.length}) —</p>
+                      <div className="space-y-1.5 mb-6">
+                        {sorted.map(([client, count]) => (
+                          <div key={client} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: 'rgba(127,171,112,0.06)', border: '1px solid rgba(127,171,112,0.12)' }}>
+                            <span className="text-xs josefin" style={{ color: 'rgba(240,232,216,0.7)' }}>{client}</span>
+                            <span className="text-xs font-bold josefin" style={{ color: '#7FAB70' }}>{count} quête{count > 1 ? 's' : ''}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()}
 
                 {/* Pending objectives */}
                 <div className="flex items-center justify-between mb-3">

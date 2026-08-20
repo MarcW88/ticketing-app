@@ -11,7 +11,7 @@ interface UniverseFilterProps {
 
 type StatusKey = keyof typeof STATUS_CONFIG;
 
-const STATUS_KEYS: StatusKey[] = ['backlog', 'active', 'paused', 'haunted', 'cursed', 'done'];
+const STATUS_KEYS: StatusKey[] = ['backlog', 'active', 'paused', 'haunted', 'cursed'];
 const DANGER_STATUSES = ['haunted', 'cursed', 'maelstrom'];
 
 export default function UniverseFilter({ current, quests, onChange }: UniverseFilterProps) {

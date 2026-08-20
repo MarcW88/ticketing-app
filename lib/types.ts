@@ -102,6 +102,7 @@ export interface GameState {
   bossQuestsCompleted?: number;    // critical quests completed
   monthlyHistory?: MonthRecord[];  // last 12 months
   objectives?: Objective[];        // user-defined objectives
+  fullDrainShieldUntil?: string;   // ISO — purchased shield: 100% drain + force-unlock cost blocked
 }
 
 export interface UniverseConfig {
