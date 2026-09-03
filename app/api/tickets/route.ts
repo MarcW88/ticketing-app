@@ -25,7 +25,7 @@ export async function OPTIONS() {
 
 export async function POST(req: NextRequest) {
   const apiKey = req.headers.get("x-api-key");
-  const expected = process.env.MCP_API_KEY;
+  const expected = process.env.TICKET_CREATE_SECRET ?? process.env.MCP_API_KEY;
   if (!expected || apiKey !== expected) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: CORS });
   }
