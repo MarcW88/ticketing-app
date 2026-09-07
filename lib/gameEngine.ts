@@ -67,32 +67,35 @@ export function updateRiskByDeadline(quests: Quest[]): Quest[] {
 export function updateHauntedCursed(quests: Quest[]): Quest[] {
   const now = new Date();
 
-  // Step 0: Recovery — if deadline moved back to the future, restore épreuves cards to active
+  // Calendar-day difference: positive = overdue, 0 = due today, negative = future
+  const calDiff = (dueDate: Date): number => {
+    const nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dueDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+    return Math.round((nowDay.getTime() - dueDay.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  // Step 0: Recovery — only restore if deadline is strictly in the future (tomorrow or later)
   let result = quests.map(q => {
     if (q.status !== 'haunted' && q.status !== 'cursed' && q.status !== 'maelstrom') return q;
     if (!q.dueDate) return q;
-    const diffDays = (now.getTime() - new Date(q.dueDate).getTime()) / (1000 * 60 * 60 * 24);
-    if (diffDays < 1) {
+    if (calDiff(new Date(q.dueDate)) < 0) {
       return { ...q, status: 'active' as const, hauntedAt: undefined, cursedAt: undefined, maelstromAt: undefined };
     }
     return q;
   });
 
-  // Step 1: time-based status escalation
+  // Step 1: time-based status escalation (calendar days — due today = haunted immediately)
   result = result.map(q => {
     if (q.status === 'done' || q.status === 'archived' || q.status === 'paused') return q;
     if (!q.dueDate) return q;
-    const due = new Date(q.dueDate);
-    const diffDays = (now.getTime() - due.getTime()) / (1000 * 60 * 60 * 24);
-    if (diffDays > 14 && q.status !== 'maelstrom') {
+    const diff = calDiff(new Date(q.dueDate));
+    if (diff >= 14 && q.status !== 'maelstrom') {
       return { ...q, status: 'maelstrom' as const, maelstromAt: q.maelstromAt ?? now.toISOString() };
     }
-    if (diffDays > 7 && q.status !== 'cursed' && q.status !== 'maelstrom') {
+    if (diff >= 7 && q.status !== 'cursed' && q.status !== 'maelstrom') {
       return { ...q, status: 'cursed' as const, cursedAt: q.cursedAt ?? now.toISOString() };
     }
-    // Backlog cards: 1-day grace (covers timezone drift on due date); active cards: 2-day grace period
-    const hauntedThreshold = q.status === 'backlog' ? 1 : 2;
-    if (diffDays > hauntedThreshold && q.status !== 'cursed' && q.status !== 'haunted' && q.status !== 'maelstrom') {
+    if (diff >= 0 && q.status !== 'cursed' && q.status !== 'haunted' && q.status !== 'maelstrom') {
       return { ...q, status: 'haunted' as const, hauntedAt: q.hauntedAt ?? now.toISOString() };
     }
     return q;
@@ -105,7 +108,7 @@ export function updateHauntedCursed(quests: Quest[]): Quest[] {
       (now.getTime() - new Date(q.hauntedAt).getTime()) >= 48 * 3600 * 1000
   );
   if (hasContagion) {
-    const backlog = result.filter(q => q.status === 'backlog' && q.dueDate && (now.getTime() - new Date(q.dueDate).getTime()) / (1000 * 60 * 60 * 24) > 1);
+    const backlog = result.filter(q => q.status === 'backlog' && q.dueDate && calDiff(new Date(q.dueDate)) >= 1);
     if (backlog.length > 0) {
       const oldest = [...backlog].sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0];
       result = result.map(q =>
