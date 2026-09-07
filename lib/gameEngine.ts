@@ -74,11 +74,11 @@ export function updateHauntedCursed(quests: Quest[]): Quest[] {
     return Math.round((nowDay.getTime() - dueDay.getTime()) / (1000 * 60 * 60 * 24));
   };
 
-  // Step 0: Recovery — only restore if deadline is strictly in the future (tomorrow or later)
+  // Step 0: Recovery — restore to active when deadline is today or in the future
   let result = quests.map(q => {
     if (q.status !== 'haunted' && q.status !== 'cursed' && q.status !== 'maelstrom') return q;
     if (!q.dueDate) return q;
-    if (calDiff(new Date(q.dueDate)) < 0) {
+    if (calDiff(new Date(q.dueDate)) <= 0) {
       return { ...q, status: 'active' as const, hauntedAt: undefined, cursedAt: undefined, maelstromAt: undefined };
     }
     return q;
@@ -95,7 +95,9 @@ export function updateHauntedCursed(quests: Quest[]): Quest[] {
     if (diff >= 7 && q.status !== 'cursed' && q.status !== 'maelstrom') {
       return { ...q, status: 'cursed' as const, cursedAt: q.cursedAt ?? now.toISOString() };
     }
-    if (diff >= 0 && q.status !== 'cursed' && q.status !== 'haunted' && q.status !== 'maelstrom') {
+    // Backlog due today → haunted immediately; active due today → stays active (player is working on it)
+    const hauntThreshold = q.status === 'backlog' ? 0 : 1;
+    if (diff >= hauntThreshold && q.status !== 'cursed' && q.status !== 'haunted' && q.status !== 'maelstrom') {
       return { ...q, status: 'haunted' as const, hauntedAt: q.hauntedAt ?? now.toISOString() };
     }
     return q;
