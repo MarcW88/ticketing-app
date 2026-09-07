@@ -303,10 +303,8 @@ export function completeQuestWithXP(
     return { updatedState, newAchievements, xpEarned: 0, leveledUp: false, newLevel: state.level, bonusType: 'circe' };
   }
 
-  // Base XP with danger penalties
+  // Base XP — no completion penalty for danger status (drain already applied separately)
   let xpEarned = calculateQuestXP(quest.risk, state.dayMode);
-  if (quest.status === 'maelstrom') xpEarned = Math.round(xpEarned * 0.5);
-  else if (quest.status === 'cursed') xpEarned = Math.round(xpEarned * 0.75);
 
   // PREMIER DU MATIN: first quest of the day → +50%
   let bonusType: string | undefined;
