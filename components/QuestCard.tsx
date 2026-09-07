@@ -18,6 +18,7 @@ interface QuestCardProps {
   hasChallenge?: boolean;
   onToggleChallengeTarget?: (id: string) => void;
   isBlocked?: boolean;
+  hasDangerCards?: boolean;
   hasMaelstrom?: boolean;
   onPenelopeWeave?: (id: string) => void;
   onForceUnlock?: (id: string) => void;
@@ -45,7 +46,7 @@ function getDueDateColor(dueDate: string): string {
   return 'rgba(240,232,216,0.60)';
 }
 
-export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, onDelete, onTimerStart, onTimerPause, onTimerReset, hasChallenge, onToggleChallengeTarget, isBlocked, hasMaelstrom, onPenelopeWeave, onForceUnlock }: QuestCardProps) {
+export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, onDelete, onTimerStart, onTimerPause, onTimerReset, hasChallenge, onToggleChallengeTarget, isBlocked, hasDangerCards, hasMaelstrom, onPenelopeWeave, onForceUnlock }: QuestCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -353,7 +354,7 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
             style={{ borderColor: 'rgba(251,146,60,0.4)', color: '#fb923c', background: 'rgba(120,50,10,0.12)', letterSpacing: '0.06em' }}
             title="Libérer au prix d'un drain horaire agressif. Risque de re-verrouillage permanent en 12h ou si XP < -300."
           >
-            ⚡ Libérer (−{FORCE_UNLOCK_IMMEDIATE_COST[quest.risk]} XP) — drain /h · risque escalade
+            ⚡ Libérer (−{FORCE_UNLOCK_IMMEDIATE_COST[quest.risk]} XP){hasDangerCards ? ' — drain /h · risque escalade' : ' — forcer le départ'}
           </button>
         </div>
       )}

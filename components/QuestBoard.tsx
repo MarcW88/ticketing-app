@@ -193,6 +193,7 @@ export default function QuestBoard({
                                 hasChallenge={hasChallenge}
                                 onToggleChallengeTarget={onToggleChallengeTarget}
                                 isBlocked={(isBlocked && col.status === 'backlog') || (isDebtLocked && col.status === 'backlog')}
+                                hasDangerCards={isBlocked}
                                 hasMaelstrom={hasMaelstrom}
                                 onPenelopeWeave={onPenelopeWeave}
                                 onForceUnlock={onForceUnlock}
