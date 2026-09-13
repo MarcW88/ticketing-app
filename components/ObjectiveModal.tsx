@@ -86,7 +86,7 @@ export default function ObjectiveModal({ isOpen, onClose, onSave, existing }: Ob
           >
             <div
               className="w-full max-w-md rounded-2xl p-6"
-              style={{ background: 'rgba(12,16,24,0.99)', border: '1px solid rgba(201,150,60,0.25)', boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}
+              style={{ background: 'rgba(12,16,24,0.99)', border: '1px solid rgba(99,102,241,0.25)', boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}
             >
               <h2 className="font-display text-lg font-bold mb-5" style={{ color: 'var(--gold)' }}>
                 {existing ? '✏️ Modifier l\'objectif' : '🎯 Nouvel objectif'}
@@ -101,7 +101,7 @@ export default function ObjectiveModal({ isOpen, onClose, onSave, existing }: Ob
                       key={i}
                       onClick={() => setIcon(i)}
                       className="w-9 h-9 rounded-lg text-lg flex items-center justify-center transition-all"
-                      style={{ background: icon === i ? 'rgba(201,150,60,0.25)' : 'rgba(255,255,255,0.05)', border: icon === i ? '1px solid rgba(201,150,60,0.5)' : '1px solid rgba(255,255,255,0.08)' }}
+                      style={{ background: icon === i ? 'rgba(99,102,241,0.25)' : 'rgba(255,255,255,0.05)', border: icon === i ? '1px solid rgba(99,102,241,0.5)' : '1px solid rgba(255,255,255,0.08)' }}
                     >
                       {i}
                     </button>
@@ -181,7 +181,7 @@ export default function ObjectiveModal({ isOpen, onClose, onSave, existing }: Ob
                       <button
                         onClick={() => c.setUse(!c.use)}
                         className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-all"
-                        style={{ background: c.use ? 'rgba(201,150,60,0.35)' : 'rgba(255,255,255,0.08)', border: c.use ? '1px solid rgba(201,150,60,0.6)' : '1px solid rgba(255,255,255,0.15)' }}
+                        style={{ background: c.use ? 'rgba(99,102,241,0.35)' : 'rgba(255,255,255,0.08)', border: c.use ? '1px solid rgba(99,102,241,0.6)' : '1px solid rgba(255,255,255,0.15)' }}
                       >
                         {c.use && <span className="text-xs" style={{ color: 'var(--gold)' }}>✓</span>}
                       </button>
@@ -217,7 +217,7 @@ export default function ObjectiveModal({ isOpen, onClose, onSave, existing }: Ob
                   onClick={handleSave}
                   disabled={!name.trim()}
                   className="flex-1 py-2.5 rounded-xl text-sm josefin font-bold transition-all disabled:opacity-30"
-                  style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F' }}
+                  style={{ background: 'linear-gradient(135deg,#4338CA,#6366F1)', color: '#FFFFFF' }}
                 >
                   {existing ? 'Enregistrer' : 'Créer'}
                 </button>

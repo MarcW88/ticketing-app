@@ -138,7 +138,7 @@ export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjecti
         className="rounded-2xl p-4 mb-3"
         style={{
           background: done ? 'rgba(127,171,112,0.07)' : 'rgba(255,255,255,0.03)',
-          border: done ? '1px solid rgba(127,171,112,0.3)' : unlockable ? '1px solid rgba(201,150,60,0.35)' : '1px solid rgba(255,255,255,0.07)',
+          border: done ? '1px solid rgba(127,171,112,0.3)' : unlockable ? '1px solid rgba(99,102,241,0.35)' : '1px solid rgba(255,255,255,0.07)',
         }}
         onClick={() => { setConfirmId(null); setDeleteId(null); }}
       >
@@ -196,7 +196,7 @@ export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjecti
                   <span>{fmt(Math.min(coins, obj.coinCost))} / {fmt(obj.coinCost)}</span>
                 </div>
                 <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                  <div className="h-1.5 rounded-full transition-all" style={{ width: `${coinPct}%`, background: coinMet ? 'linear-gradient(90deg,#8B6520,#C9963C)' : 'rgba(201,150,60,0.4)' }} />
+                  <div className="h-1.5 rounded-full transition-all" style={{ width: `${coinPct}%`, background: coinMet ? 'linear-gradient(90deg,#4338CA,#6366F1)' : 'rgba(99,102,241,0.4)' }} />
                 </div>
               </div>
             )}
@@ -219,9 +219,9 @@ export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjecti
               disabled={!unlockable}
               className="w-full mt-3 py-2 rounded-xl text-xs font-bold josefin transition-all disabled:opacity-30 disabled:cursor-not-allowed"
               style={isConfirm
-                ? { background: 'rgba(201,150,60,0.35)', color: '#fff', border: '1px solid rgba(201,150,60,0.6)' }
+                ? { background: 'rgba(99,102,241,0.35)', color: '#fff', border: '1px solid rgba(99,102,241,0.6)' }
                 : unlockable
-                  ? { background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F' }
+                  ? { background: 'linear-gradient(135deg,#4338CA,#6366F1)', color: '#FFFFFF' }
                   : { background: 'rgba(255,255,255,0.04)', color: 'rgba(240,232,216,0.3)', border: '1px solid rgba(255,255,255,0.08)' }
               }
             >
@@ -248,7 +248,7 @@ export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjecti
               initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 260 }}
               className="fixed right-0 top-0 h-full z-50 flex flex-col overflow-hidden"
-              style={{ width: 'min(480px, 100vw)', background: 'rgba(10,13,20,0.98)', borderLeft: '1px solid rgba(201,150,60,0.2)', boxShadow: '-16px 0 48px rgba(0,0,0,0.6)' }}
+              style={{ width: 'min(480px, 100vw)', background: 'rgba(10,13,20,0.98)', borderLeft: '1px solid rgba(99,102,241,0.2)', boxShadow: '-16px 0 48px rgba(0,0,0,0.6)' }}
               onClick={() => { setConfirmId(null); setDeleteId(null); }}
             >
               {/* Header */}
@@ -342,7 +342,7 @@ export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjecti
                     const canAfford = coins >= item.coins;
                     const isConfirm = shopConfirm === item.id;
                     return (
-                      <div key={item.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${canAfford ? 'rgba(201,150,60,0.2)' : 'rgba(255,255,255,0.06)'}` }}>
+                      <div key={item.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${canAfford ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.06)'}` }}>
                         <span className="text-lg">{item.icon}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold josefin" style={{ color: canAfford ? 'var(--tweed)' : 'rgba(240,232,216,0.35)' }}>{item.label}</p>
@@ -356,9 +356,9 @@ export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjecti
                           }}
                           className="shrink-0 text-xs px-3 py-1.5 rounded-lg font-bold josefin transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                           style={isConfirm
-                            ? { background: 'rgba(201,150,60,0.3)', color: '#C9963C', border: '1px solid rgba(201,150,60,0.5)' }
+                            ? { background: 'rgba(99,102,241,0.3)', color: '#6366F1', border: '1px solid rgba(99,102,241,0.5)' }
                             : canAfford
-                              ? { background: 'rgba(201,150,60,0.12)', color: 'var(--gold)', border: '1px solid rgba(201,150,60,0.3)' }
+                              ? { background: 'rgba(99,102,241,0.12)', color: 'var(--gold)', border: '1px solid rgba(99,102,241,0.3)' }
                               : { background: 'transparent', color: 'rgba(240,232,216,0.3)', border: '1px solid rgba(255,255,255,0.08)' }
                           }
                         >
@@ -403,7 +403,7 @@ export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjecti
                   <button
                     onClick={handleOpenAdd}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs josefin font-bold transition-all"
-                    style={{ background: 'rgba(201,150,60,0.15)', color: 'var(--gold)', border: '1px solid rgba(201,150,60,0.35)' }}
+                    style={{ background: 'rgba(99,102,241,0.15)', color: 'var(--gold)', border: '1px solid rgba(99,102,241,0.35)' }}
                   >
                     + Ajouter
                   </button>

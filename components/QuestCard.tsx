@@ -43,7 +43,7 @@ function getDueDateColor(dueDate: string): string {
   if (days < 0) return '#f87171';
   if (days <= 1) return '#fb923c';
   if (days <= 3) return '#fbbf24';
-  return 'rgba(240,232,216,0.60)';
+  return 'rgba(139,144,167,0.85)';
 }
 
 export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, onDelete, onTimerStart, onTimerPause, onTimerReset, hasChallenge, onToggleChallengeTarget, isBlocked, hasDangerCards, hasMaelstrom, onPenelopeWeave, onForceUnlock }: QuestCardProps) {
@@ -176,7 +176,7 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
             title={quest.challengeTarget ? 'Retirer du défi' : 'Ajouter au défi'}
             className="w-5 h-5 rounded-full flex items-center justify-center text-xs transition-all josefin"
             style={quest.challengeTarget
-              ? { background: 'rgba(201,150,60,0.20)', color: 'var(--gold)', border: '1.5px solid var(--gold)', fontSize: '10px' }
+              ? { background: 'rgba(99,102,241,0.20)', color: 'var(--gold)', border: '1.5px solid var(--gold)', fontSize: '10px' }
               : { background: 'transparent', color: 'rgba(240,232,216,0.22)', border: '1px solid rgba(240,232,216,0.14)', fontSize: '10px' }
             }
           >
@@ -226,7 +226,7 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
           {/* Client */}
           {quest.client && (
             <span className="text-xs px-2 py-0.5 rounded-full border josefin"
-              style={{ borderColor: 'rgba(201,150,60,0.2)', color: 'rgba(240,232,216,0.80)', background: 'rgba(255,255,255,0.05)', letterSpacing: '0.04em' }}>
+              style={{ borderColor: 'rgba(99,102,241,0.2)', color: 'rgba(240,232,216,0.80)', background: 'rgba(255,255,255,0.05)', letterSpacing: '0.04em' }}>
               {quest.client}
             </span>
           )}
@@ -276,7 +276,7 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
               <button
                 onClick={() => onComplete(quest.id)}
                 className="flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all hover:shadow-sm josefin"
-                style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', letterSpacing: '0.08em' }}
+                style={{ background: 'linear-gradient(135deg,#4338CA,#6366F1)', color: '#FFFFFF', letterSpacing: '0.08em' }}
               >
                 Terminer
               </button>
@@ -310,7 +310,7 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
               <button
                 onClick={() => onComplete(quest.id)}
                 className="flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all hover:shadow-sm josefin"
-                style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', letterSpacing: '0.08em' }}
+                style={{ background: 'linear-gradient(135deg,#4338CA,#6366F1)', color: '#FFFFFF', letterSpacing: '0.08em' }}
               >
                 Terminer
               </button>
@@ -320,7 +320,7 @@ export default function QuestCard({ quest, onStatusChange, onComplete, onEdit, o
             <button
               onClick={() => onComplete(quest.id)}
               className="flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all hover:shadow-sm josefin"
-              style={{ background: isMaelstrom ? 'linear-gradient(135deg,#6B0000,#B22222)' : 'linear-gradient(135deg,#8B6520,#C9963C)', color: isMaelstrom ? '#FFD0D0' : '#06090F', letterSpacing: '0.08em' }}
+              style={{ background: isMaelstrom ? 'linear-gradient(135deg,#6B0000,#B22222)' : 'linear-gradient(135deg,#4338CA,#6366F1)', color: isMaelstrom ? '#FFD0D0' : '#FFFFFF', letterSpacing: '0.08em' }}
             >
               Terminer {isMaelstrom ? '(−50% XP)' : isCursed ? '(−25% XP)' : ''}
             </button>

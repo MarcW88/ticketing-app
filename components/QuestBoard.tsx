@@ -25,10 +25,10 @@ interface QuestBoardProps {
 }
 
 const COLUMNS: { status: QuestStatus; label: string; accent: string; dropDisabled?: boolean }[] = [
-  { status: 'backlog', label: "Port d'Ithaque", accent: '#C9963C' },
-  { status: 'active',  label: 'En Mer',          accent: '#6AACCF' },
-  { status: 'paused',  label: 'Escale',           accent: '#4FA8A8' },
-  { status: 'haunted', label: 'Épreuves',         accent: '#9B7FE0', dropDisabled: true },
+  { status: 'backlog', label: 'Backlog',     accent: '#6366F1' },
+  { status: 'active',  label: 'En cours',    accent: '#60A5FA' },
+  { status: 'paused',  label: 'En attente',  accent: '#8B90A7' },
+  { status: 'haunted', label: 'À traiter',   accent: '#F59E0B', dropDisabled: true },
 ];
 
 function EmptyColumn({ status, onNewQuest, isDraggingOver }: { status: QuestStatus; onNewQuest: () => void; isDraggingOver: boolean }) {
@@ -119,7 +119,7 @@ export default function QuestBoard({
             >
               {/* Column header */}
               <div
-                className="flex items-center justify-between px-4 py-3.5 rounded-t-2xl"
+                className="flex items-center justify-between px-4 py-3.5 rounded-t-xl"
                 style={{ borderBottom: `1px solid ${col.accent}28`, borderTop: `2px solid ${col.accent}` }}
               >
                 <div className="flex items-center gap-2.5">
@@ -141,7 +141,7 @@ export default function QuestBoard({
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 rounded-b-2xl transition-all duration-150"
+                    className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 rounded-b-xl transition-all duration-150"
                     style={{
                       minHeight: 120,
                       background: snapshot.isDraggingOver && !col.dropDisabled

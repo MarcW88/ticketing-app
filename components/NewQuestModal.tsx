@@ -198,7 +198,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
             exit={{ opacity: 0, scale: 0.94, y: 24 }}
             transition={{ type: 'spring', stiffness: 380, damping: 30 }}
             className="fixed inset-x-0 top-[5vh] bottom-[5vh] z-50 max-w-2xl mx-auto overflow-hidden rounded-2xl shadow-2xl flex flex-col"
-            style={{ background: '#0D1525', border: '1px solid rgba(201,150,60,0.25)' }}
+            style={{ background: '#0D1525', border: '1px solid rgba(99,102,241,0.25)' }}
             onKeyDown={handleKeyDown}
           >
             {/* Universe accent strip */}
@@ -283,7 +283,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
                         onClick={() => handlePickRisk(r)}
                         className="flex-1 py-2.5 rounded-xl border-2 transition-all duration-200 text-xs font-semibold relative"
                         style={{
-                          borderColor: isSelected ? rcfg.color : 'rgba(201,150,60,0.15)',
+                          borderColor: isSelected ? rcfg.color : 'rgba(99,102,241,0.15)',
                           background: isSelected ? rcfg.bg : 'rgba(255,255,255,0.04)',
                           color: isSelected ? rcfg.color : 'var(--sand)',
                           transform: isSelected ? 'scale(1.04)' : 'scale(1)',
@@ -419,7 +419,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
                       )}
                       <label
                         className="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border transition-all josefin text-xs"
-                        style={{ borderColor: 'rgba(201,150,60,0.25)', color: 'rgba(220,230,245,0.65)', background: 'rgba(255,255,255,0.04)', letterSpacing: '0.05em' }}
+                        style={{ borderColor: 'rgba(99,102,241,0.25)', color: 'rgba(220,230,245,0.65)', background: 'rgba(255,255,255,0.04)', letterSpacing: '0.05em' }}
                       >
                         <span>+ Choisir une image</span>
                         <input
@@ -437,7 +437,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
 
             {/* Footer */}
             <div className="px-6 py-4 border-t flex items-center justify-between gap-3"
-              style={{ borderColor: 'rgba(201,150,60,0.2)', background: 'rgba(6,9,15,0.6)' }}>
+              style={{ borderColor: 'rgba(99,102,241,0.2)', background: 'rgba(6,9,15,0.6)' }}>
               <div className="text-xs" style={{ color: 'var(--sand)' }}>
                 <span className="font-bold" style={{ color: 'var(--copper)', fontSize: '15px' }}>+{previewXP}</span>
                 <span className="ml-1">XP à la complétion</span>
@@ -446,7 +446,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
                 <button
                   onClick={onClose}
                   className="px-4 py-2 rounded-full text-sm font-medium border transition-all hover:bg-white/10"
-                  style={{ borderColor: 'rgba(201,150,60,0.3)', color: 'var(--sand)' }}
+                  style={{ borderColor: 'rgba(99,102,241,0.3)', color: 'var(--sand)' }}
                 >
                   Annuler
                 </button>
@@ -456,7 +456,7 @@ export default function NewQuestModal({ isOpen, editingQuest, dayMode, onClose, 
                   onClick={handleSave}
                   disabled={!title.trim()}
                   className="px-5 py-2 rounded-full text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ background: 'var(--gold)', color: '#06090F', boxShadow: '0 4px 14px rgba(201,150,60,0.4)' }}
+                  style={{ background: 'var(--gold)', color: '#FFFFFF', boxShadow: '0 4px 14px rgba(99,102,241,0.4)' }}
                 >
                   {isEditing ? 'Sauvegarder' : '⚔️ Créer la Quête'}
                 </motion.button>

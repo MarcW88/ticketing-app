@@ -546,7 +546,7 @@ export default function Page() {
           <button
             onClick={openNewQuest}
             className="flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all font-display"
-            style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', boxShadow: '0 6px 24px rgba(201,150,60,0.35)' }}
+            style={{ background: 'linear-gradient(135deg,#4338CA,#6366F1)', color: '#FFFFFF', boxShadow: '0 6px 24px rgba(99,102,241,0.35)' }}
           >
             ⚔️ Première Épreuve
           </button>
@@ -595,7 +595,7 @@ export default function Page() {
         className="fixed bottom-6 left-6 z-40 flex items-center gap-2 px-3 py-2 rounded-full text-xs font-bold border transition-all shadow-md"
         style={{
           background: showStats ? 'var(--gold)' : 'rgba(6,9,15,0.92)',
-          color: showStats ? '#06090F' : 'var(--tweed)',
+          color: showStats ? '#FFFFFF' : 'var(--tweed)',
           borderColor: 'var(--line)',
           backdropFilter: 'blur(8px)',
         }}
@@ -627,7 +627,7 @@ export default function Page() {
               { label: 'En Mer', value: active.length, icon: '⚔️' },
               { label: 'Épreuves', value: haunted.length, icon: haunted.length > 0 ? '🌀' : '🦉' },
             ].map(s => (
-              <div key={s.label} className="rounded-xl p-2" style={{ background: 'rgba(201,150,60,0.08)' }}>
+              <div key={s.label} className="rounded-xl p-2" style={{ background: 'rgba(99,102,241,0.08)' }}>
                 <p className="text-xl">{s.icon}</p>
                 <p className="font-bold text-base" style={{ color: 'var(--petrol)' }}>{s.value}</p>
                 <p className="text-xs" style={{ color: 'var(--tweed)' }}>{s.label}</p>
@@ -637,11 +637,11 @@ export default function Page() {
 
           {/* XP + Streak */}
           <div className="flex gap-2">
-            <div className="flex-1 rounded-xl p-2.5 text-center" style={{ background: 'rgba(201,150,60,0.08)' }}>
+            <div className="flex-1 rounded-xl p-2.5 text-center" style={{ background: 'rgba(99,102,241,0.08)' }}>
               <p className="font-bold text-sm" style={{ color: 'var(--gold)' }}>{gameState.xpTotal.toLocaleString()}</p>
               <p className="text-xs" style={{ color: 'var(--tweed)' }}>XP total</p>
             </div>
-            <div className="flex-1 rounded-xl p-2.5 text-center" style={{ background: 'rgba(201,150,60,0.08)' }}>
+            <div className="flex-1 rounded-xl p-2.5 text-center" style={{ background: 'rgba(99,102,241,0.08)' }}>
               <p className="font-bold text-sm" style={{ color: gameState.streak >= 3 ? '#c2410c' : 'var(--copper)' }}>
                 {gameState.streak > 0 ? `🔥 ${gameState.streak}` : '—'}
               </p>
@@ -655,7 +655,7 @@ export default function Page() {
               Voyage vers Ithaque
             </p>
             <div className="flex items-center gap-2">
-              <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(201,150,60,0.12)' }}>
+              <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(99,102,241,0.12)' }}>
                 <div
                   className="h-full rounded-full xp-shimmer transition-all duration-500"
                   style={{ width: `${quests.length ? (done.length / quests.length) * 100 : 0}%` }}
@@ -768,7 +768,7 @@ export default function Page() {
             <button
               onClick={() => setShowPortFull(false)}
               className="px-6 py-2 rounded-full text-sm font-bold josefin transition-all"
-              style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F' }}
+              style={{ background: 'linear-gradient(135deg,#4338CA,#6366F1)', color: '#FFFFFF' }}
             >
               Compris
             </button>

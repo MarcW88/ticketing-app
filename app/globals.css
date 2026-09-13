@@ -1,42 +1,44 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,700&family=Josefin+Sans:wght@100;300;400;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg:           #06090F;
-  --surface:      #0A0F1E;
-  --surface-2:    #0F1A2E;
-  --gold:         #C9963C;
-  --gold-deep:    #8B6520;
-  --gold-glow:    rgba(201, 150, 60, 0.18);
-  --steel:        #4A7A9B;
-  --steel-light:  rgba(100, 160, 200, 0.55);
-  --steel-glow:   rgba(74, 122, 155, 0.15);
-  --sand:         #F0E8D8;
-  --sea:          #2A5C8A;
-  --ash:          rgba(220, 230, 245, 0.38);
-  --line:         rgba(201, 150, 60, 0.16);
-  --line-steel:   rgba(74, 122, 155, 0.20);
-  --shadow:       rgba(0, 0, 0, 0.55);
-  --petrol:       #C9963C;
-  --petrol-deep:  #8B6520;
-  --tweed:        rgba(220, 230, 245, 0.75);
-  --tweed-deep:   rgba(220, 230, 245, 0.50);
-  --copper:       #C9963C;
-  --cream:        #F0E8D8;
-  --ink:          #E8EEF4;
-  --wash-blue:    rgba(42, 92, 138, 0.18);
+  color-scheme: dark;
+  --bg:           #0B0D12;
+  --surface:      #14161F;
+  --surface-2:    #1A1D28;
+  --gold:         #6366F1;
+  --gold-deep:    #4338CA;
+  --gold-glow:    rgba(99, 102, 241, 0.18);
+  --steel:        #8B90A7;
+  --steel-light:  rgba(139, 144, 167, 0.55);
+  --steel-glow:   rgba(99, 102, 241, 0.12);
+  --sand:         #E9EAF2;
+  --sea:          #6366F1;
+  --ash:          rgba(139, 144, 167, 0.55);
+  --line:         #272A37;
+  --line-steel:   #272A37;
+  --shadow:       rgba(0, 0, 0, 0.45);
+  --petrol:       #6366F1;
+  --petrol-deep:  #4338CA;
+  --tweed:        #8B90A7;
+  --tweed-deep:   #4B5068;
+  --copper:       #6366F1;
+  --cream:        #F8F8FC;
+  --ink:          #E9EAF2;
+  --wash-blue:    rgba(99, 102, 241, 0.10);
+  --success:      #22C55E;
+  --warning:      #F59E0B;
+  --danger:       #EF4444;
 }
 
 html, body {
   background-color: var(--bg);
-  color: #E8EEF4;
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 17px;
+  font-size: 16px;
   text-rendering: optimizeLegibility;
 }
 
@@ -44,77 +46,71 @@ html, body {
 .noctua-bg {
   background:
     /* Top-right: amber/fire glow like the sail light */
-    radial-gradient(ellipse at 82% 0%,   rgba(255, 140, 40, 0.24) 0%, rgba(180, 80, 20, 0.10) 30%, transparent 55%),
+    radial-gradient(ellipse at 82% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 42%),
     /* Top-center: warm haze bloom */
-    radial-gradient(ellipse at 55% 8%,   rgba(220, 120, 50, 0.14) 0%, transparent 38%),
+    radial-gradient(ellipse at 45% 0%, rgba(99, 102, 241, 0.035) 0%, transparent 34%),
     /* Top-left: cool steel-blue atmospheric mist */
-    radial-gradient(ellipse at 8%  2%,   rgba(60, 110, 180, 0.20) 0%, transparent 42%),
+    radial-gradient(ellipse at 8% 2%, rgba(139, 144, 167, 0.05) 0%, transparent 35%),
     /* Mid-left: cool depth */
-    radial-gradient(ellipse at 5%  55%,  rgba(40, 80, 150, 0.10) 0%,  transparent 40%),
-    /* Bottom: purple-blue fog/smoke like the poster */
-    radial-gradient(ellipse at 30% 100%, rgba(80, 45, 130, 0.28) 0%, rgba(50, 65, 145, 0.16) 30%, transparent 58%),
-    radial-gradient(ellipse at 70% 95%,  rgba(60, 40, 110, 0.20) 0%, rgba(40, 60, 130, 0.10) 25%, transparent 50%),
-    /* Bottom-right: dark warm ember residue */
-    radial-gradient(ellipse at 95% 75%,  rgba(140, 60, 20, 0.12) 0%, transparent 32%),
     var(--bg);
   min-height: 100vh;
 }
 
 /* ── Card — glassmorphism ── */
 .noctua-card {
-  background: rgba(10, 18, 40, 0.60);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(201, 150, 60, 0.18);
-  border-radius: 10px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.05);
+  background: var(--surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.28);
 }
 
 .noctua-card-deep {
-  background: rgba(8, 14, 32, 0.72);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(201, 150, 60, 0.18);
-  border-radius: 10px;
-  box-shadow: 0 6px 28px rgba(0,0,0,0.50), inset 0 1px 0 rgba(255,255,255,0.04);
+  background: var(--surface-2);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 6px 28px rgba(0,0,0,0.35);
 }
 
 /* ── Typography ── */
 .font-display {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   letter-spacing: 0.06em;
 }
 
 /* Main title — Cormorant italic bold, very cinematic */
 .cinematic-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   font-weight: 700;
-  font-style: italic;
-  letter-spacing: 0.18em;
+  font-style: normal;
+  letter-spacing: -0.02em;
   line-height: 1;
 }
 
 /* UI labels — Josefin Sans ultra-thin, ultra-spaced */
 .cinematic-label {
-  font-family: 'Josefin Sans', sans-serif;
-  font-weight: 100;
-  letter-spacing: 0.55em;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 500;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  font-size: 0.52rem;
+  font-size: 0.65rem;
 }
 
 /* Column headers — Josefin Sans light, tracked */
 .cinematic-column {
-  font-family: 'Josefin Sans', sans-serif;
-  font-weight: 300;
-  letter-spacing: 0.30em;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-size: 0.70rem;
+  font-size: 0.68rem;
 }
 
 /* Generic UI text — Josefin Sans */
 .josefin {
-  font-family: 'Josefin Sans', sans-serif;
+  font-family: var(--font-mono), ui-monospace, monospace;
 }
 
 /* ── Universe card accent — glass panels ── */
@@ -124,11 +120,11 @@ html, body {
 .universe-spiderman,
 .universe-crouch,
 .universe-film_noir {
-  border-top: 2px solid rgba(201, 150, 60, 0.60) !important;
-  background: rgba(10, 18, 42, 0.58) !important;
-  backdrop-filter: blur(14px) !important;
-  -webkit-backdrop-filter: blur(14px) !important;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+  border-top: 2px solid rgba(99, 102, 241, 0.55) !important;
+  background: var(--surface) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.28) !important;
 }
 
 /* ── Sirènes card (haunted) ── */
@@ -167,9 +163,9 @@ html, body {
   background: linear-gradient(
     90deg,
     var(--gold-deep) 0%,
-    #E8C060 40%,
+    #818CF8 40%,
     var(--gold) 60%,
-    #D4A050 100%
+    #A5B4FC 100%
   );
   background-size: 200%;
   animation: shimmer 2.5s linear infinite;
@@ -181,42 +177,42 @@ html, body {
 }
 .quest-card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(201, 150, 60, 0.12);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(99, 102, 241, 0.22);
 }
 
 /* ── Kanban column — glass panel ── */
 .kanban-column {
-  background: rgba(6, 12, 28, 0.38);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(201, 150, 60, 0.10);
-  border-radius: 16px;
+  background: rgba(20, 22, 31, 0.72);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
   min-height: 200px;
 }
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(201, 150, 60, 0.25); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(201, 150, 60, 0.45); }
+::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.28); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.48); }
 
 /* ── Inputs ── */
 .noctua-input {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(201, 150, 60, 0.28);
-  border-radius: 7px;
-  color: #F0E8D8;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
   padding: 10px 14px;
   font-size: 15px;
   width: 100%;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
 }
 .noctua-input:focus {
   border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(201, 150, 60, 0.15);
-  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.16);
+  background: var(--surface);
 }
 .noctua-input::placeholder { color: rgba(240, 232, 216, 0.42); }
 
@@ -225,9 +221,9 @@ textarea.noctua-input { resize: vertical; min-height: 72px; }
 /* ── Level up glow ── */
 .level-glow {
   box-shadow:
-    0 0 24px rgba(201, 150, 60, 0.55),
-    0 0 70px rgba(201, 150, 60, 0.22),
-    0 0 120px rgba(201, 150, 60, 0.10);
+    0 0 24px rgba(99, 102, 241, 0.55),
+    0 0 70px rgba(99, 102, 241, 0.22),
+    0 0 120px rgba(99, 102, 241, 0.10);
 }
 
 /* ── Particles ── */
@@ -276,8 +272,8 @@ textarea.noctua-input { resize: vertical; min-height: 72px; }
 .ember-particle {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, #FFD080, #FF6020);
-  box-shadow: 0 0 4px #FF7030, 0 0 10px rgba(255, 120, 40, 0.55);
+  background: radial-gradient(circle at 40% 35%, #A5B4FC, #6366F1);
+  box-shadow: 0 0 4px #818CF8, 0 0 10px rgba(99, 102, 241, 0.35);
   animation: emberRise linear infinite;
   opacity: 0;
 }

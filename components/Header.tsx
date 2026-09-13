@@ -65,17 +65,17 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
   }, [showPanel]);
 
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-md border-b" style={{ borderColor: 'var(--line)', background: 'rgba(6, 9, 15, 0.92)' }}>
+    <header className="sticky top-0 z-40 border-b" style={{ borderColor: 'var(--line)', background: 'rgba(20, 22, 31, 0.96)' }}>
       <div className="max-w-7xl mx-auto px-4 py-3">
         {/* Top row */}
         <div className="flex items-center justify-between gap-4 mb-3">
           {/* Logo */}
           <div className="flex items-center gap-3 shrink-0">
             <div>
-              <h1 className="josefin text-2xl font-bold" style={{ color: 'var(--gold)', letterSpacing: '0.22em', textTransform: 'uppercase' }}>
-                L&apos;Odyssée
+              <h1 className="text-xl font-bold" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
+                Ticketing
               </h1>
-              <p className="josefin mt-1.5" style={{ color: 'rgba(220,230,245,0.38)', letterSpacing: '0.55em', textTransform: 'uppercase', fontSize: '0.50rem', fontWeight: 100 }}>Gestionnaire de missions</p>
+              <p className="josefin mt-1" style={{ color: 'var(--tweed)', letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: '0.58rem', fontWeight: 500 }}>SEO Tools Hub</p>
             </div>
           </div>
 
@@ -102,7 +102,7 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
                 className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 josefin"
                 style={
                   gameState.dayMode === mode
-                    ? { background: 'var(--gold)', color: '#06090F', boxShadow: '0 2px 8px rgba(201,150,60,0.3)', letterSpacing: '0.06em' }
+                    ? { background: 'var(--gold)', color: '#FFFFFF', boxShadow: '0 2px 8px rgba(99,102,241,0.3)', letterSpacing: '0.06em' }
                     : { color: 'rgba(240,232,216,0.55)', letterSpacing: '0.06em' }
                 }
                 title={`Boost XP ×${cfg.xpBoost}`}
@@ -136,7 +136,7 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
               <div
                 title={`Momentum ×${['1.0','1.1','1.2','1.4'][Math.min(dailyMomentum! - 1, 3)]} — ${dailyMomentum} quêtes aujourd'hui`}
                 className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs josefin border"
-                style={{ background: 'rgba(201,150,60,0.10)', color: 'var(--gold)', borderColor: 'rgba(201,150,60,0.28)', letterSpacing: '0.06em' }}
+                style={{ background: 'rgba(99,102,241,0.10)', color: 'var(--gold)', borderColor: 'rgba(99,102,241,0.28)', letterSpacing: '0.06em' }}
               >
                 ⚡ ×{['1.0','1.1','1.2','1.4'][Math.min((dailyMomentum ?? 1) - 1, 3)]}
               </div>
@@ -147,7 +147,7 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
                 onClick={onTreasure}
                 title="Trésor d'Ithaque — Drachmes & Rewards"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs josefin border transition-all"
-                style={{ borderColor: 'rgba(201,150,60,0.3)', color: 'var(--gold)', background: 'rgba(201,150,60,0.08)', letterSpacing: '0.05em' }}
+                style={{ borderColor: 'rgba(99,102,241,0.3)', color: 'var(--gold)', background: 'rgba(99,102,241,0.08)', letterSpacing: '0.05em' }}
               >
                 ⚱️ {(coins ?? 0).toLocaleString('fr-FR')}
               </motion.button>
@@ -156,7 +156,7 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
               whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
               onClick={onNewQuest}
               className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all josefin"
-              style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F', boxShadow: '0 4px 16px rgba(201,150,60,0.25)', letterSpacing: '0.05em' }}
+              style={{ background: 'var(--gold)', color: '#FFFFFF', boxShadow: '0 4px 16px rgba(99,102,241,0.22)', letterSpacing: '0.03em' }}
             >
               Nouvelle mission
             </motion.button>
@@ -169,7 +169,7 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
             {gameState.xp.toLocaleString()} XP
           </span>
           <div className="flex-1 relative">
-            <div className="h-2.5 rounded-full overflow-hidden" style={{ background: 'rgba(201,150,60,0.12)' }}>
+            <div className="h-2.5 rounded-full overflow-hidden" style={{ background: 'rgba(99,102,241,0.12)' }}>
               <motion.div
                 className="h-full rounded-full xp-shimmer"
                 initial={false}
@@ -207,7 +207,7 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
               onClick={() => setShowPanel(p => !p)}
               className="text-xs px-2.5 py-1 rounded-full border transition-all"
               style={challenge
-                ? { borderColor: 'rgba(201,150,60,0.5)', color: '#C9963C', background: 'rgba(201,150,60,0.10)' }
+                ? { borderColor: 'rgba(99,102,241,0.5)', color: '#6366F1', background: 'rgba(99,102,241,0.10)' }
                 : { borderColor: 'var(--line)', color: 'rgba(240,232,216,0.45)', background: 'transparent' }
               }
             >
@@ -229,7 +229,7 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
                     /* Active challenge view */
                     <div className="space-y-3">
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#C9963C' }}>
+                        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#6366F1' }}>
                           {challengeDone ? 'Défi accompli !' : 'Défi en cours'}
                         </p>
                         <p className="text-sm font-semibold mt-0.5" style={{ color: '#E8EEF4' }}>
@@ -249,12 +249,12 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
                             </span>
                           </div>
                         )}
-                        <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(201,150,60,0.12)' }}>
+                        <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(99,102,241,0.12)' }}>
                           <motion.div
                             className="h-full rounded-full"
                             animate={{ width: `${challengeProgress}%` }}
                             transition={{ duration: 0.6 }}
-                            style={{ background: challengeDone ? '#7FAB70' : 'linear-gradient(90deg,#8B6520,#C9963C)' }}
+                            style={{ background: challengeDone ? '#7FAB70' : 'linear-gradient(90deg,#4338CA,#6366F1)' }}
                           />
                         </div>
                       </div>
@@ -358,7 +358,7 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
                           if (t > 0) { onSetChallenge(t, formLabel); setShowPanel(false); setFormLabel(''); }
                         }}
                         className="w-full text-xs py-2 rounded-lg font-semibold transition-all"
-                        style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F' }}
+                        style={{ background: 'linear-gradient(135deg,#4338CA,#6366F1)', color: '#FFFFFF' }}
                       >
                         Lancer le défi
                       </button>
@@ -407,15 +407,15 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
             exit={{ opacity: 0, height: 0 }}
             className="flex items-center gap-3 mt-2"
           >
-            <span className="text-xs shrink-0 truncate max-w-[80px]" style={{ color: '#C9963C', fontSize: '11px' }}>
+            <span className="text-xs shrink-0 truncate max-w-[80px]" style={{ color: '#6366F1', fontSize: '11px' }}>
               {challenge.label || 'Défi'}
             </span>
-            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(201,150,60,0.10)' }}>
+            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(99,102,241,0.10)' }}>
               <motion.div
                 className="h-full rounded-full"
                 animate={{ width: `${challengeProgress}%` }}
                 transition={{ duration: 0.6 }}
-                style={{ background: challengeDone ? '#7FAB70' : 'linear-gradient(90deg,#8B6520,#C9963C)' }}
+                style={{ background: challengeDone ? '#7FAB70' : 'linear-gradient(90deg,#4338CA,#6366F1)' }}
               />
             </div>
             <span className="text-xs shrink-0" style={{ color: 'rgba(220,230,245,0.45)', fontSize: '11px' }}>

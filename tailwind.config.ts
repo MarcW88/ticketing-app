@@ -9,17 +9,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        paper: { DEFAULT: "#f7f1e7", deep: "#eee4d3" },
-        ink: "#2c2924",
-        petrol: { DEFAULT: "#526a68", deep: "#334848" },
-        tweed: { DEFAULT: "#8b7a64", deep: "#675848" },
-        copper: "#c2915d",
-        sand: "#d7bd91",
-        cream: "#fff8ea",
-        washBlue: "#dce8e5",
+        bg: "#0B0D12",
+        surface: "#14161F",
+        panel: "#1A1D28",
+        border: "#272A37",
+        accent: "#6366F1",
+        ink: "#E9EAF2",
+        petrol: { DEFAULT: "#6366F1", deep: "#4338CA" },
+        tweed: { DEFAULT: "#8B90A7", deep: "#4B5068" },
+        copper: "#6366F1",
+        sand: "#E9EAF2",
+        cream: "#F8F8FC",
+        washBlue: "#1A1D28",
       },
       fontFamily: {
-        serif: ["Georgia", "Cambria", "'Times New Roman'", "serif"],
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
+        serif: ["var(--font-sans)", "system-ui", "sans-serif"],
       },
       keyframes: {
         hauntedPulse: {
