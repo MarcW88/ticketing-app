@@ -176,7 +176,7 @@ export function applyXPDrain(
   }
 
   const newXP = state.xp - totalDrained;
-  const newLevel = getLevelFromXP(Math.max(0, newXP));
+  const newLevel = getLevelFromXP(Math.max(0, newXP - (state.xpLoan?.principal ?? 0)));
   return {
     state: { ...state, xp: newXP, level: newLevel, lastDrainAt: now.toISOString() },
     totalDrained,
@@ -221,7 +221,7 @@ export function checkAndApplyRelock(
 
   const newXP = state.xp - penalty;
   return {
-    state: { ...state, xp: newXP, level: getLevelFromXP(Math.max(0, newXP)) },
+    state: { ...state, xp: newXP, level: getLevelFromXP(Math.max(0, newXP - (state.xpLoan?.principal ?? 0))) },
     quests: updatedQuests,
     relockedCount,
   };
@@ -328,7 +328,7 @@ export function completeQuestWithXP(
   const newXP = state.xp + xpEarned;
   const newXPTotal = state.xpTotal + xpEarned;
   const oldLevel = state.level;
-  const newLevel = getLevelFromXP(newXP);
+  const newLevel = getLevelFromXP(newXP - (state.xpLoan?.principal ?? 0));
   const leveledUp = newLevel > oldLevel;
 
   const updatedState: GameState = {

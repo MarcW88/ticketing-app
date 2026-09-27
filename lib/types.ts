@@ -83,8 +83,14 @@ export interface XPChallenge {
   createdAt: string;
 }
 
+export interface XPLoan {
+  principal: number;
+  startedAt: string;
+}
+
 export interface GameState {
   xp: number;
+  xpLoan?: XPLoan;
   level: number;
   xpTotal: number;
   unlockedAchievements: string[];

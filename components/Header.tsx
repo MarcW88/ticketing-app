@@ -26,7 +26,7 @@ interface HeaderProps {
 
 export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest, onHelp, onSetChallenge, onClearChallenge, onResetXP, challengeTargets, isShielded, isDebtLocked, dailyMomentum, challengeTargetXPSum, onTreasure, coins }: HeaderProps) {
   const levelInfo = getLevelInfo(gameState.level);
-  const xpProgress = getXPProgress(gameState.xp, gameState.level);
+  const xpProgress = getXPProgress(gameState.xp - (gameState.xpLoan?.principal ?? 0), gameState.level);
   const xpForNext = getXPForNextLevel(gameState.level);
   const isMaxLevel = gameState.level >= 10;
 
@@ -166,7 +166,7 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
         {/* XP bar row */}
         <div className="flex items-center gap-3">
           <span className="text-xs font-medium shrink-0" style={{ color: 'var(--tweed)', minWidth: '56px' }}>
-            {gameState.xp.toLocaleString()} XP
+            {gameState.xp.toLocaleString()} XP {gameState.xpLoan ? `(dont ${gameState.xpLoan.principal.toLocaleString()} empruntés)` : ''}
           </span>
           <div className="flex-1 relative">
             <div className="h-2.5 rounded-full overflow-hidden" style={{ background: 'rgba(201,150,60,0.12)' }}>
@@ -197,7 +197,7 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
             {isMaxLevel ? (
               <span className="font-bold" style={{ color: 'var(--copper)' }}>MAX</span>
             ) : (
-              <><span className="font-medium">{(xpForNext - gameState.xp).toLocaleString()}</span><span className="opacity-60"> →</span></>
+                  <><span className="font-medium">{(xpForNext - gameState.xp + (gameState.xpLoan?.principal ?? 0)).toLocaleString()}</span><span className="opacity-60"> →</span></>
             )}
           </div>
 
@@ -268,7 +268,7 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
                       <div className="pt-2 border-t" style={{ borderColor: 'rgba(100,140,180,0.14)' }}>
                         {!confirmReset ? (
                           <button
-                            onClick={() => setConfirmReset(true)}
+                            onClick={() => setConfirmReset(true)} disabled={!!gameState.xpLoan}
                             className="w-full text-xs py-1.5 rounded-lg transition-all"
                             style={{ color: 'rgba(224,96,96,0.80)', border: '1px solid rgba(224,96,96,0.20)' }}
                           >
@@ -365,7 +365,7 @@ export default function Header({ gameState, xpGain, onDayModeChange, onNewQuest,
                       <div className="pt-2 border-t" style={{ borderColor: 'rgba(100,140,180,0.14)' }}>
                         {!confirmReset ? (
                           <button
-                            onClick={() => setConfirmReset(true)}
+                            onClick={() => setConfirmReset(true)} disabled={!!gameState.xpLoan}
                             className="w-full text-xs py-1.5 rounded-lg transition-all"
                             style={{ color: 'rgba(224,96,96,0.80)', border: '1px solid rgba(224,96,96,0.20)' }}
                           >

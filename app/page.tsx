@@ -16,6 +16,7 @@ import HelpModal from '@/components/HelpModal';
 import EmberBackground from '@/components/EmberBackground';
 import TimesheetPanel from '@/components/TimesheetPanel';
 import TreasurePanel from '@/components/TreasurePanel';
+import { startLoan, repayLoan } from '@/lib/loan';
 
 export default function Page() {
   const [quests, setQuests] = useState<Quest[]>([]);
@@ -282,8 +283,27 @@ export default function Page() {
 
   const handleResetXP = useCallback(() => {
     setGameState(prev => {
+      if (prev.xpLoan) return prev;
       const updated = { ...prev, xp: 0, level: 1, challenge: undefined };
       Storage.saveState(updated);
+      return updated;
+    });
+  }, []);
+
+  const handleStartLoan = useCallback((principal: number) => {
+    setGameState(prev => {
+      const updated = startLoan(prev, principal);
+      if (!updated) return prev;
+      Storage.saveStateAsync(updated);
+      return updated;
+    });
+  }, []);
+
+  const handleRepayLoan = useCallback(() => {
+    setGameState(prev => {
+      const updated = repayLoan(prev);
+      if (!updated) return prev;
+      Storage.saveStateAsync(updated);
       return updated;
     });
   }, []);
@@ -528,7 +548,7 @@ export default function Page() {
       {isDebtLocked && (
         <div className="flex items-center gap-2 px-5 py-2.5 text-xs josefin" style={{ background: 'rgba(139,26,26,0.22)', borderBottom: '1px solid rgba(224,96,96,0.28)', color: '#f87171', letterSpacing: '0.05em' }}>
           <span>⛓️</span>
-          <span>Dette de l&apos;Erèbe — XP négatif. Vous pouvez créer des quêtes dans le Port d&apos;Ithaque, mais vous ne pouvez pas déplacer de cartes vers les autres colonnes tant que votre XP est négatif.</span>
+          <span>Dette de l&apos;Erèbe — XP négatif. Vous pouvez créer des quêtes dans le Port d&apos;Ithaque, mais vous ne pouvez pas déplacer de cartes vers les autres colonnes tant que votre XP est négatif. Un prêt d&apos;XP est disponible dans le Trésor.</span>
           <span className="ml-auto font-bold" style={{ color: '#f87171' }}>{gameState.xp.toLocaleString()} XP</span>
         </div>
       )}
@@ -794,6 +814,8 @@ export default function Page() {
         onUnlockObjective={handleUnlockObjective}
         onBuyXP={handleBuyXP}
         onBuyShield={handleBuyShield}
+        onStartLoan={handleStartLoan}
+        onRepayLoan={handleRepayLoan}
         quests={quests}
       />
 

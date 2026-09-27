@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { GameState, Objective, ObjectiveCondition, MonthRecord, Quest } from '@/lib/types';
 import ObjectiveModal from './ObjectiveModal';
+import { loanInterest, MAX_LOAN_XP } from '@/lib/loan';
 
 interface TreasurePanelProps {
   isOpen: boolean;
@@ -15,6 +16,8 @@ interface TreasurePanelProps {
   onUnlockObjective: (id: string) => void;
   onBuyXP: (coinCost: number, xpGain: number) => void;
   onBuyShield: (hours: number, coinCost: number) => void;
+  onStartLoan: (principal: number) => void;
+  onRepayLoan: () => void;
   quests: Quest[];
 }
 
@@ -65,13 +68,25 @@ function canUnlock(obj: Objective, gs: GameState, activeMonths: number): boolean
   return true;
 }
 
-export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjective, onEditObjective, onDeleteObjective, onUnlockObjective, onBuyXP, onBuyShield, quests }: TreasurePanelProps) {
+export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjective, onEditObjective, onDeleteObjective, onUnlockObjective, onBuyXP, onBuyShield, onStartLoan, onRepayLoan, quests }: TreasurePanelProps) {
   const [confirmId,      setConfirmId]      = useState<string | null>(null);
   const [modalOpen,      setModalOpen]      = useState(false);
   const [editing,        setEditing]        = useState<Objective | null>(null);
   const [deleteId,       setDeleteId]       = useState<string | null>(null);
   const [shopConfirm,    setShopConfirm]    = useState<string | null>(null);
   const [shieldConfirm,  setShieldConfirm]  = useState<string | null>(null);
+  const [loanAmount, setLoanAmount] = useState('15000');
+  const [loanConfirm, setLoanConfirm] = useState(false);
+  const [repayConfirm, setRepayConfirm] = useState(false);
+  const [loanNow, setLoanNow] = useState(() => Date.now());
+
+  // Update the displayed interest while the panel is open; settlement recalculates it at repayment.
+  useEffect(() => {
+    if (!isOpen || !gameState.xpLoan) return;
+    setLoanNow(Date.now());
+    const timer = setInterval(() => setLoanNow(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, [isOpen, gameState.xpLoan]);
 
   const coins       = gameState.coins ?? 0;
   const xpTotal     = gameState.xpTotal ?? 0;
@@ -284,6 +299,47 @@ export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjecti
 
               {/* Content */}
               <div className="flex-1 overflow-y-auto px-5 py-4">
+
+                <div className="rounded-xl p-4 mb-6" style={{ background: 'rgba(201,150,60,0.07)', border: '1px solid rgba(201,150,60,0.28)' }}>
+                  <p className="text-sm font-bold josefin mb-2" style={{ color: 'var(--gold)' }}>⚖️ Prêt d&apos;XP</p>
+                  {gameState.xpLoan ? (() => {
+                    const { principal, startedAt } = gameState.xpLoan;
+                    const interest = loanInterest(principal, startedAt, loanNow);
+                    return <>
+                      <p className="text-xs josefin leading-relaxed" style={{ color: 'var(--tweed)' }}>
+                        {fmt(principal)} XP empruntés depuis le {new Date(startedAt).toLocaleString('fr-FR')}. Intérêts à payer aujourd&apos;hui : <strong>{fmt(interest)} 🪙</strong>.
+                      </p>
+                      <p className="text-xs josefin mt-2" style={{ color: 'rgba(240,232,216,0.55)' }}>
+                        Au remboursement, {fmt(principal)} XP seront retirés de votre solde. Le taux est de 0,1 % du capital par période de 24 h entamée, arrondi à la drachme supérieure.
+                      </p>
+                      <button disabled={coins < interest} onClick={() => {
+                        if (repayConfirm) { onRepayLoan(); setRepayConfirm(false); }
+                        else setRepayConfirm(true);
+                      }} className="mt-3 px-3 py-2 rounded-lg text-xs font-bold josefin disabled:opacity-40" style={{ background: 'rgba(201,150,60,0.22)', color: 'var(--gold)' }}>
+                        {repayConfirm ? `Confirmer : −${fmt(principal)} XP et −${fmt(interest)} 🪙` : 'Rembourser le prêt'}
+                      </button>
+                      {coins < interest && <p className="text-xs mt-2" style={{ color: '#E08060' }}>Il manque {fmt(interest - coins)} drachmes pour rembourser.</p>}
+                    </>;
+                  })() : <>
+                    <p className="text-xs josefin leading-relaxed mb-3" style={{ color: 'rgba(240,232,216,0.65)' }}>
+                      Choisissez l&apos;XP à utiliser temporairement. Un seul prêt à la fois, jusqu&apos;à {fmt(MAX_LOAN_XP)} XP. Le capital sera retiré à la clôture ; seul le temps d&apos;utilisation fixe les intérêts en drachmes. Aucun XP gagné n&apos;est ajouté au cumul.
+                    </p>
+                    <div className="flex gap-2 items-center">
+                      <input type="number" min="1" max={MAX_LOAN_XP} step="1" value={loanAmount}
+                        onChange={e => { setLoanAmount(e.target.value); setLoanConfirm(false); }}
+                        aria-label="Montant du prêt en XP"
+                        className="w-32 px-2 py-2 rounded-lg text-sm bg-transparent border text-white" style={{ borderColor: 'rgba(201,150,60,0.4)' }} />
+                      <span className="text-xs" style={{ color: 'var(--tweed)' }}>XP</span>
+                      <button disabled={!Number.isSafeInteger(Number(loanAmount)) || Number(loanAmount) < 1 || Number(loanAmount) > MAX_LOAN_XP}
+                        onClick={() => { if (loanConfirm) { onStartLoan(Number(loanAmount)); setLoanConfirm(false); } else setLoanConfirm(true); }}
+                        className="ml-auto px-3 py-2 rounded-lg text-xs font-bold josefin disabled:opacity-40" style={{ background: 'rgba(201,150,60,0.22)', color: 'var(--gold)' }}>
+                        {loanConfirm ? 'Confirmer le prêt' : 'Emprunter'}
+                      </button>
+                    </div>
+                    {Number.isSafeInteger(Number(loanAmount)) && Number(loanAmount) > 0 && Number(loanAmount) <= MAX_LOAN_XP &&
+                      <p className="text-xs mt-2" style={{ color: 'rgba(240,232,216,0.55)' }}>Coût estimé : {fmt(loanInterest(Number(loanAmount), new Date(loanNow).toISOString(), loanNow))} 🪙 pour les premières 24 h, puis {fmt(Math.ceil(Number(loanAmount) * 0.001))} 🪙 par 24 h entamées.</p>}
+                  </>}
+                </div>
 
                 {/* Shield Shop */}
                 {(() => {
