@@ -17,11 +17,14 @@ export function startLoan(state: GameState, principal: number, now = Date.now())
   return { ...state, xp, xpLoan: { principal, startedAt: new Date(now).toISOString() } };
 }
 
-export function repayLoan(state: GameState, now = Date.now()): GameState | null {
+export function repayLoan(state: GameState, amount = state.xpLoan?.principal ?? 0, now = Date.now()): GameState | null {
   const loan = state.xpLoan;
-  if (!loan) return null;
-  const interest = loanInterest(loan.principal, loan.startedAt, now);
+  if (!loan || !Number.isSafeInteger(amount) || amount < 1 || amount > loan.principal) return null;
+  const interest = loanInterest(amount, loan.startedAt, now);
   if ((state.coins ?? 0) < interest) return null;
-  const xp = state.xp - loan.principal;
-  return { ...state, xp, level: getLevelFromXP(xp), coins: (state.coins ?? 0) - interest, xpLoan: undefined };
+  const xp = state.xp - amount;
+  const remaining = loan.principal - amount;
+  // Keep the original start: unpaid capital has been borrowed for the whole duration.
+  return { ...state, xp, level: getLevelFromXP(xp - remaining), coins: (state.coins ?? 0) - interest,
+    xpLoan: remaining > 0 ? { ...loan, principal: remaining } : undefined };
 }

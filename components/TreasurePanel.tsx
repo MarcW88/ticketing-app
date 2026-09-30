@@ -17,7 +17,7 @@ interface TreasurePanelProps {
   onBuyXP: (coinCost: number, xpGain: number) => void;
   onBuyShield: (hours: number, coinCost: number) => void;
   onStartLoan: (principal: number) => void;
-  onRepayLoan: () => void;
+  onRepayLoan: (amount: number) => void;
   quests: Quest[];
 }
 
@@ -78,6 +78,7 @@ export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjecti
   const [loanAmount, setLoanAmount] = useState('15000');
   const [loanConfirm, setLoanConfirm] = useState(false);
   const [repayConfirm, setRepayConfirm] = useState(false);
+  const [repayAmount, setRepayAmount] = useState('500');
   const [loanNow, setLoanNow] = useState(() => Date.now());
 
   // Update the displayed interest while the panel is open; settlement recalculates it at repayment.
@@ -305,20 +306,31 @@ export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjecti
                   {gameState.xpLoan ? (() => {
                     const { principal, startedAt } = gameState.xpLoan;
                     const interest = loanInterest(principal, startedAt, loanNow);
+                    const amount = Number(repayAmount);
+                    const validAmount = Number.isSafeInteger(amount) && amount > 0 && amount <= principal;
+                    const paymentInterest = validAmount ? loanInterest(amount, startedAt, loanNow) : 0;
                     return <>
                       <p className="text-xs josefin leading-relaxed" style={{ color: 'var(--tweed)' }}>
                         {fmt(principal)} XP empruntés depuis le {new Date(startedAt).toLocaleString('fr-FR')}. Intérêts à payer aujourd&apos;hui : <strong>{fmt(interest)} 🪙</strong>.
                       </p>
                       <p className="text-xs josefin mt-2" style={{ color: 'rgba(240,232,216,0.55)' }}>
-                        Au remboursement, {fmt(principal)} XP seront retirés de votre solde. Le taux est de 0,1 % du capital par période de 24 h entamée, arrondi à la drachme supérieure.
+                        Remboursez en plusieurs fois. Chaque versement retire l&apos;XP choisi et facture ses intérêts depuis le début du prêt : 0,1 % par période de 24 h entamée, arrondi à la drachme supérieure. Le capital restant continue à porter intérêt depuis cette même date.
                       </p>
-                      <button disabled={coins < interest} onClick={() => {
-                        if (repayConfirm) { onRepayLoan(); setRepayConfirm(false); }
+                      <label className="block text-xs mt-3" style={{ color: 'var(--tweed)' }}>XP à rembourser
+                        <input type="number" min="1" max={principal} step="1" value={repayAmount}
+                          onChange={e => { setRepayAmount(e.target.value); setRepayConfirm(false); }}
+                          className="block w-full mt-1 px-2 py-2 rounded-lg text-sm bg-transparent border text-white" />
+                      </label>
+                      <button onClick={() => { setRepayAmount(String(principal)); setRepayConfirm(false); }} className="text-xs underline mt-2" style={{ color: 'var(--gold)' }}>Tout rembourser</button>
+                      {validAmount && <p className="text-xs mt-2" style={{ color: 'var(--tweed)' }}>Ce versement : {fmt(amount)} XP + {fmt(paymentInterest)} 🪙. Capital restant : {fmt(principal - amount)} XP.</p>}
+                      {validAmount && gameState.xp - amount < 0 && <p className="text-xs mt-2" style={{ color: '#E08060' }}>Votre solde passera à {fmt(gameState.xp - amount)} XP : les déplacements de quêtes seront bloqués.</p>}
+                      <button disabled={!validAmount || coins < paymentInterest} onClick={() => {
+                        if (repayConfirm) { onRepayLoan(amount); setRepayConfirm(false); }
                         else setRepayConfirm(true);
                       }} className="mt-3 px-3 py-2 rounded-lg text-xs font-bold josefin disabled:opacity-40" style={{ background: 'rgba(201,150,60,0.22)', color: 'var(--gold)' }}>
-                        {repayConfirm ? `Confirmer : −${fmt(principal)} XP et −${fmt(interest)} 🪙` : 'Rembourser le prêt'}
+                        {repayConfirm ? `Confirmer : −${fmt(amount)} XP et −${fmt(paymentInterest)} 🪙` : 'Rembourser ce montant'}
                       </button>
-                      {coins < interest && <p className="text-xs mt-2" style={{ color: '#E08060' }}>Il manque {fmt(interest - coins)} drachmes pour rembourser.</p>}
+                      {validAmount && coins < paymentInterest && <p className="text-xs mt-2" style={{ color: '#E08060' }}>Il manque {fmt(paymentInterest - coins)} drachmes pour ce versement.</p>}
                     </>;
                   })() : <>
                     <p className="text-xs josefin leading-relaxed mb-3" style={{ color: 'rgba(240,232,216,0.65)' }}>

@@ -299,9 +299,9 @@ export default function Page() {
     });
   }, []);
 
-  const handleRepayLoan = useCallback(() => {
+  const handleRepayLoan = useCallback((amount: number) => {
     setGameState(prev => {
-      const updated = repayLoan(prev);
+      const updated = repayLoan(prev, amount);
       if (!updated) return prev;
       Storage.saveStateAsync(updated);
       return updated;
