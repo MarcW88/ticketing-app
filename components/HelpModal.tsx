@@ -12,7 +12,7 @@ const D = {
   bg:      '#080C17',
   bgPanel: '#0A0F1E',
   border:  'rgba(100,140,180,0.16)',
-  gold:    '#C9963C',
+  gold:    '#6366F1',
   text:    'rgba(220,230,245,0.88)',
   muted:   'rgba(220,230,245,0.45)',
   line:    'rgba(100,140,180,0.14)',
@@ -85,7 +85,7 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                     onClick={() => setActive(s.id)}
                     className="w-full text-left px-4 py-2.5 text-xs transition-all"
                     style={active === s.id
-                      ? { color: '#FFFFFF', fontWeight: 600, background: 'rgba(201,150,60,0.10)', borderRight: `2px solid ${D.gold}` }
+                      ? { color: '#FFFFFF', fontWeight: 600, background: 'rgba(99,102,241,0.10)', borderRight: `2px solid ${D.gold}` }
                       : { color: D.muted }
                     }
                   >
@@ -103,7 +103,7 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                     onClick={() => setActive(s.id)}
                     className="shrink-0 px-3 py-1 rounded-full text-xs font-medium"
                     style={active === s.id
-                      ? { background: `rgba(201,150,60,0.15)`, color: D.gold, border: `1px solid rgba(201,150,60,0.35)` }
+                      ? { background: `rgba(99,102,241,0.15)`, color: D.gold, border: `1px solid rgba(99,102,241,0.35)` }
                       : { color: D.muted }
                     }
                   >
@@ -154,7 +154,7 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                 <button
                   onClick={onClose}
                   className="text-xs px-4 py-1.5 rounded-full font-semibold transition-all"
-                  style={{ background: 'linear-gradient(135deg,#8B6520,#C9963C)', color: '#06090F' }}
+                  style={{ background: 'linear-gradient(135deg,#4338CA,#6366F1)', color: '#FFFFFF' }}
                 >
                   Commencer
                 </button>
@@ -241,7 +241,7 @@ function SectionBoard() {
 
       <div className="space-y-2.5">
         {[
-          { accent: '#C9963C', name: "Port d'Ithaque", desc: 'Toutes tes missions en attente. Point de départ par défaut.' },
+          { accent: '#6366F1', name: "Port d'Ithaque", desc: 'Toutes tes missions en attente. Point de départ par défaut.' },
           { accent: '#6AACCF', name: 'En Mer',          desc: 'Missions sur lesquelles tu travailles activement.' },
           { accent: '#7FAB70', name: 'Ithaque',          desc: 'Missions terminées. Les XP sont accordés au passage dans cette colonne.' },
           { accent: '#9B7FE0', name: 'Épreuves',         desc: 'Missions en retard détectées automatiquement. À traiter en priorité.' },
@@ -273,7 +273,7 @@ function SectionRisks() {
       <div className="grid grid-cols-2 gap-3">
         {[
           { risk: 'Calypso',   xp: 10,  color: '#6AACCF', desc: 'Petite correction, todo rapide.' },
-          { risk: 'Scylla',    xp: 30,  color: '#C9963C', desc: 'Tâche standard de la journée.' },
+          { risk: 'Scylla',    xp: 30,  color: '#6366F1', desc: 'Tâche standard de la journée.' },
           { risk: 'Charybde',  xp: 75,  color: '#E08060', desc: 'Livrable important, délai serré.' },
           { risk: 'Le Styx',   xp: 150, color: '#E06060', desc: 'Impact direct sur le business.' },
         ].map(r => (
@@ -346,7 +346,7 @@ function SectionModes() {
         {[
           { label: 'Normal',    boost: '×1.0', color: '#6AACCF', desc: 'Journée standard.' },
           { label: 'Lecture',   boost: '×1.1', color: '#7FAB70', desc: 'Veille, formation, recherche.' },
-          { label: 'Technique', boost: '×1.3', color: '#C9963C', desc: 'Deep-work, développement, audit.' },
+          { label: 'Technique', boost: '×1.3', color: '#6366F1', desc: 'Deep-work, développement, audit.' },
           { label: 'Client',    boost: '×1.5', color: '#9B7FE0', desc: 'Réunion client, présentation, livraison.' },
         ].map(m => (
           <div key={m.label} className="flex items-center gap-4 p-3 rounded-xl"
@@ -391,7 +391,7 @@ function InfoCard({ title, desc }: { title: string; desc: string }) {
 function InfoBox({ children }: { children: React.ReactNode }) {
   return (
     <div className="p-3 rounded-xl text-xs leading-relaxed"
-      style={{ background: 'rgba(201,150,60,0.08)', border: '1px solid rgba(201,150,60,0.20)', color: D.text }}>
+      style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.20)', color: D.text }}>
       {children}
     </div>
   );
@@ -403,7 +403,7 @@ function Steps({ steps }: { steps: { n: string; title: string; desc: string }[] 
       {steps.map(s => (
         <div key={s.n} className="flex gap-3">
           <div className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-            style={{ background: 'rgba(201,150,60,0.15)', color: D.gold, border: `1px solid rgba(201,150,60,0.35)` }}>
+            style={{ background: 'rgba(99,102,241,0.15)', color: D.gold, border: `1px solid rgba(99,102,241,0.35)` }}>
             {s.n}
           </div>
           <div className="flex-1 pb-3 border-b" style={{ borderColor: D.line }}>

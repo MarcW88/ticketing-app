@@ -69,7 +69,7 @@ function StatusTab({ label, color, count, isActive, onClick }: {
       className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 shrink-0 josefin"
       style={
         isActive
-          ? { background: `rgba(201,150,60,0.12)`, color, border: `1.5px solid ${color}`, fontWeight: 600, letterSpacing: '0.06em' }
+          ? { background: `rgba(99,102,241,0.12)`, color, border: `1.5px solid ${color}`, fontWeight: 600, letterSpacing: '0.06em' }
           : { color: 'rgba(240,232,216,0.60)', border: '1.5px solid transparent', letterSpacing: '0.06em' }
       }
     >
@@ -78,8 +78,8 @@ function StatusTab({ label, color, count, isActive, onClick }: {
         <span
           className="text-xs font-bold px-1.5 rounded-full min-w-[18px] text-center"
           style={{
-            background: isActive ? color : 'rgba(201,150,60,0.12)',
-            color: isActive ? '#06090F' : 'var(--gold)',
+            background: isActive ? color : 'rgba(99,102,241,0.12)',
+            color: isActive ? '#FFFFFF' : 'var(--gold)',
           }}
         >
           {count}

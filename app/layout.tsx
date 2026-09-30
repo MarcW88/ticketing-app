@@ -1,9 +1,20 @@
 import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+const geistSans = Geist({
+  variable: "--font-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
-  title: "Codex des Mondes Parallèles",
-  description: "Quest Log — RPG task manager across parallel universes",
+  title: "Ticketing — SEO Tools Hub",
+  description: "Gestionnaire de tickets, priorités et suivi du temps.",
 };
 
 export default function RootLayout({
@@ -12,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
+    <html lang="fr" className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
       <body className="noctua-bg">{children}</body>
     </html>
   );
