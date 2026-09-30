@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { GameState, Objective, ObjectiveCondition, MonthRecord, Quest } from '@/lib/types';
 import ObjectiveModal from './ObjectiveModal';
-import { loanInterest, MAX_LOAN_XP } from '@/lib/loan';
+import { loanInterest, MAX_LOAN_XP, LOAN_DAILY_RATE } from '@/lib/loan';
 
 interface TreasurePanelProps {
   isOpen: boolean;
@@ -314,7 +314,7 @@ export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjecti
                         {fmt(principal)} XP empruntés depuis le {new Date(startedAt).toLocaleString('fr-FR')}. Intérêts à payer aujourd&apos;hui : <strong>{fmt(interest)} 🪙</strong>.
                       </p>
                       <p className="text-xs josefin mt-2" style={{ color: 'rgba(240,232,216,0.55)' }}>
-                        Remboursez en plusieurs fois. Chaque versement retire l&apos;XP choisi et facture ses intérêts depuis le début du prêt : 0,1 % par période de 24 h entamée, arrondi à la drachme supérieure. Le capital restant continue à porter intérêt depuis cette même date.
+                        Remboursez en plusieurs fois. Chaque versement retire l&apos;XP choisi et facture ses intérêts depuis le début du prêt : {(LOAN_DAILY_RATE * 100).toLocaleString('fr-FR')} % par période de 24 h entamée, arrondi à la drachme supérieure. Le capital restant continue à porter intérêt depuis cette même date.
                       </p>
                       <label className="block text-xs mt-3" style={{ color: 'var(--tweed)' }}>XP à rembourser
                         <input type="number" min="1" max={principal} step="1" value={repayAmount}
@@ -349,7 +349,7 @@ export default function TreasurePanel({ isOpen, onClose, gameState, onAddObjecti
                       </button>
                     </div>
                     {Number.isSafeInteger(Number(loanAmount)) && Number(loanAmount) > 0 && Number(loanAmount) <= MAX_LOAN_XP &&
-                      <p className="text-xs mt-2" style={{ color: 'rgba(240,232,216,0.55)' }}>Coût estimé : {fmt(loanInterest(Number(loanAmount), new Date(loanNow).toISOString(), loanNow))} 🪙 pour les premières 24 h, puis {fmt(Math.ceil(Number(loanAmount) * 0.001))} 🪙 par 24 h entamées.</p>}
+                      <p className="text-xs mt-2" style={{ color: 'rgba(240,232,216,0.55)' }}>Coût estimé : {fmt(loanInterest(Number(loanAmount), new Date(loanNow).toISOString(), loanNow))} 🪙 pour les premières 24 h, puis {fmt(Math.ceil(Number(loanAmount) * LOAN_DAILY_RATE))} 🪙 par 24 h entamées.</p>}
                   </>}
                 </div>
 

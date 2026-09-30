@@ -1,7 +1,7 @@
 import type { GameState } from './types';
 import { getLevelFromXP } from './gameEngine';
 
-export const LOAN_DAILY_RATE = 0.001; // 0.1% of borrowed XP in drachmes per started 24h
+export const LOAN_DAILY_RATE = 0.002; // 0.2% of borrowed XP in drachmes per started 24h
 export const MAX_LOAN_XP = 20000;
 
 export function loanInterest(principal: number, startedAt: string, now = Date.now()): number {
